@@ -50,5 +50,14 @@ pnpm dev            # API em :3000 e front em :3001
 - **Membro** 1:N **Pagamento**
 - **Membro** 1:N **HistoricoAtividade**
 - **Funcionario** 1:N **HistoricoAtividade** (funcionário responsável pela atividade)
+- **Treino** 1:N **HistoricoAtividade** (opcional: a atividade pode pertencer a um treino)
+
+Convenções:
+
+- IDs são **UUID v7** (gerados pelo Prisma Client, ordenados por tempo).
+- **Membros e funcionários não são apagados**: desative com `ativo = false`. O banco
+  bloqueia a exclusão de quem tem pagamentos, treinos ou histórico.
+- **Pagamento** tem `dataVencimento`; `dataPagamento` fica nula até o pagamento ser feito.
+- **Cargo** do funcionário é fixo: `ADMIN`, `RECEPCIONISTA` ou `INSTRUTOR`.
 
 O schema fica em `apps/api/prisma/schema.prisma`.
