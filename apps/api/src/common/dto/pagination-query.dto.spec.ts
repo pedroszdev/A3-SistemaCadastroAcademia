@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { PaginationQueryDto } from './pagination-query.dto';
