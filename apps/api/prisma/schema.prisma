@@ -1,0 +1,89 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StatusPagamento {
+  PENDENTE
+  PAGO
+  ATRASADO
+  CANCELADO
+}
+
+model Membro {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  cpf          String   @unique @db.Char(11)
+  telefone     String
+  endereco     String
+  dataCadastro DateTime @default(now()) @map("data_cadastro")
+
+  treinos     Treino[]
+  pagamentos  Pagamento[]
+  atividades  HistoricoAtividade[]
+
+  @@map("membros")
+}
+
+model Treino {
+  id         Int      @id @default(autoincrement())
+  membroId   Int      @map("membro_id")
+  tipo       String
+  descricao  String
+  /// duração em minutos
+  duracao    Int
+  dataInicio DateTime @map("data_inicio")
+
+  membro Membro @relation(fields: [membroId], references: [id], onDelete: Cascade)
+
+  @@index([membroId])
+  @@map("treinos")
+}
+
+model Pagamento {
+  id            Int             @id @default(autoincrement())
+  membroId      Int             @map("membro_id")
+  valor         Decimal         @db.Decimal(10, 2)
+  dataPagamento DateTime        @map("data_pagamento")
+  status        StatusPagamento @default(PENDENTE)
+
+  membro Membro @relation(fields: [membroId], references: [id], onDelete: Cascade)
+
+  @@index([membroId])
+  @@map("pagamentos")
+}
+
+model HistoricoAtividade {
+  id            Int      @id @default(autoincrement())
+  membroId      Int      @map("membro_id")
+  funcionarioId Int?     @map("funcionario_id")
+  atividade     String
+  data          DateTime
+  /// tempo de execução em minutos
+  tempoExecucao Int      @map("tempo_execucao")
+
+  membro      Membro       @relation(fields: [membroId], references: [id], onDelete: Cascade)
+  funcionario Funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
+
+  @@index([membroId])
+  @@index([funcionarioId])
+  @@map("historico_atividades")
+}
+
+model Funcionario {
+  id        Int    @id @default(autoincrement())
+  nome      String
+  cargo     String
+  login     String @unique
+  /// hash da senha (nunca a senha em texto puro)
+  senhaHash String @map("senha_hash")
+
+  atividades HistoricoAtividade[]
+
+  @@map("funcionarios")
+}
