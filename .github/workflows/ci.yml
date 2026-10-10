@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: Lint, build e testes
+    runs-on: ubuntu-latest
+
+    # Credenciais do Postgres efêmero do CI (não é segredo real); o DATABASE_URL
+    # é montado num passo para não deixar a senha embutida em connection string.
+    env:
+      PGUSER: academia
+      PGPASSWORD: academia
+      PGDATABASE: academia
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: academia
+          POSTGRES_PASSWORD: academia
+          POSTGRES_DB: academia
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U academia"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          # Histórico completo para o SonarCloud (INF-05)
+          fetch-depth: 0
+
+      - name: Configurar DATABASE_URL
+        run: echo "DATABASE_URL=postgresql://${PGUSER}:${PGPASSWORD}@localhost:5432/${PGDATABASE}?schema=public" >> "$GITHUB_ENV"
+
+      - name: Setup do pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - name: Setup do Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      - name: Testes unitários da API (cobertura)
+        run: pnpm --filter api test:cov
+
+      - name: Testes unitários do web (cobertura)
+        run: pnpm --filter web test:cov
+
+      - name: Aplicar migrations
+        run: pnpm --filter api exec prisma migrate deploy
+
+      - name: Testes e2e da API
+        run: pnpm --filter api test:e2e
+
+      - name: Publicar relatórios de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: |
+            apps/api/coverage
+            apps/web/coverage
+          if-no-files-found: ignore

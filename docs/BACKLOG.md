@@ -340,7 +340,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 **Responsável:** Gabriel, Yohan · **Sprint:** 0 · **Depende de:** ADM-03 · **Status:** ✅ concluída
 
 **O que fazer**
-- Instalar Node ≥ 20, pnpm (`corepack enable`) e Docker.
+- Instalar Node ≥ 24, pnpm (`corepack enable`) e Docker.
 - Configurar o git com o **mesmo e-mail da conta do GitHub**:
   ```bash
   git config --global user.name "Seu Nome"
@@ -450,7 +450,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 
 **O que fazer**
 - `.github/workflows/ci.yml`, disparado em `push` na `main` e em `pull_request`:
-  1. checkout com `fetch-depth: 0` (o Sonar precisa do histórico) → setup do pnpm e do Node 20 com cache → `pnpm install --frozen-lockfile`;
+  1. checkout com `fetch-depth: 0` (o Sonar precisa do histórico) → setup do pnpm e do Node 24 com cache → `pnpm install --frozen-lockfile`;
   2. `pnpm lint`;
   3. `pnpm build` (garante que compila);
   4. testes unitários com cobertura: `pnpm --filter api test:cov` e `pnpm --filter web test:cov`;
@@ -1399,7 +1399,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 | **DOC-04** | 2.2 Escopo do teste | 0,2 | Yohan | Tabela de módulos/funcionalidades testados; o que **não** é testado e por quê (ex.: testes visuais, carga em escala) |
 | **DOC-05** | 2.3 Contexto do sistema | 0,2 | Pedro | Arquitetura (diagrama do monorepo: web → API → Postgres), tecnologias, dependências, histórico de mudanças (link do histórico de commits/PRs), documentação (README, ESCOPO) |
 | **DOC-06** | 2.4 Estratégia de testes | 0,2 | Yohan | Unitários (Jest/Vitest com mocks), integração e sistema (e2e com supertest + banco real), regressão (CI em todo PR), segurança (E2E-05), desempenho (justificar se não fizer), usabilidade (QA-06, se feito) |
-| **DOC-07** | 2.5 Ambiente de teste | 0,2 | Gabriel | Máquinas locais (requisitos), Docker/Postgres 17, runner do GitHub Actions (ubuntu, Node 20), como replicar (README + docker-compose) |
+| **DOC-07** | 2.5 Ambiente de teste | 0,2 | Gabriel | Máquinas locais (requisitos), Docker/Postgres 17, runner do GitHub Actions (ubuntu, Node 24), como replicar (README + docker-compose) |
 | **DOC-08** | 2.6 Dados de teste | 0,2 | Gabriel | Seed, fábricas do e2e, CPFs **gerados** (não reais), banco limpo a cada execução, LGPD |
 | **DOC-09** | 2.7 Ferramentas de teste | 0,2 | Pedro | Jest, Vitest, Testing Library, supertest, GitHub Actions (automação a cada push/PR), SonarCloud (análise estática), com justificativa e prints |
 | **DOC-10** | 2.8 Cronograma | 0,2 | Gabriel | Tabela de sprints e marcos (seção 3 deste backlog), com datas reais de conclusão |
