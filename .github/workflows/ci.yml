@@ -20,6 +20,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://academia:academia@localhost:5432/academia?schema=public
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     services:
       postgres:
@@ -72,6 +73,11 @@ jobs:
 
       - name: Testes e2e da API
         run: pnpm --filter api test:e2e
+
+      - name: Análise do SonarCloud
+        # Pulado onde o secret não existe (ex.: PR de fork)
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v8.2.2
 
       - name: Publicar relatórios de cobertura
         if: always()
