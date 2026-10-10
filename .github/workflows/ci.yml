@@ -18,8 +18,12 @@ jobs:
     name: Lint, build e testes
     runs-on: ubuntu-latest
 
+    # Credenciais do Postgres efêmero do CI (não é segredo real); o DATABASE_URL
+    # é montado num passo para não deixar a senha embutida em connection string.
     env:
-      DATABASE_URL: postgresql://academia:academia@localhost:5432/academia?schema=public
+      PGUSER: academia
+      PGPASSWORD: academia
+      PGDATABASE: academia
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     services:
@@ -44,8 +48,11 @@ jobs:
           # Histórico completo para o SonarCloud (INF-05)
           fetch-depth: 0
 
+      - name: Configurar DATABASE_URL
+        run: echo "DATABASE_URL=postgresql://${PGUSER}:${PGPASSWORD}@localhost:5432/${PGDATABASE}?schema=public" >> "$GITHUB_ENV"
+
       - name: Setup do pnpm
-        uses: pnpm/action-setup@v6.0.10
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       - name: Setup do Node
         uses: actions/setup-node@v5
