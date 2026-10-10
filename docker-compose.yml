@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: academia-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: academia
+      POSTGRES_PASSWORD: academia
+      POSTGRES_DB: academia
+    ports:
+      - "5432:5432"
+    volumes:
+      - academia-db-data:/var/lib/postgresql/data
+
+volumes:
+  academia-db-data:

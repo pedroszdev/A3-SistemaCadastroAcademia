@@ -1,0 +1,32 @@
+{
+  "name": "a3-sistemacadastroacademia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de cadastro de academia (monorepo)",
+  "homepage": "https://github.com/pedroszdev/A3-SistemaCadastroAcademia#readme",
+  "bugs": {
+    "url": "https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pedroszdev/A3-SistemaCadastroAcademia.git"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter api --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "format": "pnpm --filter api format",
+    "test": "pnpm -r test",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter api prisma:migrate",
+    "db:studio": "pnpm --filter api prisma:studio"
+  }
+}

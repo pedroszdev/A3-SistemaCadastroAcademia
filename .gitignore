@@ -1,0 +1,60 @@
+# ===== Dependências =====
+node_modules/
+.pnpm-store/
+.pnp
+.pnp.*
+
+# ===== Variáveis de ambiente =====
+# nunca versionar segredos; só os arquivos de exemplo
+.env
+.env.*
+!.env.example
+
+# ===== Build / saída =====
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# ===== Next.js (apps/web) =====
+.next/
+next-env.d.ts
+.vercel/
+
+# ===== Prisma (apps/api) =====
+# client gerado pelo `prisma generate` (recriado no postinstall)
+apps/api/src/generated/
+
+# ===== Testes =====
+coverage/
+.nyc_output/
+
+# ===== Logs =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Certificados / chaves =====
+*.pem
+*.key
+
+# ===== Cache =====
+.cache/
+.eslintcache
+.turbo/
+
+# ===== Editores =====
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# ===== Sistema operacional =====
+.DS_Store
+Thumbs.db
+desktop.ini
