@@ -12,7 +12,7 @@ export default defineConfig({
     unstubGlobals: true,
     coverage: {
       provider: "v8",
-      reporter: ["lcov", "text-summary"],
+      reporter: [["lcov", { projectRoot: "../.." }], "text-summary"],
       reportsDirectory: "coverage",
       include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/**/*.test.{ts,tsx}", "src/**/layout.tsx"],
