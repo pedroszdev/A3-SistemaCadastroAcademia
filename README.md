@@ -1,5 +1,7 @@
 # Sistema de Cadastro de Academia
 
+[![CI](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/workflows/ci.yml/badge.svg)](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/workflows/ci.yml)
+
 Monorepo gerenciado com **pnpm workspaces**.
 
 ```
@@ -14,7 +16,7 @@ Monorepo gerenciado com **pnpm workspaces**.
 
 ## Requisitos
 
-- Node.js >= 20
+- Node.js >= 24
 - pnpm (`corepack enable`)
 - Docker (para o banco local)
 
