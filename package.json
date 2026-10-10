@@ -14,7 +14,7 @@
   "license": "MIT",
   "packageManager": "pnpm@11.22.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "pnpm --parallel --filter api --filter web dev",
