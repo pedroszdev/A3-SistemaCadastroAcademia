@@ -13,7 +13,8 @@
     "lint:fix": "eslint \"{src,test}/**/*.ts\" --fix",
     "format": "prettier --write \"{src,test}/**/*.ts\" prisma.config.ts",
     "format:check": "prettier --check \"{src,test}/**/*.ts\" prisma.config.ts",
-    "test": "jest --passWithNoTests",
+    "test": "jest",
+    "test:cov": "jest --coverage",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -63,6 +64,21 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "collectCoverageFrom": [
+      "**/*.ts"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/generated/",
+      "main\\.ts$",
+      "\\.module\\.ts$",
+      "/dto/"
+    ],
+    "coverageDirectory": "../coverage",
+    "coverageReporters": [
+      "lcov",
+      "text-summary"
+    ],
     "testEnvironment": "node"
   }
 }
