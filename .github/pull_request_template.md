@@ -13,7 +13,7 @@ pnpm test
 ## Checklist (DoD)
 
 - [ ] Código e **testes** no mesmo PR, com commits pequenos em Conventional Commits, feitos pela minha conta
-- [ ] CI verde (lint, build, testes unitários, e2e e quality gate do Sonar)
+- [ ] CI verde (lint, build, testes unitários e e2e)
 - [ ] O Sonar não aponta bug, vulnerabilidade ou hotspot novo, e a cobertura do código novo é ≥ 80%
 - [ ] Regras da seção 4 do backlog respeitadas (se alguma mudou, a seção 4 foi atualizada antes)
 - [ ] Item marcado na seção 5 do backlog

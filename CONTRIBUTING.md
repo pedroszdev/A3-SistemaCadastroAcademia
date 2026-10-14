@@ -28,7 +28,8 @@ A nota individual da A3 é medida pelos **commits de código-fonte** de cada um,
 1. Crie uma branch a partir da `main` atualizada: `feat/membros-service`, `test/pagamentos-status`, `fix/historico-data-futura`.
 2. Abra um PR para a `main` e preencha o template (o que muda, como testar, DoD, `Closes #`).
 3. O PR só entra com:
-   - o check **"Lint, build e testes"** verde (inclui o quality gate do SonarCloud);
+   - o check **"Lint, build e testes"** verde (lint, build, testes unitários e e2e);
+   - o comentário do SonarCloud no PR sem bug, vulnerabilidade ou hotspot novo, e cobertura do código novo ≥ 80%. O quality gate do Sonar é conferido nesse comentário, não faz parte do check do CI;
    - **1 aprovação** de outro integrante. Revisem os PRs abertos em até 24h.
 4. Merge com **"Create a merge commit"** ou **"Rebase and merge"**. **Nunca "Squash"**: ele junta os commits e apaga o histórico que o professor avalia.
 
@@ -37,7 +38,7 @@ A `main` é protegida: ninguém, nem admin, dá push direto nela.
 ## Código e testes
 
 - **Teste junto com o código**, no mesmo PR. Meta de cobertura: **≥ 80%** no código novo.
-- **API**: siga o padrão do módulo de funcionários (`dto/`, controller, service e specs). Testes unitários em `src/<modulo>/*.spec.ts` com o `PrismaService` mockado; e2e em `test/<modulo>.e2e-spec.ts` com banco real.
+- **API**: siga o padrão da [seção 4.3 do backlog](docs/BACKLOG.md#43-padrão-de-código-de-cada-módulo-da-api) (`dto/`, controller, service e specs). O módulo de funcionários (FUN-01) é a referência desse padrão. Testes unitários em `src/<modulo>/*.spec.ts` com o `PrismaService` mockado; e2e em `test/<modulo>.e2e-spec.ts` com banco real.
 - **Web**: `page.tsx` fino. Validação, formatação e chamadas à API ficam em `lib/` ou `features/<modulo>/`, com testes `*.test.ts(x)` ao lado.
 - **Dados fictícios sempre** (LGPD): nada de CPF, telefone ou endereço reais em seed, testes ou prints.
 
@@ -47,10 +48,11 @@ Requisitos: Node.js ≥ 24, pnpm (`corepack enable`) e Docker.
 
 ```bash
 pnpm db:up                     # PostgreSQL local
+pnpm db:migrate                # aplica as migrations no banco local
 pnpm test                      # testes unitários da API e do web
 pnpm --filter api test:cov     # cobertura da API (apps/api/coverage)
 pnpm --filter web test:cov     # cobertura do web (apps/web/coverage)
-pnpm --filter api test:e2e     # e2e da API (precisa do banco no ar)
+pnpm --filter api test:e2e     # e2e da API (precisa do banco no ar e migrado)
 pnpm lint                      # ESLint em tudo
 ```
 
