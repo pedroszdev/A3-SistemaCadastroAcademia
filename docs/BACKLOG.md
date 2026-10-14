@@ -198,7 +198,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] ADM-03 Adicionar colaboradores no GitHub
 - [x] ADM-05 Canal e check-in semanal
 - [ ] ADM-06 Documento de escopo (coordenação + RNFs)
-- [ ] INF-01 Proteção da main, templates e CONTRIBUTING
+- [x] INF-01 Proteção da main, templates e CONTRIBUTING
 - [ ] INF-02 Jest da API com cobertura + e2e — 🟡 **parcial**: Jest, ts-jest e @nestjs/testing já estão instalados, com a config básica no `package.json`. Faltam a cobertura (exclusões, lcov, `test:cov`), o `jest-e2e.json`, o supertest e remover o `--passWithNoTests`
 - [ ] INF-03 Testes no front (Vitest)
 - [ ] INF-04 Pipeline do GitHub Actions
