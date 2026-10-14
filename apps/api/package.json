@@ -95,7 +95,12 @@
     ],
     "coverageDirectory": "../coverage",
     "coverageReporters": [
-      "lcov",
+      [
+        "lcov",
+        {
+          "projectRoot": "../.."
+        }
+      ],
       "text-summary"
     ],
     "testEnvironment": "node"

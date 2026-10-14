@@ -1,6 +1,8 @@
 # Sistema de Cadastro de Academia
 
 [![CI](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/workflows/ci.yml/badge.svg)](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/workflows/ci.yml)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=pedroszdev_A3-SistemaCadastroAcademia&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=pedroszdev_A3-SistemaCadastroAcademia)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pedroszdev_A3-SistemaCadastroAcademia&metric=coverage)](https://sonarcloud.io/summary/new_code?id=pedroszdev_A3-SistemaCadastroAcademia)
 
 Monorepo gerenciado com **pnpm workspaces**.
 

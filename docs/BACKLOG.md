@@ -202,7 +202,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] INF-02 Jest da API com cobertura + e2e — 🟡 **parcial**: Jest, ts-jest e @nestjs/testing já estão instalados, com a config básica no `package.json`. Faltam a cobertura (exclusões, lcov, `test:cov`), o `jest-e2e.json`, o supertest e remover o `--passWithNoTests`
 - [ ] INF-03 Testes no front (Vitest)
 - [ ] INF-04 Pipeline do GitHub Actions
-- [ ] INF-05 SonarCloud + primeira análise
+- [x] INF-05 SonarCloud + primeira análise
 - [ ] INF-06 Seed do banco
 - [ ] INF-07 Base comum da API (filtro de erros, paginação, datas)
 - [ ] FUN-01 Back de funcionários
