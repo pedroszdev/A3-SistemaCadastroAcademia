@@ -24,7 +24,6 @@ jobs:
       PGUSER: academia
       PGPASSWORD: academia
       PGDATABASE: academia
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     services:
       postgres:
@@ -81,10 +80,17 @@ jobs:
       - name: Testes e2e da API
         run: pnpm --filter api test:e2e
 
+      # O token fica só no passo do scan, longe do install, do build e dos testes
+      - name: Verificar SONAR_TOKEN
+        id: sonar
+        run: echo "habilitado=${{ secrets.SONAR_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
+
       - name: Análise do SonarCloud
         # Pulado onde o secret não existe (ex.: PR de fork)
-        if: env.SONAR_TOKEN != ''
-        uses: SonarSource/sonarqube-scan-action@v8.2.2
+        if: steps.sonar.outputs.habilitado == 'true'
+        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Publicar relatórios de cobertura
         if: always()
