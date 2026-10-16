@@ -266,7 +266,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] PAG-04 Situação financeira / inadimplência
 - [ ] PAG-05 Controller de pagamentos
 - [ ] PAG-06 Testes de pagamentos
-- [ ] HIS-01 DTOs de histórico
+- [x] HIS-01 DTOs de histórico
 - [ ] HIS-02 Service de histórico
 - [ ] HIS-03 Controller de histórico
 - [ ] HIS-04 Testes de histórico
