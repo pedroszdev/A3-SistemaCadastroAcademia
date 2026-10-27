@@ -25,14 +25,26 @@ describe('IsCpf', () => {
     expect(await mensagensDe(Alvo, { cpf })).toEqual([]);
   });
 
-  it.each([['111.444.777-36'], ['111.111.111-11'], [11144477735], [undefined]])(
-    '%o → rejeita',
-    async (cpf) => {
-      expect(await mensagensDe(Alvo, { cpf })).toEqual([
-        'cpf deve ser um CPF válido',
-      ]);
+  it.each([['111.444.777-35'], [' 111.444.777-35 '], ['11144477735']])(
+    '%o → guarda só os números',
+    (cpf) => {
+      expect(plainToInstance(Alvo, { cpf }).cpf).toBe('11144477735');
     },
   );
+
+  it.each([
+    ['111.444.777-36'],
+    ['111.111.111-11'],
+    [11144477735],
+    [undefined],
+    [null],
+    [{}],
+    [['111.444.777-35']],
+  ])('%o → rejeita', async (cpf) => {
+    expect(await mensagensDe(Alvo, { cpf })).toEqual([
+      'cpf deve ser um CPF válido',
+    ]);
+  });
 
   it('aceita uma mensagem própria', async () => {
     expect(await mensagensDe(AlvoComMensagem, { cpf: '123' })).toEqual([
