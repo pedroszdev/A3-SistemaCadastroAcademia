@@ -64,7 +64,7 @@ Cada módulo tem uma faixa fixa de IDs para que os três escrevam em paralelo se
 | **RF41** | Listar pagamentos com paginação e filtros por membro, status (PENDENTE, PAGO, ATRASADO, CANCELADO) e período de vencimento; cada item traz o status calculado e os dias em atraso | ADMIN, RECEPCIONISTA | RN07 |
 | **RF42** | Consultar um pagamento pelo identificador (inexistente → 404) | ADMIN, RECEPCIONISTA | RN07 |
 | **RF43** | Registrar o pagamento de uma mensalidade, com data do pagamento opcional (padrão: hoje; não pode ser futura) | ADMIN, RECEPCIONISTA | RN08 |
-| **RF44** | Cancelar uma mensalidade pendente ou atrasada | ADMIN, RECEPCIONISTA | RN08 |
+| **RF44** | Cancelar uma mensalidade que ainda não foi paga (já paga → 409) | ADMIN, RECEPCIONISTA | RN08 |
 | **RF45** | Consultar a situação financeira de um membro: em dia ou inadimplente, quantidade de pagamentos atrasados e maior atraso em dias | ADMIN, RECEPCIONISTA | RN07, RN09 |
 
 O INSTRUTOR e o ALUNO não acessam pagamentos (403).
@@ -103,6 +103,7 @@ O fluxo principal é o caminho que a demo e o teste e2e `test/fluxo-principal.e2
 5. Registrar o pagamento
 6. Registrar atividade
 7. Consultar o histórico do membro
+8. Conferir o dashboard
 
 ### 7.1 Critérios de aceitação do fluxo principal
 
@@ -110,7 +111,7 @@ O fluxo principal é o caminho que a demo e o teste e2e `test/fluxo-principal.e2
 
 - **Dado** um funcionário ativo com login e senha válidos
 - **Quando** ele faz login
-- **Então** recebe um token válido por 8 horas e acessa as telas do seu cargo
+- **Então** recebe um token válido por 8 horas, e `GET /auth/me` com esse token devolve o seu cargo
 
 **CA02 · Cadastrar membro**
 
@@ -148,33 +149,43 @@ O fluxo principal é o caminho que a demo e o teste e2e `test/fluxo-principal.e2
 - **Quando** a recepcionista consulta o histórico do membro
 - **Então** a atividade aparece no histórico do membro, com o nome do instrutor e os 60 minutos
 
+**CA08 · Conferir o dashboard**
+
+- **Dado** o membro, o pagamento e a atividade dos CA02 a CA06
+- **Quando** a recepcionista consulta o dashboard
+- **Então** o membro conta nos membros ativos, os R$ 100,00 entram na receita do mês e a atividade entra nas atividades de hoje
+
 ### 7.2 Cenários alternativos (inadimplência, RN09)
 
-**CA08 · Atraso acima da tolerância**
+O limite da tolerância (atraso de 10 dias ainda em dia, de 11 dias inadimplente) é verificado nos unitários PAG-02 e PAG-06; os cenários abaixo usam 15 e 5 dias, como o E2E-03.
+
+**CA09 · Atraso acima da tolerância**
 
 - **Dado** um membro com pagamento vencido há 15 dias e não pago
 - **Quando** o instrutor tenta registrar uma atividade
 - **Então** recebe 422 "Membro com pagamento em atraso" e nada é gravado
 
-**CA09 · Atraso dentro da tolerância**
+**CA10 · Atraso dentro da tolerância**
 
 - **Dado** um membro com pagamento vencido há 5 dias (dentro da tolerância de 10 dias)
 - **Quando** o instrutor registra uma atividade
 - **Então** a atividade é gravada
 
-**CA10 · Regularização do atraso**
+**CA11 · Regularização do atraso**
 
-- **Dado** o membro do CA08
+- **Dado** o membro do CA09
 - **Quando** a recepcionista registra o pagamento atrasado e o instrutor tenta de novo
 - **Então** a atividade é gravada (201)
 
-**CA11 · Membro inativo**
+**CA12 · Membro inativo**
 
 - **Dado** um membro inativo
 - **Quando** a recepcionista tenta lançar um pagamento ou o instrutor tenta registrar uma atividade
 - **Então** recebe 422
 
 ### 7.3 Rastreabilidade
+
+Quem preencher as seções 4.1, 4.3, 4.4 e 4.7 troca o "(a preencher)" da sua linha pelos RFs correspondentes.
 
 | Critério | RFs | RNs | Teste |
 | --- | --- | --- | --- |
@@ -183,9 +194,11 @@ O fluxo principal é o caminho que a demo e o teste e2e `test/fluxo-principal.e2
 | **CA03** | 4.4 (a preencher) | RN05 | E2E-02 |
 | **CA04** | RF40 | RN06, RN07 | E2E-02 |
 | **CA05** | RF43 | RN08 | E2E-02 |
-| **CA06** | RF50 | RN10, RN11 | E2E-02 |
+| **CA06** | RF50 | RN04, RN09, RN10, RN11 | E2E-02 |
 | **CA07** | RF52 | — | E2E-02 |
-| **CA08** | RF45, RF50 | RN09 | E2E-03 |
-| **CA09** | RF45, RF50 | RN09 | E2E-03 |
-| **CA10** | RF43, RF50 | RN09 | E2E-03 |
-| **CA11** | RF40, RF50 | RN04 | PAG-06 / HIS-04 (unitário) |
+| **CA08** | 4.7 (a preencher) | — | E2E-02 |
+| **CA09** | RF50 | RN09 | E2E-03 |
+| **CA10** | RF50 | RN09 | E2E-03 |
+| **CA11** | RF43, RF50 | RN09 | E2E-03 |
+| **CA12** | RF40, RF50 | RN04 | PAG-06 / HIS-04 (unitário) |
+| Limite de 10/11 dias | RF45 | RN09 | PAG-02 / PAG-06 (unitário) |
