@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { hoje } from '../common/utils/date';
+import { diasEntre, hoje } from '../common/utils/date';
 import { paginacaoPrisma, paginate } from '../common/utils/paginate';
 import type { Prisma } from '../generated/prisma/client';
 import { StatusPagamento } from '../generated/prisma/enums';
@@ -15,7 +15,12 @@ import {
   StatusFiltroPagamento,
 } from './dto/query-pagamento.dto';
 import { RegistrarPagamentoDto } from './dto/registrar-pagamento.dto';
-import { calcularStatus, diasEmAtraso } from './pagamento-status';
+import {
+  DIAS_TOLERANCIA,
+  type SituacaoFinanceira,
+  calcularStatus,
+  diasEmAtraso,
+} from './pagamento-status';
 
 export const PAGAMENTO_SELECT = {
   id: true,
@@ -149,6 +154,37 @@ export class PagamentosService {
     return this.findOne(id);
   }
 
+  async situacaoMembro(membroId: string): Promise<{
+    situacao: SituacaoFinanceira;
+    pagamentosAtrasados: number;
+    maiorAtrasoDias: number;
+  }> {
+    await this.assertMembroExiste(membroId);
+
+    const referencia = hoje();
+    const { _count, _min } = await this.prisma.pagamento.aggregate({
+      where: { membroId, ...filtroStatus('ATRASADO', referencia) },
+      _count: { _all: true },
+      _min: { dataVencimento: true },
+    });
+    // RN09: o vencimento mais antigo entre os atrasados dá o maior atraso.
+    const maiorAtrasoDias = _min.dataVencimento
+      ? diasEntre(_min.dataVencimento, referencia)
+      : 0;
+    return {
+      situacao: maiorAtrasoDias > DIAS_TOLERANCIA ? 'INADIMPLENTE' : 'EM_DIA',
+      pagamentosAtrasados: _count._all,
+      maiorAtrasoDias,
+    };
+  }
+
+  async assertMembroAdimplente(membroId: string): Promise<void> {
+    const { situacao } = await this.situacaoMembro(membroId);
+    if (situacao === 'INADIMPLENTE') {
+      throw new UnprocessableEntityException('Membro com pagamento em atraso');
+    }
+  }
+
   // RN08: a troca condicional não casou; descobre se foi 404 ou 409.
   private async explicarFalha(
     id: string,
@@ -173,6 +209,16 @@ export class PagamentosService {
         ? 'Pagamento cancelado não pode ser pago'
         : 'Pagamento já está cancelado',
     );
+  }
+
+  private async assertMembroExiste(membroId: string) {
+    const membro = await this.prisma.membro.findUnique({
+      where: { id: membroId },
+      select: { id: true },
+    });
+    if (!membro) {
+      throw new NotFoundException('Membro não encontrado');
+    }
   }
 
   // Provisório até a MEM-03 exportar MembrosService.assertMembroAtivo (RN04).
