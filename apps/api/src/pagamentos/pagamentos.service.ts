@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -13,6 +14,7 @@ import {
   QueryPagamentoDto,
   StatusFiltroPagamento,
 } from './dto/query-pagamento.dto';
+import { RegistrarPagamentoDto } from './dto/registrar-pagamento.dto';
 import { calcularStatus, diasEmAtraso } from './pagamento-status';
 
 export const PAGAMENTO_SELECT = {
@@ -119,6 +121,58 @@ export class PagamentosService {
       throw new NotFoundException('Pagamento não encontrado');
     }
     return apresentar(pagamento, hoje());
+  }
+
+  async registrarPagamento(id: string, dto: RegistrarPagamentoDto) {
+    // condicional no banco: sem janela entre ler o status e gravar (RN08)
+    const { count } = await this.prisma.pagamento.updateMany({
+      where: { id, status: StatusPagamento.PENDENTE },
+      data: {
+        status: StatusPagamento.PAGO,
+        dataPagamento: dto.dataPagamento,
+      },
+    });
+    if (count === 0) {
+      await this.explicarFalha(id, 'pagar');
+    }
+    return this.findOne(id);
+  }
+
+  async cancelar(id: string) {
+    const { count } = await this.prisma.pagamento.updateMany({
+      where: { id, status: StatusPagamento.PENDENTE },
+      data: { status: StatusPagamento.CANCELADO },
+    });
+    if (count === 0) {
+      await this.explicarFalha(id, 'cancelar');
+    }
+    return this.findOne(id);
+  }
+
+  // RN08: a troca condicional não casou; descobre se foi 404 ou 409.
+  private async explicarFalha(
+    id: string,
+    acao: 'pagar' | 'cancelar',
+  ): Promise<never> {
+    const atual = await this.prisma.pagamento.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    if (!atual) {
+      throw new NotFoundException('Pagamento não encontrado');
+    }
+    if (atual.status === StatusPagamento.PAGO) {
+      throw new ConflictException(
+        acao === 'pagar'
+          ? 'Pagamento já foi pago'
+          : 'Pagamento já pago não pode ser cancelado',
+      );
+    }
+    throw new ConflictException(
+      acao === 'pagar'
+        ? 'Pagamento cancelado não pode ser pago'
+        : 'Pagamento já está cancelado',
+    );
   }
 
   // Provisório até a MEM-03 exportar MembrosService.assertMembroAtivo (RN04).
