@@ -262,7 +262,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] ADM-06 Escopo: RFs de pagamentos/histórico + fluxo principal e critérios de aceitação
 - [x] PAG-01 DTOs de pagamentos
 - [x] PAG-02 Cálculo de status (função pura)
-- [ ] PAG-03 Service de pagamentos
+- [x] PAG-03 Service de pagamentos
 - [ ] PAG-04 Situação financeira / inadimplência
 - [ ] PAG-05 Controller de pagamentos
 - [ ] PAG-06 Testes de pagamentos
