@@ -35,6 +35,10 @@ describe('UpdateFuncionarioDto', () => {
     [{ senha: 'x'.repeat(73) }, 'senha deve ter no máximo 72 bytes'],
     // 40 caracteres, mas 80 bytes em UTF-8
     [{ senha: 'ç'.repeat(40) }, 'senha deve ter no máximo 72 bytes'],
+    // null não é "campo ausente": se passar, o Prisma recusa e vira 500
+    [{ nome: null }, 'nome deve ser um texto'],
+    [{ cargo: null }, 'cargo deve ser ADMIN, RECEPCIONISTA ou INSTRUTOR'],
+    [{ senha: null }, 'senha deve ser um texto'],
   ])('%o → "%s"', async (campos, mensagem) => {
     const { mensagens } = await validar(campos);
 
