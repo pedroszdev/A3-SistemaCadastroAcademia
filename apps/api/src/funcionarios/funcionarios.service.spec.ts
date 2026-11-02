@@ -106,7 +106,8 @@ describe('FuncionariosService', () => {
       expect(prisma.funcionario.findMany).toHaveBeenCalledWith({
         where,
         select: FUNCIONARIO_SELECT,
-        orderBy: { nome: 'asc' },
+        // id desempata nomes iguais, para a paginação não repetir nem pular
+        orderBy: [{ nome: 'asc' }, { id: 'asc' }],
         skip: 10,
         take: 10,
       });
