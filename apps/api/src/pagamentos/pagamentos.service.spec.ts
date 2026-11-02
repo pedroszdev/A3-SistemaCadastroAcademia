@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -258,6 +259,154 @@ describe('PagamentosService', () => {
       await expect(service.findOne(ID)).rejects.toThrow(
         new NotFoundException('Pagamento não encontrado'),
       );
+    });
+  });
+
+  describe('registrarPagamento', () => {
+    const dto = {
+      dataPagamento: new Date('2026-10-10'),
+    };
+
+    it('marca como PAGO só se ainda está PENDENTE e devolve o pagamento apresentado', async () => {
+      prisma.pagamento.updateMany.mockResolvedValue({ count: 1 });
+      prisma.pagamento.findUnique.mockResolvedValue(
+        pagamento({
+          status: StatusPagamento.PAGO,
+          dataPagamento: dto.dataPagamento,
+          dataVencimento: new Date('2026-10-05'),
+        }),
+      );
+
+      const pago = await service.registrarPagamento(ID, dto);
+
+      expect(prisma.pagamento.updateMany).toHaveBeenCalledWith({
+        where: { id: ID, status: StatusPagamento.PENDENTE },
+        data: {
+          status: StatusPagamento.PAGO,
+          dataPagamento: dto.dataPagamento,
+        },
+      });
+      expect(prisma.pagamento.findUnique).toHaveBeenCalledTimes(1);
+      expect(prisma.pagamento.findUnique).toHaveBeenCalledWith({
+        where: { id: ID },
+        select: PAGAMENTO_SELECT,
+      });
+      expect(pago).toMatchObject({
+        id: ID,
+        valor: 99.9,
+        status: 'PAGO',
+        diasEmAtraso: 0,
+      });
+    });
+
+    it.each([
+      ['já pago', StatusPagamento.PAGO, 'Pagamento já foi pago'],
+      [
+        'cancelado',
+        StatusPagamento.CANCELADO,
+        'Pagamento cancelado não pode ser pago',
+      ],
+    ])(
+      'lança 409 quando o pagamento está %s',
+      async (_caso, status, mensagem) => {
+        prisma.pagamento.updateMany.mockResolvedValue({ count: 0 });
+        prisma.pagamento.findUnique.mockResolvedValue({ status });
+
+        await expect(service.registrarPagamento(ID, dto)).rejects.toThrow(
+          new ConflictException(mensagem),
+        );
+        expect(prisma.pagamento.findUnique).toHaveBeenCalledTimes(1);
+        expect(prisma.pagamento.findUnique).toHaveBeenCalledWith({
+          where: { id: ID },
+          select: { status: true },
+        });
+      },
+    );
+
+    it('lança 404 quando o pagamento não existe', async () => {
+      prisma.pagamento.updateMany.mockResolvedValue({ count: 0 });
+      prisma.pagamento.findUnique.mockResolvedValue(null);
+
+      await expect(service.registrarPagamento(ID, dto)).rejects.toThrow(
+        new NotFoundException('Pagamento não encontrado'),
+      );
+      expect(prisma.pagamento.findUnique).toHaveBeenCalledTimes(1);
+      expect(prisma.pagamento.findUnique).toHaveBeenCalledWith({
+        where: { id: ID },
+        select: { status: true },
+      });
+    });
+  });
+
+  describe('cancelar', () => {
+    it('marca como CANCELADO só se ainda está PENDENTE e devolve o pagamento apresentado', async () => {
+      prisma.pagamento.updateMany.mockResolvedValue({ count: 1 });
+      prisma.pagamento.findUnique.mockResolvedValue(
+        pagamento({
+          status: StatusPagamento.CANCELADO,
+          dataVencimento: new Date('2026-10-05'),
+        }),
+      );
+
+      const cancelado = await service.cancelar(ID);
+
+      expect(prisma.pagamento.updateMany).toHaveBeenCalledWith({
+        where: { id: ID, status: StatusPagamento.PENDENTE },
+        data: { status: StatusPagamento.CANCELADO },
+      });
+      expect(prisma.pagamento.findUnique).toHaveBeenCalledTimes(1);
+      expect(prisma.pagamento.findUnique).toHaveBeenCalledWith({
+        where: { id: ID },
+        select: PAGAMENTO_SELECT,
+      });
+      expect(cancelado).toMatchObject({
+        id: ID,
+        valor: 99.9,
+        status: 'CANCELADO',
+        diasEmAtraso: 0,
+      });
+    });
+
+    it.each([
+      [
+        'já pago',
+        StatusPagamento.PAGO,
+        'Pagamento já pago não pode ser cancelado',
+      ],
+      [
+        'já cancelado',
+        StatusPagamento.CANCELADO,
+        'Pagamento já está cancelado',
+      ],
+    ])(
+      'lança 409 quando o pagamento está %s',
+      async (_caso, status, mensagem) => {
+        prisma.pagamento.updateMany.mockResolvedValue({ count: 0 });
+        prisma.pagamento.findUnique.mockResolvedValue({ status });
+
+        await expect(service.cancelar(ID)).rejects.toThrow(
+          new ConflictException(mensagem),
+        );
+        expect(prisma.pagamento.findUnique).toHaveBeenCalledTimes(1);
+        expect(prisma.pagamento.findUnique).toHaveBeenCalledWith({
+          where: { id: ID },
+          select: { status: true },
+        });
+      },
+    );
+
+    it('lança 404 quando o pagamento não existe', async () => {
+      prisma.pagamento.updateMany.mockResolvedValue({ count: 0 });
+      prisma.pagamento.findUnique.mockResolvedValue(null);
+
+      await expect(service.cancelar(ID)).rejects.toThrow(
+        new NotFoundException('Pagamento não encontrado'),
+      );
+      expect(prisma.pagamento.findUnique).toHaveBeenCalledTimes(1);
+      expect(prisma.pagamento.findUnique).toHaveBeenCalledWith({
+        where: { id: ID },
+        select: { status: true },
+      });
     });
   });
 });
