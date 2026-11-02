@@ -49,7 +49,8 @@ export class FuncionariosService {
       this.prisma.funcionario.findMany({
         where,
         select: FUNCIONARIO_SELECT,
-        orderBy: { nome: 'asc' },
+        // id desempata nomes iguais, para a paginação não repetir nem pular
+        orderBy: [{ nome: 'asc' }, { id: 'asc' }],
         ...paginacaoPrisma(query),
       }),
       this.prisma.funcionario.count({ where }),
