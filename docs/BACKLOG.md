@@ -205,8 +205,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] INF-05 SonarCloud + primeira análise
 - [ ] INF-06 Seed do banco
 - [ ] INF-07 Base comum da API (filtro de erros, paginação, datas)
-- [ ] FUN-01 Back de funcionários
-- [ ] FUN-02 Testes de funcionários
+- [x] FUN-01 Back de funcionários
+- [x] FUN-02 Testes de funcionários
 - [ ] AUTH-01 Login com JWT
 - [ ] AUTH-02 Autorização por cargo (RBAC)
 - [ ] AUTH-03 Testes de auth
@@ -564,7 +564,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 **Responsável:** Pedro · **Sprint:** 2 · **Depende de:** FUN-01
 
 **O que fazer**
-- Instalar `@nestjs/jwt`, `@nestjs/passport`, `passport-jwt` e `bcrypt`.
+- Instalar `@nestjs/jwt`, `@nestjs/passport` e `passport-jwt`. O hash usa o `bcryptjs`, já instalado na FUN-01.
 - `POST /auth/login { login, senha }` → `{ accessToken, funcionario: { id, nome, cargo } }`.
 - `GET /auth/me` → o funcionário logado.
 - `JwtAuthGuard` **global** + decorator `@Public()` para o login e o health (RN14).

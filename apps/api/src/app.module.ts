@@ -3,10 +3,15 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
+import { FuncionariosModule } from './funcionarios/funcionarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    FuncionariosModule,
+  ],
   controllers: [AppController],
   providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
 })
