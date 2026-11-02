@@ -264,7 +264,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] PAG-02 Cálculo de status (função pura)
 - [x] PAG-03 Service de pagamentos
 - [x] PAG-04 Situação financeira / inadimplência
-- [ ] PAG-05 Controller de pagamentos
+- [ ] PAG-05 Controller de pagamentos — 🟡 **parcial**: as rotas e os testes de delegação estão prontos. Falta aplicar o `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) quando a AUTH-02 entrar
 - [ ] PAG-06 Testes de pagamentos
 - [x] HIS-01 DTOs de histórico
 - [ ] HIS-02 Service de histórico
