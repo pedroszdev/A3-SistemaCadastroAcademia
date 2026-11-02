@@ -1,5 +1,6 @@
 import { CreatePagamentoDto } from './dto/create-pagamento.dto';
 import { QueryPagamentoDto } from './dto/query-pagamento.dto';
+import { RegistrarPagamentoDto } from './dto/registrar-pagamento.dto';
 import { PagamentosController } from './pagamentos.controller';
 import { PagamentosService } from './pagamentos.service';
 
@@ -10,6 +11,8 @@ describe('PagamentosController', () => {
     findAll: jest.Mock;
     create: jest.Mock;
     findOne: jest.Mock;
+    registrarPagamento: jest.Mock;
+    cancelar: jest.Mock;
   };
   let controller: PagamentosController;
 
@@ -18,6 +21,8 @@ describe('PagamentosController', () => {
       findAll: jest.fn(),
       create: jest.fn(),
       findOne: jest.fn(),
+      registrarPagamento: jest.fn(),
+      cancelar: jest.fn(),
     };
     controller = new PagamentosController(
       service as unknown as PagamentosService,
@@ -56,5 +61,24 @@ describe('PagamentosController', () => {
 
     await expect(controller.findOne(ID)).resolves.toBe(pagamento);
     expect(service.findOne).toHaveBeenCalledWith(ID);
+  });
+
+  it('pagar delega id e dto ao registrarPagamento', async () => {
+    const dto: RegistrarPagamentoDto = {
+      dataPagamento: new Date('2026-11-01T00:00:00.000Z'),
+    };
+    const pago = { id: ID, status: 'PAGO' };
+    service.registrarPagamento.mockResolvedValue(pago);
+
+    await expect(controller.pagar(ID, dto)).resolves.toBe(pago);
+    expect(service.registrarPagamento).toHaveBeenCalledWith(ID, dto);
+  });
+
+  it('cancelar delega só o id ao service', async () => {
+    const cancelado = { id: ID, status: 'CANCELADO' };
+    service.cancelar.mockResolvedValue(cancelado);
+
+    await expect(controller.cancelar(ID)).resolves.toBe(cancelado);
+    expect(service.cancelar).toHaveBeenCalledWith(ID);
   });
 });
