@@ -30,6 +30,8 @@ describe('UpdateMembroDto', () => {
 
   it.each([
     [{ cpf: '52998224725' }, 'cpf não pode ser alterado'],
+    [{ cpf: '' }, 'cpf não pode ser alterado'],
+    [{ cpf: null }, 'cpf não pode ser alterado'],
     [{ nome: null }, 'nome deve ser um texto'],
     [{ nome: 'Ab' }, 'nome deve ter entre 3 e 120 caracteres'],
     [{ telefone: null }, 'telefone deve ser um texto'],
