@@ -46,7 +46,8 @@ function apresentar(pagamento: PagamentoDoBanco, referencia: Date) {
   };
 }
 
-// RN07: ATRASADO não existe no banco; vira PENDENTE, sem pagamento e já vencido.
+// RN07: mesma regra de calcularStatus. O que define PAGO é ter dataPagamento, e
+// ATRASADO não existe no banco: é não cancelado, sem pagamento e já vencido.
 function filtroStatus(
   status: StatusFiltroPagamento | undefined,
   referencia: Date,
@@ -56,15 +57,20 @@ function filtroStatus(
       return {};
     case 'ATRASADO':
       return {
-        status: StatusPagamento.PENDENTE,
+        status: { not: StatusPagamento.CANCELADO },
         dataPagamento: null,
         dataVencimento: { lt: referencia },
       };
     case 'PENDENTE':
       return {
-        status: StatusPagamento.PENDENTE,
+        status: { not: StatusPagamento.CANCELADO },
         dataPagamento: null,
         dataVencimento: { gte: referencia },
+      };
+    case 'PAGO':
+      return {
+        status: { not: StatusPagamento.CANCELADO },
+        dataPagamento: { not: null },
       };
     default:
       return { status };

@@ -169,7 +169,7 @@ describe('PagamentosService', () => {
       [
         'ATRASADO',
         {
-          status: StatusPagamento.PENDENTE,
+          status: { not: StatusPagamento.CANCELADO },
           dataPagamento: null,
           dataVencimento: { lt: hojeSP },
         },
@@ -177,12 +177,18 @@ describe('PagamentosService', () => {
       [
         'PENDENTE',
         {
-          status: StatusPagamento.PENDENTE,
+          status: { not: StatusPagamento.CANCELADO },
           dataPagamento: null,
           dataVencimento: { gte: hojeSP },
         },
       ],
-      ['PAGO', { status: StatusPagamento.PAGO }],
+      [
+        'PAGO',
+        {
+          status: { not: StatusPagamento.CANCELADO },
+          dataPagamento: { not: null },
+        },
+      ],
       ['CANCELADO', { status: StatusPagamento.CANCELADO }],
     ] as const)(
       'traduz o status %s para a consulta',
@@ -441,7 +447,7 @@ describe('PagamentosService', () => {
       expect(prisma.pagamento.aggregate).toHaveBeenCalledWith({
         where: {
           membroId: MEMBRO_ID,
-          status: StatusPagamento.PENDENTE,
+          status: { not: StatusPagamento.CANCELADO },
           dataPagamento: null,
           dataVencimento: { lt: new Date('2026-10-10') },
         },
