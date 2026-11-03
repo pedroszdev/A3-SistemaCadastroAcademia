@@ -1,11 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEmpty,
-  IsString,
-  Length,
-  Matches,
-  ValidateIf,
-} from 'class-validator';
+import { Equals, IsString, Length, Matches, ValidateIf } from 'class-validator';
 import { aparar } from '../../common/utils/aparar';
 import { MENSAGEM_TELEFONE, normalizarTelefone } from './create-membro.dto';
 
@@ -33,8 +27,9 @@ export class UpdateMembroDto {
   endereco?: string;
 
   // RN02: o CPF não muda depois do cadastro. Declarado só para responder
-  // 400 com uma mensagem clara, em vez do genérico da whitelist.
-  @seVeio
-  @IsEmpty({ message: 'cpf não pode ser alterado' })
+  // 400 com uma mensagem clara, em vez do genérico da whitelist. O
+  // @Equals(undefined) recusa qualquer valor enviado, inclusive "" e null
+  // (o @IsEmpty deixava passar).
+  @Equals(undefined, { message: 'cpf não pode ser alterado' })
   cpf?: never;
 }
