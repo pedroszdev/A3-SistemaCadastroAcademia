@@ -210,7 +210,7 @@ Quem preencher as seções 4.1, 4.3, 4.4 e 4.7 troca o "(a preencher)" da sua li
 | --- | --- | --- | --- |
 | **CA01** | 4.1 (a preencher) | RN14 | E2E-02 |
 | **CA02** | RF20, RF21 | RN01, RN02 | E2E-02 |
-| **CA03** | RF30 | RN05 | E2E-02 |
+| **CA03** | RF30 | RN04, RN05 | E2E-02 |
 | **CA04** | RF40 | RN06, RN07 | E2E-02 |
 | **CA05** | RF43 | RN08 | E2E-02 |
 | **CA06** | RF50 | RN04, RN09, RN10, RN11 | E2E-02 |
