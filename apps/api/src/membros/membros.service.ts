@@ -24,14 +24,15 @@ export const MEMBRO_SELECT = {
 } as const;
 
 const SO_DIGITOS = /^\d+$/;
+const ESPACOS = /\s/g;
 
-// Busca só com números (com ou sem a máscara) procura pelo início do CPF;
-// qualquer outra coisa procura no nome, sem diferenciar maiúsculas.
+// Busca só com números (com ou sem a máscara ou espaços) procura pelo início
+// do CPF; qualquer outra coisa procura no nome, sem diferenciar maiúsculas.
 export function filtroBusca(busca?: string): Prisma.MembroWhereInput {
   if (!busca) {
     return {};
   }
-  const cpf = normalizarCpf(busca);
+  const cpf = normalizarCpf(busca).replace(ESPACOS, '');
   if (SO_DIGITOS.test(cpf)) {
     return { cpf: { startsWith: cpf } };
   }
