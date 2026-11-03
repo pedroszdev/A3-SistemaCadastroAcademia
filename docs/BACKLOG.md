@@ -233,7 +233,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] ADM-06 Escopo: RFs de membros e treinos
 - [x] MEM-01 Validador de CPF
 - [x] MEM-02 DTOs de membros
-- [ ] MEM-03 Service de membros
+- [x] MEM-03 Service de membros
 - [ ] MEM-04 Controller de membros
 - [ ] MEM-05 Testes de membros
 - [ ] MEM-06 Resumo/ficha do membro (API)
