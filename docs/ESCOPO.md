@@ -71,7 +71,7 @@ O INSTRUTOR só lista e consulta membros; a ficha resumida fica de fora porque t
 | **RF32** | Consultar um treino pelo identificador (inexistente → 404) | ADMIN, RECEPCIONISTA, INSTRUTOR | — |
 | **RF33** | Editar tipo, descrição, duração e data de início de um treino, revalidando os campos enviados (a data de início só é revalidada se for alterada); o membro do treino não pode ser trocado | ADMIN, INSTRUTOR | RN05 |
 | **RF34** | Excluir um treino; as atividades ligadas a ele continuam no histórico, sem o vínculo | ADMIN, INSTRUTOR | — |
-| **RF35** | O aluno consulta os próprios treinos (lista com filtro por tipo, mais recentes primeiro, e detalhe); o treino de outro membro responde 404 | ALUNO | RN16, RN17 |
+| **RF35** | O aluno consulta os próprios treinos (lista paginada com filtro por tipo, mais recentes primeiro, e detalhe); o treino de outro membro responde 404 | ALUNO | RN16, RN17 |
 
 A RECEPCIONISTA só consulta; quem cria, edita e exclui é o INSTRUTOR ou o ADMIN.
 
