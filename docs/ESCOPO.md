@@ -58,7 +58,7 @@ Cada módulo tem uma faixa fixa de IDs para que os três escrevam em paralelo se
 | **RF23** | Editar nome, telefone e endereço de um membro; o CPF não pode ser alterado | ADMIN, RECEPCIONISTA | RN02 |
 | **RF24** | Desativar e reativar um membro, sem excluir o cadastro; membro inativo não recebe novo treino, pagamento nem atividade | ADMIN, RECEPCIONISTA | RN03, RN04 |
 | **RF25** | Consultar a ficha resumida do membro: dados, situação financeira, treino mais recente e total de atividades nos últimos 30 dias | ADMIN, RECEPCIONISTA | RN09 |
-| **RF26** | Liberar, redefinir (senha com no mínimo 8 caracteres) e revogar o acesso do aluno ao portal; membro inativo não recebe acesso, e a senha nunca é devolvida pela API | ADMIN, RECEPCIONISTA | RN04, RN12, RN15 |
+| **RF26** | Liberar, redefinir (senha com no mínimo 8 caracteres) e revogar o acesso do aluno ao portal; membro inativo não recebe acesso, e a senha nunca é devolvida pela API | ADMIN, RECEPCIONISTA | RN12, RN15 |
 
 O INSTRUTOR só lista e consulta membros; a ficha resumida fica de fora porque traz a situação financeira, e pagamentos são só do ADMIN e da RECEPCIONISTA. O ALUNO não acessa as rotas de membros (403).
 
