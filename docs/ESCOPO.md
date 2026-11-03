@@ -50,11 +50,30 @@ Cada módulo tem uma faixa fixa de IDs para que os três escrevam em paralelo se
 
 ### 4.3 Membros
 
-> A preencher — Gabriel.
+| ID | Requisito | Perfis | Regras |
+| --- | --- | --- | --- |
+| **RF20** | Cadastrar membro com nome (**3 a 120** caracteres), CPF válido, telefone (10 ou 11 dígitos) e endereço (**5 a 200** caracteres); o CPF e o telefone são guardados só com os números e o membro começa ativo | ADMIN, RECEPCIONISTA | RN01, RN02 |
+| **RF21** | Listar membros com paginação, ordenados por nome, com busca por nome parcial (sem diferenciar maiúsculas) ou CPF e filtro por ativo/inativo | ADMIN, RECEPCIONISTA, INSTRUTOR | — |
+| **RF22** | Consultar um membro pelo identificador (inexistente → 404) | ADMIN, RECEPCIONISTA, INSTRUTOR | — |
+| **RF23** | Editar nome, telefone e endereço de um membro; o CPF não pode ser alterado | ADMIN, RECEPCIONISTA | RN02 |
+| **RF24** | Desativar e reativar um membro, sem excluir o cadastro; membro inativo não recebe novo treino, pagamento nem atividade | ADMIN, RECEPCIONISTA | RN03, RN04 |
+| **RF25** | Consultar a ficha resumida do membro: dados, situação financeira, treino mais recente e total de atividades nos últimos 30 dias | ADMIN, RECEPCIONISTA, INSTRUTOR | RN09 |
+| **RF26** | Liberar, redefinir (senha com no mínimo 8 caracteres) e revogar o acesso do aluno ao portal; membro inativo não recebe acesso, e a senha nunca é devolvida pela API | ADMIN, RECEPCIONISTA | RN04, RN12, RN15 |
+
+O INSTRUTOR só consulta membros. O ALUNO não acessa as rotas de membros (403).
 
 ### 4.4 Treinos
 
-> A preencher — Gabriel.
+| ID | Requisito | Perfis | Regras |
+| --- | --- | --- | --- |
+| **RF30** | Criar treino para um membro ativo, com tipo da lista (Musculação, Cardio, Funcional, Alongamento, Crossfit, Outro), descrição (**3 a 500** caracteres), duração de **1 a 300 min** e data de início a partir de hoje | ADMIN, INSTRUTOR | RN04, RN05 |
+| **RF31** | Listar treinos com paginação e filtros por membro e tipo, e listar os treinos de um membro | ADMIN, RECEPCIONISTA, INSTRUTOR | — |
+| **RF32** | Consultar um treino pelo identificador (inexistente → 404) | ADMIN, RECEPCIONISTA, INSTRUTOR | — |
+| **RF33** | Editar um treino, revalidando tipo, duração e data de início; o membro do treino não pode ser trocado | ADMIN, INSTRUTOR | RN05 |
+| **RF34** | Excluir um treino; as atividades ligadas a ele continuam no histórico, sem o vínculo | ADMIN, INSTRUTOR | — |
+| **RF35** | O aluno consulta os próprios treinos (lista com filtro por tipo, mais recentes primeiro, e detalhe); o treino de outro membro responde 404 | ALUNO | RN16, RN17 |
+
+A RECEPCIONISTA só consulta; quem cria, edita e exclui é o INSTRUTOR ou o ADMIN.
 
 ### 4.5 Pagamentos
 
@@ -190,8 +209,8 @@ Quem preencher as seções 4.1, 4.3, 4.4 e 4.7 troca o "(a preencher)" da sua li
 | Critério | RFs | RNs | Teste |
 | --- | --- | --- | --- |
 | **CA01** | 4.1 (a preencher) | RN14 | E2E-02 |
-| **CA02** | 4.3 (a preencher) | RN01, RN02 | E2E-02 |
-| **CA03** | 4.4 (a preencher) | RN05 | E2E-02 |
+| **CA02** | RF20, RF21 | RN01, RN02 | E2E-02 |
+| **CA03** | RF30 | RN05 | E2E-02 |
 | **CA04** | RF40 | RN06, RN07 | E2E-02 |
 | **CA05** | RF43 | RN08 | E2E-02 |
 | **CA06** | RF50 | RN04, RN09, RN10, RN11 | E2E-02 |
