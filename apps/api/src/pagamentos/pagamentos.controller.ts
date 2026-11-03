@@ -7,7 +7,9 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { ExigeJsonGuard } from '../common/guards/exige-json.guard';
 import { CreatePagamentoDto } from './dto/create-pagamento.dto';
 import { QueryPagamentoDto } from './dto/query-pagamento.dto';
 import { RegistrarPagamentoDto } from './dto/registrar-pagamento.dto';
@@ -33,6 +35,7 @@ export class PagamentosController {
   }
 
   @Patch(':id/pagar')
+  @UseGuards(ExigeJsonGuard)
   pagar(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RegistrarPagamentoDto,
