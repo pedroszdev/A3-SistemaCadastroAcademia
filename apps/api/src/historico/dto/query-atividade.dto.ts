@@ -1,6 +1,7 @@
 import { IsOptional, IsUUID } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { IsDataCalendario } from '../../common/validators/is-data-calendario.decorator';
+import { NaoAnteriorA } from '../../common/validators/nao-anterior-a.decorator';
 
 export class QueryAtividadeDto extends PaginationQueryDto {
   @IsOptional()
@@ -17,5 +18,6 @@ export class QueryAtividadeDto extends PaginationQueryDto {
 
   @IsOptional()
   @IsDataCalendario()
+  @NaoAnteriorA('dataDe')
   dataAte?: Date;
 }
