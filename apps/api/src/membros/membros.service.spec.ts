@@ -45,6 +45,8 @@ describe('filtroBusca', () => {
     ['52998224725', { cpf: { startsWith: '52998224725' } }],
     ['529.982', { cpf: { startsWith: '529982' } }],
     ['529.982.247-25', { cpf: { startsWith: '52998224725' } }],
+    ['529 982', { cpf: { startsWith: '529982' } }],
+    ['529 982 247 25', { cpf: { startsWith: '52998224725' } }],
     ['ana1', { nome: { contains: 'ana1', mode: 'insensitive' } }],
   ])('"%s" → %o', (busca, esperado) => {
     expect(filtroBusca(busca)).toEqual(esperado);
