@@ -263,7 +263,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] PAG-01 DTOs de pagamentos
 - [x] PAG-02 Cálculo de status (função pura)
 - [x] PAG-03 Service de pagamentos
-- [x] PAG-04 Situação financeira / inadimplência
+- [ ] PAG-04 Situação financeira / inadimplência — 🟡 **parcial**: a regra, a rota e os testes estão prontos. Falta aplicar o `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) em `GET /membros/:id/situacao` quando a AUTH-02 entrar
 - [ ] PAG-05 Controller de pagamentos
 - [ ] PAG-06 Testes de pagamentos
 - [x] HIS-01 DTOs de histórico
