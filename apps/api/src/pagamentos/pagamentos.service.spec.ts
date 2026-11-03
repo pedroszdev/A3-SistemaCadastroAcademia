@@ -35,6 +35,7 @@ describe('PagamentosService', () => {
       count: jest.Mock;
       findUnique: jest.Mock;
       updateMany: jest.Mock;
+      aggregate: jest.Mock;
     };
     membro: { findUnique: jest.Mock };
   };
@@ -50,6 +51,7 @@ describe('PagamentosService', () => {
         count: jest.fn(),
         findUnique: jest.fn(),
         updateMany: jest.fn(),
+        aggregate: jest.fn(),
       },
       membro: { findUnique: jest.fn() },
     };
@@ -167,7 +169,7 @@ describe('PagamentosService', () => {
       [
         'ATRASADO',
         {
-          status: StatusPagamento.PENDENTE,
+          status: { not: StatusPagamento.CANCELADO },
           dataPagamento: null,
           dataVencimento: { lt: hojeSP },
         },
@@ -175,12 +177,18 @@ describe('PagamentosService', () => {
       [
         'PENDENTE',
         {
-          status: StatusPagamento.PENDENTE,
+          status: { not: StatusPagamento.CANCELADO },
           dataPagamento: null,
           dataVencimento: { gte: hojeSP },
         },
       ],
-      ['PAGO', { status: StatusPagamento.PAGO }],
+      [
+        'PAGO',
+        {
+          status: { not: StatusPagamento.CANCELADO },
+          dataPagamento: { not: null },
+        },
+      ],
       ['CANCELADO', { status: StatusPagamento.CANCELADO }],
     ] as const)(
       'traduz o status %s para a consulta',
@@ -407,6 +415,122 @@ describe('PagamentosService', () => {
         where: { id: ID },
         select: { status: true },
       });
+    });
+  });
+
+  describe('situacaoMembro', () => {
+    const agregado = (
+      quantidade: number,
+      vencimentoMaisAntigo: string | null,
+    ) => ({
+      _count: { _all: quantidade },
+      _min: {
+        dataVencimento: vencimentoMaisAntigo
+          ? new Date(vencimentoMaisAntigo)
+          : null,
+      },
+    });
+
+    beforeEach(() => {
+      prisma.membro.findUnique.mockResolvedValue({ id: MEMBRO_ID });
+    });
+
+    it('sem atrasos está EM_DIA e agrega só os pagamentos atrasados do membro', async () => {
+      prisma.pagamento.aggregate.mockResolvedValue(agregado(0, null));
+
+      const situacao = await service.situacaoMembro(MEMBRO_ID);
+
+      expect(prisma.membro.findUnique).toHaveBeenCalledWith({
+        where: { id: MEMBRO_ID },
+        select: { id: true },
+      });
+      expect(prisma.pagamento.aggregate).toHaveBeenCalledWith({
+        where: {
+          membroId: MEMBRO_ID,
+          status: { not: StatusPagamento.CANCELADO },
+          dataPagamento: null,
+          dataVencimento: { lt: new Date('2026-10-10') },
+        },
+        _count: { _all: true },
+        _min: { dataVencimento: true },
+      });
+      expect(situacao).toEqual({
+        situacao: 'EM_DIA',
+        pagamentosAtrasados: 0,
+        maiorAtrasoDias: 0,
+      });
+    });
+
+    it.each([
+      ['5 dias', 'EM_DIA', '2026-10-05', 5],
+      ['10 dias (limite da tolerância)', 'EM_DIA', '2026-09-30', 10],
+      ['11 dias', 'INADIMPLENTE', '2026-09-29', 11],
+    ] as const)(
+      'com atraso de %s fica %s',
+      async (_caso, situacao, vencimento, dias) => {
+        prisma.pagamento.aggregate.mockResolvedValue(agregado(1, vencimento));
+
+        await expect(service.situacaoMembro(MEMBRO_ID)).resolves.toEqual({
+          situacao,
+          pagamentosAtrasados: 1,
+          maiorAtrasoDias: dias,
+        });
+      },
+    );
+
+    it('com vários atrasados conta todos e usa o vencimento mais antigo', async () => {
+      prisma.pagamento.aggregate.mockResolvedValue(agregado(3, '2026-09-20'));
+
+      await expect(service.situacaoMembro(MEMBRO_ID)).resolves.toEqual({
+        situacao: 'INADIMPLENTE',
+        pagamentosAtrasados: 3,
+        maiorAtrasoDias: 20,
+      });
+    });
+
+    it('lança 404 quando o membro não existe, sem consultar pagamentos', async () => {
+      prisma.membro.findUnique.mockResolvedValue(null);
+
+      await expect(service.situacaoMembro(MEMBRO_ID)).rejects.toThrow(
+        new NotFoundException('Membro não encontrado'),
+      );
+      expect(prisma.pagamento.aggregate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('assertMembroAdimplente', () => {
+    beforeEach(() => {
+      prisma.membro.findUnique.mockResolvedValue({ id: MEMBRO_ID });
+    });
+
+    it('resolve quando o membro está EM_DIA', async () => {
+      prisma.pagamento.aggregate.mockResolvedValue({
+        _count: { _all: 1 },
+        _min: { dataVencimento: new Date('2026-10-05') },
+      });
+
+      await expect(
+        service.assertMembroAdimplente(MEMBRO_ID),
+      ).resolves.toBeUndefined();
+    });
+
+    it('lança 422 quando o membro está INADIMPLENTE (RN09)', async () => {
+      prisma.pagamento.aggregate.mockResolvedValue({
+        _count: { _all: 1 },
+        _min: { dataVencimento: new Date('2026-09-29') },
+      });
+
+      await expect(service.assertMembroAdimplente(MEMBRO_ID)).rejects.toThrow(
+        new UnprocessableEntityException('Membro com pagamento em atraso'),
+      );
+    });
+
+    it('repassa o 404 quando o membro não existe', async () => {
+      prisma.membro.findUnique.mockResolvedValue(null);
+
+      await expect(service.assertMembroAdimplente(MEMBRO_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });
