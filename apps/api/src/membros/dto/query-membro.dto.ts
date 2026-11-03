@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { aparar } from '../../common/utils/aparar';
+import { paraBooleano } from '../../common/utils/para-booleano';
 
 export class QueryMembroDto extends PaginationQueryDto {
   // Nome parcial (sem diferenciar maiúsculas) ou CPF, com ou sem máscara.
@@ -12,11 +13,7 @@ export class QueryMembroDto extends PaginationQueryDto {
   busca?: string;
 
   @IsOptional()
-  @Transform(({ value }: { value: unknown }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value;
-  })
+  @Transform(paraBooleano)
   @IsBoolean({ message: 'ativo deve ser true ou false' })
   ativo?: boolean;
 }
