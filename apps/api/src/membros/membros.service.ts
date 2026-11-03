@@ -4,6 +4,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { paginacaoPrisma, paginate } from '../common/utils/paginate';
 import { normalizarCpf } from '../common/validators/cpf';
 import type { Prisma } from '../generated/prisma/client';
@@ -50,15 +51,27 @@ export class MembrosService {
       throw new ConflictException('CPF já cadastrado');
     }
 
-    return this.prisma.membro.create({
-      data: {
-        nome: dto.nome,
-        cpf: dto.cpf,
-        telefone: dto.telefone,
-        endereco: dto.endereco,
-      },
-      select: MEMBRO_SELECT,
-    });
+    try {
+      return await this.prisma.membro.create({
+        data: {
+          nome: dto.nome,
+          cpf: dto.cpf,
+          telefone: dto.telefone,
+          endereco: dto.endereco,
+        },
+        select: MEMBRO_SELECT,
+      });
+    } catch (erro) {
+      // Outro cadastro com o mesmo CPF pode entrar entre a consulta e o insert;
+      // o índice único recusa, e a resposta continua a mesma da RN02.
+      if (
+        erro instanceof PrismaClientKnownRequestError &&
+        erro.code === 'P2002'
+      ) {
+        throw new ConflictException('CPF já cadastrado');
+      }
+      throw erro;
+    }
   }
 
   async findAll(query: QueryMembroDto) {
