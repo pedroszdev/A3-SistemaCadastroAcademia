@@ -462,12 +462,12 @@ describe('PagamentosService', () => {
     });
 
     it.each([
-      ['5 dias', '2026-10-05', 'EM_DIA', 5],
-      ['10 dias (limite da tolerância)', '2026-09-30', 'EM_DIA', 10],
-      ['11 dias', '2026-09-29', 'INADIMPLENTE', 11],
+      ['5 dias', 'EM_DIA', '2026-10-05', 5],
+      ['10 dias (limite da tolerância)', 'EM_DIA', '2026-09-30', 10],
+      ['11 dias', 'INADIMPLENTE', '2026-09-29', 11],
     ] as const)(
       'com atraso de %s fica %s',
-      async (_caso, vencimento, situacao, dias) => {
+      async (_caso, situacao, vencimento, dias) => {
         prisma.pagamento.aggregate.mockResolvedValue(agregado(1, vencimento));
 
         await expect(service.situacaoMembro(MEMBRO_ID)).resolves.toEqual({
