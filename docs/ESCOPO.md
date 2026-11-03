@@ -69,7 +69,7 @@ O INSTRUTOR só lista e consulta membros; a ficha resumida fica de fora porque t
 | **RF30** | Criar treino para um membro ativo, com tipo da lista (Musculação, Cardio, Funcional, Alongamento, Crossfit, Outro), descrição (**3 a 500** caracteres), duração de **1 a 300 min** e data de início a partir de hoje | ADMIN, INSTRUTOR | RN04, RN05 |
 | **RF31** | Listar treinos com paginação e filtros por membro e tipo, e listar os treinos de um membro | ADMIN, RECEPCIONISTA, INSTRUTOR | — |
 | **RF32** | Consultar um treino pelo identificador (inexistente → 404) | ADMIN, RECEPCIONISTA, INSTRUTOR | — |
-| **RF33** | Editar um treino, revalidando tipo, duração e data de início; o membro do treino não pode ser trocado | ADMIN, INSTRUTOR | RN05 |
+| **RF33** | Editar tipo, descrição, duração e data de início de um treino, revalidando os campos enviados (a data de início só é revalidada se for alterada); o membro do treino não pode ser trocado | ADMIN, INSTRUTOR | RN05 |
 | **RF34** | Excluir um treino; as atividades ligadas a ele continuam no histórico, sem o vínculo | ADMIN, INSTRUTOR | — |
 | **RF35** | O aluno consulta os próprios treinos (lista com filtro por tipo, mais recentes primeiro, e detalhe); o treino de outro membro responde 404 | ALUNO | RN16, RN17 |
 
