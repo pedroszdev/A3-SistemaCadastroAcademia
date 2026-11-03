@@ -1,5 +1,7 @@
 import { IsNumber, IsUUID, Max, Min } from 'class-validator';
+import { DentroDosUltimosDias } from '../../common/validators/dentro-dos-ultimos-dias.decorator';
 import { IsDataCalendario } from '../../common/validators/is-data-calendario.decorator';
+import { DIAS_RETROATIVOS_MAX } from '../pagamento-status';
 
 export class CreatePagamentoDto {
   @IsUUID(undefined, { message: 'membroId deve ser um UUID válido' })
@@ -14,5 +16,6 @@ export class CreatePagamentoDto {
   valor!: number;
 
   @IsDataCalendario()
+  @DentroDosUltimosDias(DIAS_RETROATIVOS_MAX)
   dataVencimento!: Date;
 }
