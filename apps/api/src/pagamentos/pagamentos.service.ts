@@ -217,6 +217,7 @@ export class PagamentosService {
     );
   }
 
+  // Provisório até a MEM-03, como o assertMembroAtivo abaixo.
   private async assertMembroExiste(membroId: string) {
     const membro = await this.prisma.membro.findUnique({
       where: { id: membroId },
