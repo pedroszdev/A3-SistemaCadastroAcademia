@@ -232,7 +232,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] ADM-04 Ambiente local + git com a própria conta
 - [ ] ADM-06 Escopo: RFs de membros e treinos
 - [x] MEM-01 Validador de CPF
-- [ ] MEM-02 DTOs de membros
+- [x] MEM-02 DTOs de membros
 - [ ] MEM-03 Service de membros
 - [ ] MEM-04 Controller de membros
 - [ ] MEM-05 Testes de membros
