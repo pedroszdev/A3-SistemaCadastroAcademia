@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
@@ -22,6 +23,13 @@ const membro = (extra: Record<string, unknown> = {}) => ({
   dataCadastro: new Date('2026-10-01T12:00:00.000Z'),
   ...extra,
 });
+
+function erroPrisma(code: string) {
+  return new PrismaClientKnownRequestError('erro do prisma', {
+    code,
+    clientVersion: 'test',
+  });
+}
 
 function primeiroArg<T>(mock: jest.Mock): T {
   const [[arg]] = mock.mock.calls as [[T]];
@@ -98,6 +106,23 @@ describe('MembrosService', () => {
         new ConflictException('CPF já cadastrado'),
       );
       expect(prisma.membro.create).not.toHaveBeenCalled();
+    });
+
+    it('lança 409 quando outro cadastro com o mesmo CPF entra antes (P2002)', async () => {
+      prisma.membro.findUnique.mockResolvedValue(null);
+      prisma.membro.create.mockRejectedValue(erroPrisma('P2002'));
+
+      await expect(service.create(dto)).rejects.toThrow(
+        new ConflictException('CPF já cadastrado'),
+      );
+    });
+
+    it('repassa os outros erros do Prisma', async () => {
+      const erro = erroPrisma('P2003');
+      prisma.membro.findUnique.mockResolvedValue(null);
+      prisma.membro.create.mockRejectedValue(erro);
+
+      await expect(service.create(dto)).rejects.toBe(erro);
     });
   });
 
