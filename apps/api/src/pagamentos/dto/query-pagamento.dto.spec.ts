@@ -68,6 +68,10 @@ describe('QueryPagamentoDto', () => {
       { vencimentoAte: '10/11/2026' },
       'vencimentoAte deve ser uma data válida no formato AAAA-MM-DD',
     ],
+    [
+      { vencimentoDe: '2026-12-01', vencimentoAte: '2026-01-01' },
+      'vencimentoAte não pode ser anterior a vencimentoDe',
+    ],
     [{ pageSize: '101' }, 'pageSize deve ser no máximo 100'],
   ])('%o → "%s"', async (query, mensagem) => {
     const { mensagens } = await validar(query);
