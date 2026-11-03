@@ -103,7 +103,7 @@ Esta seção é a fonte da verdade para back, front e testes. Se uma regra mudar
 | **RN03** | Membro e funcionário **não são excluídos**, apenas desativados (`ativo = false`) e reativados | Gabriel / Pedro | — |
 | **RN04** | Membro **inativo** não pode receber novo treino, novo pagamento nem nova atividade | Gabriel (helper) / todos usam | 422 |
 | **RN05** | Treino: duração entre **1 e 300 min**; `dataInicio` não pode ser anterior a hoje; tipo deve ser um da lista (Musculação, Cardio, Funcional, Alongamento, Crossfit, Outro) | Gabriel | 400 |
-| **RN06** | Pagamento: valor **> 0 e ≤ 10.000**; data de vencimento obrigatória | Yohan | 400 |
+| **RN06** | Pagamento: valor **> 0 e ≤ 10.000**; data de vencimento obrigatória; vencimento e data de pagamento com no máximo **90 dias no passado** (constante `DIAS_RETROATIVOS_MAX = 90`); no máximo **uma cobrança não cancelada** por membro em cada vencimento | Yohan | 400 / 409 |
 | **RN07** | O status do pagamento é **calculado**. No banco ficam só `PENDENTE`, `PAGO` e `CANCELADO`. Na resposta: `CANCELADO` se cancelado; `PAGO` se tem `dataPagamento`; `ATRASADO` se o vencimento é anterior a hoje e não foi pago; senão `PENDENTE` | Yohan | — |
 | **RN08** | Não é possível pagar um pagamento já pago ou cancelado, nem cancelar um pagamento já pago | Yohan | 409 |
 | **RN09** | Membro **inadimplente** é aquele com algum pagamento atrasado há **mais de 10 dias** (constante `DIAS_TOLERANCIA = 10`). Inadimplente **não pode registrar atividade** | Yohan | 422 ("Membro com pagamento em atraso") |
@@ -264,7 +264,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] PAG-02 Cálculo de status (função pura)
 - [x] PAG-03 Service de pagamentos
 - [x] PAG-04 Situação financeira / inadimplência
-- [ ] PAG-05 Controller de pagamentos — 🟡 **parcial**: as rotas e os testes de delegação estão prontos. Falta aplicar o `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) quando a AUTH-02 entrar
+- [ ] PAG-05 Controller de pagamentos — 🟡 **parcial**: as rotas e os testes de delegação estão prontos. Falta aplicar o `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) no `PagamentosController` e no `MembrosSituacaoController` (`GET /membros/:id/situacao`) quando a AUTH-02 entrar
 - [x] PAG-06 Testes de pagamentos
 - [x] HIS-01 DTOs de histórico
 - [ ] HIS-02 Service de histórico
