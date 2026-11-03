@@ -230,7 +230,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 ### Gabriel
 - [x] ADM-01 Postar link do repositório e nomes no Ulife
 - [x] ADM-04 Ambiente local + git com a própria conta
-- [ ] ADM-06 Escopo: RFs de membros e treinos
+- [x] ADM-06 Escopo: RFs de membros e treinos
 - [x] MEM-01 Validador de CPF
 - [ ] MEM-02 DTOs de membros
 - [ ] MEM-03 Service de membros
@@ -263,8 +263,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] PAG-01 DTOs de pagamentos
 - [x] PAG-02 Cálculo de status (função pura)
 - [x] PAG-03 Service de pagamentos
-- [x] PAG-04 Situação financeira / inadimplência
-- [ ] PAG-05 Controller de pagamentos — 🟡 **parcial**: as rotas e os testes de delegação estão prontos. Falta aplicar o `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) no `PagamentosController` e no `MembrosSituacaoController` (`GET /membros/:id/situacao`) quando a AUTH-02 entrar
+- [ ] PAG-04 Situação financeira / inadimplência — 🟡 **parcial**: a regra, a rota e os testes estão prontos. Falta aplicar o `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) em `GET /membros/:id/situacao` quando a AUTH-02 entrar
+- [ ] PAG-05 Controller de pagamentos — 🟡 **parcial**: as rotas e os testes de delegação estão prontos. Falta aplicar o `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) no `PagamentosController` quando a AUTH-02 entrar
 - [x] PAG-06 Testes de pagamentos
 - [x] HIS-01 DTOs de histórico
 - [ ] HIS-02 Service de histórico
