@@ -53,6 +53,10 @@ describe('QueryAtividadeDto', () => {
       { dataAte: '10/11/2026' },
       'dataAte deve ser uma data válida no formato AAAA-MM-DD',
     ],
+    [
+      { dataDe: '2026-12-01', dataAte: '2026-01-01' },
+      'dataAte não pode ser anterior a dataDe',
+    ],
     [{ pageSize: '101' }, 'pageSize deve ser no máximo 100'],
   ])('%o → "%s"', async (query, mensagem) => {
     const { mensagens } = await validar(query);

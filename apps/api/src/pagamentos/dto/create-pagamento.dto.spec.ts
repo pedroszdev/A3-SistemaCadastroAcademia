@@ -21,6 +21,34 @@ const MSG_DATA =
   'dataVencimento deve ser uma data válida no formato AAAA-MM-DD';
 
 describe('CreatePagamentoDto', () => {
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-10-16T15:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('aceita vencimento no limite de 90 dias no passado', async () => {
+    const { mensagens } = await validar({
+      ...base,
+      dataVencimento: '2026-07-18',
+    });
+
+    expect(mensagens).toEqual([]);
+  });
+
+  it('rejeita vencimento com mais de 90 dias no passado', async () => {
+    const { mensagens } = await validar({
+      ...base,
+      dataVencimento: '2026-07-17',
+    });
+
+    expect(mensagens).toEqual([
+      'dataVencimento não pode ter mais de 90 dias no passado',
+    ]);
+  });
+
   it('aceita um body válido e converte dataVencimento para Date', async () => {
     const { dto, mensagens } = await validar(base);
 
