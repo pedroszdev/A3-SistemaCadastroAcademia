@@ -1,7 +1,10 @@
 import { Transform } from 'class-transformer';
 import { Equals, IsString, Length, Matches } from 'class-validator';
 import { aparar } from '../../common/utils/aparar';
-import { MENSAGEM_TELEFONE, normalizarTelefone } from './create-membro.dto';
+import {
+  MENSAGEM_TELEFONE,
+  normalizarTelefone,
+} from '../../common/utils/telefone';
 import { SeVeio } from '../../common/validators/se-veio.decorator';
 
 export class UpdateMembroDto {

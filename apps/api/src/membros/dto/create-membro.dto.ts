@@ -2,14 +2,10 @@ import { Transform } from 'class-transformer';
 import { IsString, Length, Matches } from 'class-validator';
 import { IsCpf } from '../../common/validators/is-cpf.decorator';
 import { aparar } from '../../common/utils/aparar';
-
-// Telefone é guardado só com os números: (48) 99999-1234 → 48999991234.
-export function normalizarTelefone({ value }: { value: unknown }): unknown {
-  return typeof value === 'string' ? value.replace(/[\s().+-]/g, '') : value;
-}
-
-export const MENSAGEM_TELEFONE =
-  'telefone deve ter 10 ou 11 dígitos, com o DDD';
+import {
+  MENSAGEM_TELEFONE,
+  normalizarTelefone,
+} from '../../common/utils/telefone';
 
 export class CreateMembroDto {
   @Transform(aparar)
