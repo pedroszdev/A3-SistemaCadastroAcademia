@@ -71,6 +71,19 @@ describe('Regra de inadimplência (e2e)', () => {
       });
   }
 
+  it('vencido há 15 dias → 422', async () => {
+    const membro = await criarMembro(prisma);
+    await lancarPagamento(membro.id, 15);
+
+    const bloqueada = await registrarAtividade(membro.id).expect(422);
+
+    expect(bloqueada.body).toMatchObject({
+      statusCode: 422,
+      message: 'Membro com pagamento em atraso',
+    });
+    expect(await prisma.historicoAtividade.count()).toBe(0);
+  });
+
   it('vencido há 5 dias → 201 (dentro da tolerância)', async () => {
     const membro = await criarMembro(prisma);
     await lancarPagamento(membro.id, 5);
