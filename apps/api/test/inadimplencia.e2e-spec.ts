@@ -26,6 +26,7 @@ describe('Regra de inadimplência (e2e)', () => {
   let prisma: PrismaService;
   let tokenRecepcao: string;
   let tokenInstrutor: string;
+  let instrutorId: string;
 
   beforeAll(async () => {
     app = await criarApp();
@@ -35,7 +36,9 @@ describe('Regra de inadimplência (e2e)', () => {
   beforeEach(async () => {
     await limparBanco(prisma);
     tokenRecepcao = (await loginComo(app, Cargo.RECEPCIONISTA)).token;
-    tokenInstrutor = (await loginComo(app, Cargo.INSTRUTOR)).token;
+    const instrutor = await loginComo(app, Cargo.INSTRUTOR);
+    tokenInstrutor = instrutor.token;
+    instrutorId = instrutor.funcionario.id;
   });
 
   afterAll(async () => {
@@ -71,9 +74,9 @@ describe('Regra de inadimplência (e2e)', () => {
       });
   }
 
-  it('vencido há 15 dias → 422', async () => {
+  it('vencido há 15 dias → 422; depois de pagar → 201', async () => {
     const membro = await criarMembro(prisma);
-    await lancarPagamento(membro.id, 15);
+    const pagamento = await lancarPagamento(membro.id, 15);
 
     const bloqueada = await registrarAtividade(membro.id).expect(422);
 
@@ -82,6 +85,25 @@ describe('Regra de inadimplência (e2e)', () => {
       message: 'Membro com pagamento em atraso',
     });
     expect(await prisma.historicoAtividade.count()).toBe(0);
+
+    const pago = await request(app.getHttpServer())
+      .patch(`/pagamentos/${pagamento.id}/pagar`)
+      .set('Authorization', bearer(tokenRecepcao))
+      .send({})
+      .expect(200);
+
+    expect(pago.body).toMatchObject({
+      id: pagamento.id,
+      status: 'PAGO',
+      diasEmAtraso: 0,
+    });
+
+    const liberada = await registrarAtividade(membro.id).expect(201);
+
+    expect(liberada.body).toMatchObject({
+      membroId: membro.id,
+      funcionario: { id: instrutorId },
+    });
   });
 
   it('vencido há 5 dias → 201 (dentro da tolerância)', async () => {
