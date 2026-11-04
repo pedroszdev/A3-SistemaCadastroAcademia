@@ -24,7 +24,7 @@ import { JwtStrategy } from './jwt.strategy';
 import type { UsuarioAutenticado } from './usuario-autenticado';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
-const SEGREDO = 'segredo-apenas-para-teste';
+const SEGREDO = 'segredo-apenas-para-teste-com-32-caracteres';
 const SENHA = 'senha1234';
 const MENSAGEM_TOKEN = 'Token ausente, inválido ou expirado';
 

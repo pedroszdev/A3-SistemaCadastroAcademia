@@ -10,7 +10,10 @@ describe('AuthModule', () => {
 
   // Monta o módulo só com a configuração informada, sem ler .env nem o
   // ambiente do processo, e sem abrir conexão com o banco.
-  const montar = (expira?: string) =>
+  const montar = (
+    expira?: string,
+    segredo = 'segredo-apenas-para-teste-com-32-caracteres',
+  ) =>
     Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -19,7 +22,7 @@ describe('AuthModule', () => {
           skipProcessEnv: true,
           load: [
             () => ({
-              JWT_SECRET: 'segredo-apenas-para-teste',
+              JWT_SECRET: segredo,
               ...(expira !== undefined && { JWT_EXPIRES_IN: expira }),
             }),
           ],
@@ -70,6 +73,23 @@ describe('AuthModule', () => {
       '"%s" → a API não sobe',
       async (valor) => {
         await expect(montar(valor)).rejects.toThrow(/JWT_EXPIRES_IN inválido/);
+      },
+    );
+  });
+
+  describe('JWT_SECRET', () => {
+    it('com 32 caracteres → a API sobe', async () => {
+      moduleRef = await montar(undefined, 'a'.repeat(32));
+
+      expect(duracaoDoToken(moduleRef)).toBe(28800);
+    });
+
+    it.each([['a'], ['a'.repeat(31)]])(
+      '"%s" → a API não sobe',
+      async (segredo) => {
+        await expect(montar(undefined, segredo)).rejects.toThrow(
+          /JWT_SECRET muito curto/,
+        );
       },
     );
   });

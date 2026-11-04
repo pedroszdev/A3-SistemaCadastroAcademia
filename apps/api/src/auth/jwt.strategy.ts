@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { isUUID } from 'class-validator';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { segredoJwt } from './segredo-jwt';
 import { TokenPayload, UsuarioAutenticado } from './usuario-autenticado';
 
 @Injectable()
@@ -13,7 +15,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
+      secretOrKey: segredoJwt(config),
       algorithms: ['HS256'],
       ignoreExpiration: false,
     });
@@ -22,7 +24,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // Consulta o banco a cada requisição: funcionário desativado perde o acesso
   // na hora e o cargo vale o atual, não o do momento do login.
   async validate(payload: TokenPayload): Promise<UsuarioAutenticado | null> {
-    if (payload.tipo !== 'FUNCIONARIO') {
+    // sub fora do formato de UUID vira 401 aqui, em vez de 500 no Postgres.
+    if (payload.tipo !== 'FUNCIONARIO' || !isUUID(payload.sub)) {
       return null;
     }
 

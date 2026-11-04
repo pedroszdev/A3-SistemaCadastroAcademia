@@ -20,7 +20,9 @@ describe('JwtStrategy', () => {
   beforeEach(() => {
     prisma = { funcionario: { findUnique: jest.fn() } };
     const config = {
-      getOrThrow: jest.fn().mockReturnValue('segredo-de-teste'),
+      getOrThrow: jest
+        .fn()
+        .mockReturnValue('segredo-apenas-para-teste-com-32-caracteres'),
     };
     strategy = new JwtStrategy(
       config as unknown as ConfigService,
@@ -42,6 +44,20 @@ describe('JwtStrategy', () => {
           prisma as unknown as PrismaService,
         ),
     ).toThrow('JWT_SECRET');
+  });
+
+  it('recusa JWT_SECRET com menos de 32 caracteres', () => {
+    const config = {
+      getOrThrow: jest.fn().mockReturnValue('a'.repeat(31)),
+    };
+
+    expect(
+      () =>
+        new JwtStrategy(
+          config as unknown as ConfigService,
+          prisma as unknown as PrismaService,
+        ),
+    ).toThrow('JWT_SECRET muito curto');
   });
 
   it('devolve o usuário com o cargo atual do banco', async () => {
@@ -87,4 +103,15 @@ describe('JwtStrategy', () => {
     await expect(strategy.validate(outroTipo)).resolves.toBeNull();
     expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
   });
+
+  // Sem essa barreira, o Postgres recusa o id e a requisição vira 500.
+  it.each([['abc'], [undefined], [123]])(
+    'recusa token com sub %p sem consultar o banco',
+    async (sub) => {
+      const subInvalido = { ...payload(), sub } as unknown as TokenPayload;
+
+      await expect(strategy.validate(subInvalido)).resolves.toBeNull();
+      expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
+    },
+  );
 });
