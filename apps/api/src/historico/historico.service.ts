@@ -9,7 +9,10 @@ import { MembrosService } from '../membros/membros.service';
 import { PagamentosService } from '../pagamentos/pagamentos.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
-import { QueryAtividadeDto } from './dto/query-atividade.dto';
+import {
+  QueryAtividadeDto,
+  QueryAtividadeMembroDto,
+} from './dto/query-atividade.dto';
 
 export const ATIVIDADE_SELECT = {
   id: true,
@@ -76,9 +79,8 @@ export class HistoricoService {
     return paginate(data, total, query);
   }
 
-  async findAllDoMembro(membroId: string, query: QueryAtividadeDto) {
+  async findAllDoMembro(membroId: string, query: QueryAtividadeMembroDto) {
     await this.membros.findOne(membroId);
-    // o membroId do path prevalece sobre o da query
     return this.findAll({ ...query, membroId });
   }
 

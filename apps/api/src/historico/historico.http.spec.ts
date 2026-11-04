@@ -11,7 +11,6 @@ import { MembrosAtividadesController } from './membros-atividades.controller';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 const MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789def';
-const OUTRO_MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789c01';
 const FUNCIONARIO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789a01';
 const OUTRO_FUNCIONARIO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789a02';
 
@@ -160,11 +159,10 @@ describe('HistoricoController (HTTP)', () => {
     it('chama findAllDoMembro com o id do path e a query convertida', async () => {
       await http()
         .get(`/membros/${MEMBRO_ID}/atividades`)
-        .query({ membroId: OUTRO_MEMBRO_ID, dataDe: '2026-10-01', page: '3' })
+        .query({ dataDe: '2026-10-01', page: '3' })
         .expect(200);
 
       expect(service.findAllDoMembro).toHaveBeenCalledWith(MEMBRO_ID, {
-        membroId: OUTRO_MEMBRO_ID,
         dataDe: new Date('2026-10-01T00:00:00.000Z'),
         page: 3,
         pageSize: 20,

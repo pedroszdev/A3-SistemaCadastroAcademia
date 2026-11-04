@@ -303,22 +303,6 @@ describe('HistoricoService', () => {
       });
     });
 
-    it('o membroId do path prevalece sobre o da query', async () => {
-      await service.findAllDoMembro(MEMBRO_ID, {
-        page: 1,
-        pageSize: 20,
-        membroId: OUTRO_MEMBRO_ID,
-      });
-
-      expect(membros.findOne).toHaveBeenCalledWith(MEMBRO_ID);
-      expect(primeiroArg(prisma.historicoAtividade.findMany)).toMatchObject({
-        where: { membroId: MEMBRO_ID },
-      });
-      expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({
-        where: expect.objectContaining({ membroId: MEMBRO_ID }) as unknown,
-      });
-    });
-
     it('mantém período, funcionário e paginação da query', async () => {
       const dataDe = new Date('2026-10-01');
       const dataAte = new Date('2026-10-31');

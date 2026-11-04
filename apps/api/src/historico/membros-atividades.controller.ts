@@ -1,5 +1,5 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
-import { QueryAtividadeDto } from './dto/query-atividade.dto';
+import { QueryAtividadeMembroDto } from './dto/query-atividade.dto';
 import { HistoricoService } from './historico.service';
 
 // A rota fica em Histórico porque a consulta é daqui; o prefixo `membros`
@@ -11,7 +11,7 @@ export class MembrosAtividadesController {
   @Get(':id/atividades')
   findAll(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: QueryAtividadeDto,
+    @Query() query: QueryAtividadeMembroDto,
   ) {
     return this.historico.findAllDoMembro(id, query);
   }
