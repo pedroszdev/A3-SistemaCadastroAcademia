@@ -279,7 +279,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] WEB-Y6 Portal do aluno: Meu histórico
 - [x] E2E-01 Utilitários de e2e (banco limpo, login)
 - [ ] E2E-02 e2e do fluxo principal
-- [ ] E2E-03 e2e da regra de inadimplência
+- [x] E2E-03 e2e da regra de inadimplência
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-03 Triagem semanal das issues do professor
 - [ ] QA-04 Regressão manual pré-entrega
