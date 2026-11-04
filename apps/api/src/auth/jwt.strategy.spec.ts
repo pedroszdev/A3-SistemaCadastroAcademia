@@ -46,6 +46,20 @@ describe('JwtStrategy', () => {
     ).toThrow('JWT_SECRET');
   });
 
+  it('recusa JWT_SECRET com menos de 32 caracteres', () => {
+    const config = {
+      getOrThrow: jest.fn().mockReturnValue('a'.repeat(31)),
+    };
+
+    expect(
+      () =>
+        new JwtStrategy(
+          config as unknown as ConfigService,
+          prisma as unknown as PrismaService,
+        ),
+    ).toThrow('JWT_SECRET muito curto');
+  });
+
   it('devolve o usuário com o cargo atual do banco', async () => {
     prisma.funcionario.findUnique.mockResolvedValue({
       id: ID,
