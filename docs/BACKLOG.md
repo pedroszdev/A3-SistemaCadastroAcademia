@@ -268,8 +268,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] PAG-06 Testes de pagamentos
 - [x] HIS-01 DTOs de histórico
 - [x] HIS-02 Service de histórico
-- [ ] HIS-03 Controller de histórico
-- [ ] HIS-04 Testes de histórico — 🟡 **parcial**: os testes do `HistoricoService` estão prontos (100% de cobertura). Faltam os testes do controller, que entram com a HIS-03
+- [ ] HIS-03 Controller de histórico — 🟡 **parcial**: as rotas e os testes estão prontos. Falta aplicar o `@Roles` (registrar: ADMIN, INSTRUTOR; consultar: ADMIN, RECEPCIONISTA, INSTRUTOR) quando a AUTH-02 entrar
+- [x] HIS-04 Testes de histórico
 - [ ] HIS-05 Histórico do aluno (`/me/atividades`)
 - [ ] WEB-Y1 Tela de pagamentos
 - [ ] WEB-Y2 Formulário de pagamento
