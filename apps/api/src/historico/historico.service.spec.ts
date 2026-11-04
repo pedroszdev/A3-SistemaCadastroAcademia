@@ -270,6 +270,30 @@ describe('HistoricoService', () => {
       });
       expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
     });
+
+    it.each([
+      [
+        'só dataDe',
+        { dataDe: new Date('2026-10-01') },
+        { gte: new Date('2026-10-01'), lte: undefined },
+      ],
+      [
+        'só dataAte',
+        { dataAte: new Date('2026-10-31') },
+        { gte: undefined, lte: new Date('2026-10-31') },
+      ],
+    ])(
+      'com %s deixa o outro limite do período aberto',
+      async (_, periodo, data) => {
+        await service.findAll({ ...base, ...periodo });
+
+        const where = { membroId: undefined, funcionarioId: undefined, data };
+        expect(primeiroArg(prisma.historicoAtividade.findMany)).toMatchObject({
+          where,
+        });
+        expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
+      },
+    );
   });
 
   describe('findAllDoMembro', () => {
