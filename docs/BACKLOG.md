@@ -267,9 +267,9 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] PAG-05 Controller de pagamentos — 🟡 **parcial**: as rotas e os testes de delegação estão prontos. Falta aplicar o `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) no `PagamentosController` quando a AUTH-02 entrar
 - [x] PAG-06 Testes de pagamentos
 - [x] HIS-01 DTOs de histórico
-- [ ] HIS-02 Service de histórico
+- [x] HIS-02 Service de histórico
 - [ ] HIS-03 Controller de histórico
-- [ ] HIS-04 Testes de histórico
+- [ ] HIS-04 Testes de histórico — 🟡 **parcial**: os testes do `HistoricoService` estão prontos (100% de cobertura). Faltam os testes do controller, que entram com a HIS-03
 - [ ] HIS-05 Histórico do aluno (`/me/atividades`)
 - [ ] WEB-Y1 Tela de pagamentos
 - [ ] WEB-Y2 Formulário de pagamento
