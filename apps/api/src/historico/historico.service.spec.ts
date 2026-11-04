@@ -211,4 +211,87 @@ describe('HistoricoService', () => {
       expect(prisma.historicoAtividade.create).not.toHaveBeenCalled();
     });
   });
+
+  describe('findAll', () => {
+    const base = { page: 2, pageSize: 10 };
+
+    beforeEach(() => {
+      prisma.historicoAtividade.findMany.mockResolvedValue([]);
+      prisma.historicoAtividade.count.mockResolvedValue(0);
+    });
+
+    it('sem filtros não restringe a consulta e devolve a página', async () => {
+      const itens = [atividade()];
+      prisma.historicoAtividade.findMany.mockResolvedValue(itens);
+      prisma.historicoAtividade.count.mockResolvedValue(11);
+
+      const resultado = await service.findAll(base);
+
+      const where = {
+        membroId: undefined,
+        funcionarioId: undefined,
+        data: { gte: undefined, lte: undefined },
+      };
+      expect(prisma.historicoAtividade.findMany).toHaveBeenCalledWith({
+        where,
+        select: ATIVIDADE_SELECT,
+        orderBy: [{ data: 'desc' }, { id: 'asc' }],
+        skip: 10,
+        take: 10,
+      });
+      expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
+      expect(resultado).toEqual({
+        data: itens,
+        total: 11,
+        page: 2,
+        pageSize: 10,
+      });
+    });
+
+    it('filtra por membro, funcionário e período', async () => {
+      const dataDe = new Date('2026-10-01');
+      const dataAte = new Date('2026-10-31');
+
+      await service.findAll({
+        ...base,
+        membroId: MEMBRO_ID,
+        funcionarioId: FUNCIONARIO_ID,
+        dataDe,
+        dataAte,
+      });
+
+      const where = {
+        membroId: MEMBRO_ID,
+        funcionarioId: FUNCIONARIO_ID,
+        data: { gte: dataDe, lte: dataAte },
+      };
+      expect(primeiroArg(prisma.historicoAtividade.findMany)).toMatchObject({
+        where,
+      });
+      expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
+    });
+  });
+
+  describe('findOne', () => {
+    it('devolve a atividade com o select padrão', async () => {
+      const encontrada = atividade();
+      prisma.historicoAtividade.findUnique.mockResolvedValue(encontrada);
+
+      const resultado = await service.findOne(ID);
+
+      expect(prisma.historicoAtividade.findUnique).toHaveBeenCalledWith({
+        where: { id: ID },
+        select: ATIVIDADE_SELECT,
+      });
+      expect(resultado).toBe(encontrada);
+    });
+
+    it('lança 404 quando a atividade não existe', async () => {
+      prisma.historicoAtividade.findUnique.mockResolvedValue(null);
+
+      await expect(service.findOne(ID)).rejects.toThrow(
+        new NotFoundException('Atividade não encontrada'),
+      );
+    });
+  });
 });
