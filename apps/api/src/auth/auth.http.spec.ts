@@ -26,6 +26,7 @@ import type { UsuarioAutenticado } from './usuario-autenticado';
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 const SEGREDO = 'segredo-apenas-para-teste';
 const SENHA = 'senha1234';
+const MENSAGEM_TOKEN = 'Token ausente, inválido ou expirado';
 
 @Controller('teste')
 class TesteController {
@@ -213,7 +214,9 @@ describe('Auth (HTTP)', () => {
 
   describe('guard global', () => {
     it('rota pública funciona sem token', async () => {
-      await http().get('/teste/publica').expect(200);
+      const resposta = await http().get('/teste/publica').expect(200);
+
+      expect(resposta.body).toEqual({ ok: true });
     });
 
     it('@UsuarioAtual entrega id, tipo e cargo do banco', async () => {
@@ -238,16 +241,18 @@ describe('Auth (HTTP)', () => {
 
       expect(resposta.body).toEqual({
         statusCode: 401,
-        message: 'Token ausente, inválido ou expirado',
+        message: MENSAGEM_TOKEN,
         error: 'Unauthorized',
       });
     });
 
     it('401 com token malformado', async () => {
-      await http()
+      const resposta = await http()
         .get('/teste/protegida')
         .set('Authorization', 'Bearer isto-nao-e-um-jwt')
         .expect(401);
+
+      expect(resposta.body).toMatchObject({ message: MENSAGEM_TOKEN });
     });
 
     it('401 com token assinado por outro segredo', async () => {
@@ -256,10 +261,12 @@ describe('Auth (HTTP)', () => {
         { secret: 'outro-segredo-qualquer' },
       );
 
-      await http()
+      const resposta = await http()
         .get('/teste/protegida')
         .set('Authorization', `Bearer ${token}`)
         .expect(401);
+
+      expect(resposta.body).toMatchObject({ message: MENSAGEM_TOKEN });
     });
 
     it('401 com token expirado', async () => {
@@ -268,10 +275,12 @@ describe('Auth (HTTP)', () => {
         { expiresIn: -10 },
       );
 
-      await http()
+      const resposta = await http()
         .get('/teste/protegida')
         .set('Authorization', `Bearer ${token}`)
         .expect(401);
+
+      expect(resposta.body).toMatchObject({ message: MENSAGEM_TOKEN });
     });
 
     it('401 com token alg none', async () => {
@@ -293,10 +302,12 @@ describe('Auth (HTTP)', () => {
         registro({ ativo: false }),
       );
 
-      await http()
+      const resposta = await http()
         .get('/teste/protegida')
         .set('Authorization', `Bearer ${await tokenValido()}`)
         .expect(401);
+
+      expect(resposta.body).toMatchObject({ message: MENSAGEM_TOKEN });
     });
   });
 });
