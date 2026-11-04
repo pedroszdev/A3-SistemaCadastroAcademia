@@ -93,7 +93,8 @@ export class FuncionariosService {
   }
 
   async desativar(id: string, solicitanteId?: string) {
-    if (solicitanteId === id) {
+    // O ParseUUIDPipe aceita maiúsculas e o banco devolve o id em minúsculas.
+    if (solicitanteId?.toLowerCase() === id.toLowerCase()) {
       throw new UnprocessableEntityException(
         'Você não pode desativar o próprio usuário',
       );

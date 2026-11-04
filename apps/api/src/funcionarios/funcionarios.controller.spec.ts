@@ -72,12 +72,19 @@ describe('FuncionariosController', () => {
     expect(service.update).toHaveBeenCalledWith(ID, dto);
   });
 
-  it('desativar delega só o id ao service', async () => {
+  it('desativar delega o id e o solicitante ao service', async () => {
     const desativado = { id: ID, ativo: false };
     service.desativar.mockResolvedValue(desativado);
+    const solicitante = {
+      id: 'outro',
+      tipo: 'FUNCIONARIO',
+      cargo: Cargo.ADMIN,
+    } as const;
 
-    await expect(controller.desativar(ID)).resolves.toBe(desativado);
-    expect(service.desativar).toHaveBeenCalledWith(ID);
+    await expect(controller.desativar(ID, solicitante)).resolves.toBe(
+      desativado,
+    );
+    expect(service.desativar).toHaveBeenCalledWith(ID, 'outro');
   });
 
   it('reativar delega o id ao service', async () => {
