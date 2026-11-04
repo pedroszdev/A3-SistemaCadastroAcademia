@@ -66,8 +66,9 @@ export class HistoricoService {
       this.prisma.historicoAtividade.findMany({
         where,
         select: ATIVIDADE_SELECT,
-        // id desempata datas iguais, para a paginação não repetir nem pular
-        orderBy: [{ data: 'desc' }, { id: 'asc' }],
+        // id (UUIDv7) desempata datas iguais, com a registrada por último primeiro,
+        // e a paginação não repete nem pula
+        orderBy: [{ data: 'desc' }, { id: 'desc' }],
         ...paginacaoPrisma(query),
       }),
       this.prisma.historicoAtividade.count({ where }),

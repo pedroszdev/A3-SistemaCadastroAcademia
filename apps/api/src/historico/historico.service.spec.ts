@@ -235,7 +235,7 @@ describe('HistoricoService', () => {
       expect(prisma.historicoAtividade.findMany).toHaveBeenCalledWith({
         where,
         select: ATIVIDADE_SELECT,
-        orderBy: [{ data: 'desc' }, { id: 'asc' }],
+        orderBy: [{ data: 'desc' }, { id: 'desc' }],
         skip: 10,
         take: 10,
       });
