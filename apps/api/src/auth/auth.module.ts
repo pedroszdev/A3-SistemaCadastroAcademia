@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { EXPIRACAO_PADRAO, expiracaoEmSegundos } from './expiracao-token';
 import { JwtStrategy } from './jwt.strategy';
+import { segredoJwt } from './segredo-jwt';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { JwtStrategy } from './jwt.strategy';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService): JwtModuleOptions => ({
-        secret: config.getOrThrow<string>('JWT_SECRET'),
+        secret: segredoJwt(config),
         signOptions: {
           algorithm: 'HS256',
           expiresIn: expiracaoEmSegundos(
