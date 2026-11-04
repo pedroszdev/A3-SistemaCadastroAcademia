@@ -1,13 +1,16 @@
 import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { hashSync } from 'bcryptjs';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
 import { Cargo } from '../src/generated/prisma/enums';
 import { PrismaService } from '../src/prisma/prisma.service';
+import {
+  criarApp,
+  criarFuncionario,
+  limparBanco,
+  prismaDe,
+  SENHA_PADRAO,
+} from './utils';
 
-const SENHA = 'senha-e2e-1234';
 const NOME = 'Funcionária E2E';
 const MENSAGEM_TOKEN = 'Token ausente, inválido ou expirado';
 
@@ -21,38 +24,26 @@ describe('Auth (e2e)', () => {
   let token: string;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    app = await criarApp();
+    prisma = prismaDe(app);
+    await limparBanco(prisma);
 
-    app = moduleRef.createNestApplication();
-    await app.init();
-    prisma = app.get(PrismaService);
-
-    login = `e2eauth${Date.now()}`;
-    const funcionario = await prisma.funcionario.create({
-      data: {
-        login,
-        nome: NOME,
-        cargo: Cargo.RECEPCIONISTA,
-        senhaHash: hashSync(SENHA, 4),
-      },
-      select: { id: true },
+    const funcionario = await criarFuncionario(prisma, {
+      nome: NOME,
+      cargo: Cargo.RECEPCIONISTA,
     });
     id = funcionario.id;
+    login = funcionario.login;
   });
 
   afterAll(async () => {
-    if (id) {
-      await prisma.funcionario.delete({ where: { id } });
-    }
     await app.close();
   });
 
   it('POST /auth/login com credencial válida → 200 com token e funcionário', async () => {
     const resposta = await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ login, senha: SENHA })
+      .send({ login, senha: SENHA_PADRAO })
       .expect(200);
 
     const corpo = resposta.body as {
