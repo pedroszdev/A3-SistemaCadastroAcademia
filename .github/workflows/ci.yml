@@ -18,12 +18,14 @@ jobs:
     name: Lint, build e testes
     runs-on: ubuntu-latest
 
-    # Credenciais do Postgres efêmero do CI (não é segredo real); o DATABASE_URL
-    # é montado num passo para não deixar a senha embutida em connection string.
+    # Valores do CI, nenhum é segredo real: Postgres efêmero e JWT_SECRET de teste.
+    # O DATABASE_URL é montado num passo para não deixar a senha embutida em
+    # connection string.
     env:
       PGUSER: academia
       PGPASSWORD: academia
       PGDATABASE: academia
+      JWT_SECRET: segredo-apenas-para-o-ci
 
     services:
       postgres:
