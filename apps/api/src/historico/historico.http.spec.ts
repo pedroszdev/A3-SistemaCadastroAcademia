@@ -11,6 +11,7 @@ import { MembrosAtividadesController } from './membros-atividades.controller';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 const MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789def';
+const OUTRO_MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789c01';
 const FUNCIONARIO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789a01';
 const OUTRO_FUNCIONARIO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789a02';
 
@@ -168,6 +169,15 @@ describe('HistoricoController (HTTP)', () => {
         pageSize: 20,
       });
       expect(service.findAll).not.toHaveBeenCalled();
+    });
+
+    it('recusa membroId na query, sem chamar o service', async () => {
+      await http()
+        .get(`/membros/${MEMBRO_ID}/atividades`)
+        .query({ membroId: OUTRO_MEMBRO_ID })
+        .expect(400);
+
+      expect(service.findAllDoMembro).not.toHaveBeenCalled();
     });
 
     it('responde 400 para id que não é UUID, sem chamar o service', async () => {
