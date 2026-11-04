@@ -8,11 +8,14 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Cargo } from '../generated/prisma/enums';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
 import { QueryFuncionarioDto } from './dto/query-funcionario.dto';
 import { UpdateFuncionarioDto } from './dto/update-funcionario.dto';
 import { FuncionariosService } from './funcionarios.service';
 
+@Roles(Cargo.ADMIN)
 @Controller('funcionarios')
 export class FuncionariosController {
   constructor(private readonly funcionarios: FuncionariosService) {}
