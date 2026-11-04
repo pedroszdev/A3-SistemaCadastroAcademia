@@ -60,6 +60,8 @@ pnpm lint                      # ESLint em tudo
 
 Os e2e apagam o banco a cada spec, então rodam num banco separado, cujo nome termina em `_test`. O `limparBanco()` recusa rodar em qualquer outro, para nunca apagar o banco de desenvolvimento.
 
+A API não sobe sem `JWT_SECRET`. Os e2e leem esse valor do `apps/api/.env` (criado nos primeiros passos do README). Sem esse arquivo, exporte um antes, como o CI faz: `export JWT_SECRET="$(openssl rand -hex 32)"`.
+
 ```bash
 docker exec academia-db createdb -U academia academia_test
 DATABASE_URL="postgresql://academia:academia@localhost:5432/academia_test?schema=public" pnpm --filter api exec prisma migrate deploy
