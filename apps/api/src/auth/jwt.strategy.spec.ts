@@ -103,4 +103,15 @@ describe('JwtStrategy', () => {
     await expect(strategy.validate(outroTipo)).resolves.toBeNull();
     expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
   });
+
+  // Sem essa barreira, o Postgres recusa o id e a requisição vira 500.
+  it.each([['abc'], [undefined], [123]])(
+    'recusa token com sub %p sem consultar o banco',
+    async (sub) => {
+      const subInvalido = { ...payload(), sub } as unknown as TokenPayload;
+
+      await expect(strategy.validate(subInvalido)).resolves.toBeNull();
+      expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
+    },
+  );
 });
