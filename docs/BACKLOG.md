@@ -201,7 +201,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] INF-01 Proteção da main, templates e CONTRIBUTING
 - [x] INF-02 Jest da API com cobertura + e2e
 - [x] INF-03 Testes no front (Vitest)
-- [ ] INF-04 Pipeline do GitHub Actions
+- [ ] INF-04 Pipeline do GitHub Actions — 🟡 **parcial**: o `ci.yml` roda lint, build, testes com cobertura, e2e com Postgres e o Sonar em todo PR, e o badge está no README. Faltam os prints de um PR com o check e da aba Actions
 - [x] INF-05 SonarCloud + primeira análise
 - [ ] INF-06 Seed do banco — 🟡 **parcial**: `pnpm db:seed` cria os 3 funcionários (entrou com a AUTH-01). Faltam membros, treinos, pagamentos e atividades
 - [ ] INF-07 Base comum da API (filtro de erros, paginação, datas)
