@@ -19,7 +19,7 @@ describe('AuthModule', () => {
           skipProcessEnv: true,
           load: [
             () => ({
-              JWT_SECRET: 'segredo-apenas-para-teste',
+              JWT_SECRET: 'segredo-apenas-para-teste-com-32-caracteres',
               ...(expira !== undefined && { JWT_EXPIRES_IN: expira }),
             }),
           ],

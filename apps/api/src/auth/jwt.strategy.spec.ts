@@ -20,7 +20,9 @@ describe('JwtStrategy', () => {
   beforeEach(() => {
     prisma = { funcionario: { findUnique: jest.fn() } };
     const config = {
-      getOrThrow: jest.fn().mockReturnValue('segredo-de-teste'),
+      getOrThrow: jest
+        .fn()
+        .mockReturnValue('segredo-apenas-para-teste-com-32-caracteres'),
     };
     strategy = new JwtStrategy(
       config as unknown as ConfigService,
