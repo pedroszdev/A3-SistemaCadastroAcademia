@@ -294,4 +294,53 @@ describe('HistoricoService', () => {
       );
     });
   });
+
+  describe('resumoMembro', () => {
+    it('conta e soma os minutos das atividades do período', async () => {
+      const de = new Date('2026-10-01');
+      const ate = new Date('2026-10-31');
+      prisma.historicoAtividade.aggregate.mockResolvedValue({
+        _count: { _all: 3 },
+        _sum: { tempoExecucao: 135 },
+      });
+
+      const resumo = await service.resumoMembro(MEMBRO_ID, de, ate);
+
+      expect(prisma.historicoAtividade.aggregate).toHaveBeenCalledWith({
+        where: { membroId: MEMBRO_ID, data: { gte: de, lte: ate } },
+        _count: { _all: true },
+        _sum: { tempoExecucao: true },
+      });
+      expect(resumo).toEqual({ totalAtividades: 3, totalMinutos: 135 });
+    });
+
+    it('devolve zeros quando não há atividades', async () => {
+      prisma.historicoAtividade.aggregate.mockResolvedValue({
+        _count: { _all: 0 },
+        _sum: { tempoExecucao: null },
+      });
+
+      const resumo = await service.resumoMembro(MEMBRO_ID);
+
+      expect(resumo).toEqual({ totalAtividades: 0, totalMinutos: 0 });
+    });
+
+    it('sem período não restringe a data', async () => {
+      prisma.historicoAtividade.aggregate.mockResolvedValue({
+        _count: { _all: 0 },
+        _sum: { tempoExecucao: null },
+      });
+
+      await service.resumoMembro(MEMBRO_ID);
+
+      expect(prisma.historicoAtividade.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            membroId: MEMBRO_ID,
+            data: { gte: undefined, lte: undefined },
+          },
+        }),
+      );
+    });
+  });
 });
