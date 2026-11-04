@@ -28,8 +28,8 @@ A nota individual da A3 é medida pelos **commits de código-fonte** de cada um,
 1. Crie uma branch a partir da `main` atualizada: `feat/membros-service`, `test/pagamentos-status`, `fix/historico-data-futura`.
 2. Abra um PR para a `main` e preencha o template (o que muda, como testar, DoD, `Closes #`).
 3. O PR só entra com:
-   - o check **"Lint, build e testes"** verde (lint, build, testes unitários e e2e);
-   - o comentário do SonarCloud no PR sem bug, vulnerabilidade ou hotspot novo, e cobertura do código novo ≥ 80%. O quality gate do Sonar é conferido nesse comentário, não faz parte do check do CI;
+   - o check **"Lint, build e testes"** verde (lint, build, testes unitários, e2e e quality gate do Sonar);
+   - o **quality gate do SonarCloud aprovado**: sem bug, vulnerabilidade ou hotspot novo, e cobertura do código novo ≥ 80%. O passo do Sonar espera o resultado do gate e falha se ele reprovar, então gate reprovado deixa o check vermelho e barra o merge. O comentário do SonarCloud no PR mostra o detalhe. Só PR de fork, que não recebe o `SONAR_TOKEN`, pula a análise ([detalhes](docs/evidencias/quality-gate/README.md));
    - **1 aprovação** de outro integrante. Revisem os PRs abertos em até 24h.
 4. Merge com **"Create a merge commit"** ou **"Rebase and merge"**. **Nunca "Squash"**: ele junta os commits e apaga o histórico que o professor avalia.
 
