@@ -428,6 +428,23 @@ describe('HistoricoService', () => {
       expect(resumo).toEqual({ totalAtividades: 0, totalMinutos: 0 });
     });
 
+    it('a partir de uma data, sem limite final', async () => {
+      const de = new Date('2026-10-01');
+      prisma.historicoAtividade.aggregate.mockResolvedValue({
+        _count: { _all: 2 },
+        _sum: { tempoExecucao: 90 },
+      });
+
+      const resumo = await service.resumoMembro(MEMBRO_ID, de);
+
+      expect(prisma.historicoAtividade.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { membroId: MEMBRO_ID, data: { gte: de, lte: undefined } },
+        }),
+      );
+      expect(resumo).toEqual({ totalAtividades: 2, totalMinutos: 90 });
+    });
+
     it('sem período não restringe a data', async () => {
       prisma.historicoAtividade.aggregate.mockResolvedValue({
         _count: { _all: 0 },
