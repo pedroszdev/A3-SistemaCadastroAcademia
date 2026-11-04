@@ -86,6 +86,22 @@ export class HistoricoService {
     return atividade;
   }
 
+  async resumoMembro(
+    membroId: string,
+    de?: Date,
+    ate?: Date,
+  ): Promise<{ totalAtividades: number; totalMinutos: number }> {
+    const { _count, _sum } = await this.prisma.historicoAtividade.aggregate({
+      where: { membroId, data: { gte: de, lte: ate } },
+      _count: { _all: true },
+      _sum: { tempoExecucao: true },
+    });
+    return {
+      totalAtividades: _count._all,
+      totalMinutos: _sum.tempoExecucao ?? 0,
+    };
+  }
+
   // RN10: o treino informado precisa ser do próprio membro.
   private async assertTreinoDoMembro(treinoId: string, membroId: string) {
     const treino = await this.prisma.treino.findUnique({
