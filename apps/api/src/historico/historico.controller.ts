@@ -1,4 +1,15 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { UsuarioAtual } from '../auth/decorators/usuario-atual.decorator';
+import type { UsuarioAutenticado } from '../auth/usuario-autenticado';
+import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { QueryAtividadeDto } from './dto/query-atividade.dto';
 import { HistoricoService } from './historico.service';
 
@@ -9,6 +20,15 @@ export class HistoricoController {
   @Get()
   findAll(@Query() query: QueryAtividadeDto) {
     return this.historico.findAll(query);
+  }
+
+  @Post()
+  registrar(
+    @Body() dto: CreateAtividadeDto,
+    @UsuarioAtual() usuario: UsuarioAutenticado,
+  ) {
+    // RN11: o funcionário do registro é o do token
+    return this.historico.registrar(dto, usuario.id);
   }
 
   @Get(':id')
