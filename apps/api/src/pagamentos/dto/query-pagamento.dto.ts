@@ -1,6 +1,7 @@
 import { IsIn, IsOptional, IsUUID } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { IsDataCalendario } from '../../common/validators/is-data-calendario.decorator';
+import { NaoAnteriorA } from '../../common/validators/nao-anterior-a.decorator';
 
 // O filtro aceita ATRASADO, que é calculado (RN07) e não existe no banco.
 export const STATUS_FILTRO_PAGAMENTO = [
@@ -29,5 +30,6 @@ export class QueryPagamentoDto extends PaginationQueryDto {
 
   @IsOptional()
   @IsDataCalendario()
+  @NaoAnteriorA('vencimentoDe')
   vencimentoAte?: Date;
 }

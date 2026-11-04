@@ -43,6 +43,23 @@ describe('RegistrarPagamentoDto', () => {
     expect(mensagens).toEqual(['dataPagamento não pode ser uma data futura']);
   });
 
+  it('aceita dataPagamento no limite de 90 dias no passado', async () => {
+    const { mensagens } = await validar({ dataPagamento: '2026-07-18' });
+
+    expect(mensagens).toEqual([]);
+  });
+
+  it.each([['2026-07-17'], ['1900-01-01']])(
+    'rejeita %s, com mais de 90 dias no passado',
+    async (dataPagamento) => {
+      const { mensagens } = await validar({ dataPagamento });
+
+      expect(mensagens).toEqual([
+        'dataPagamento não pode ter mais de 90 dias no passado',
+      ]);
+    },
+  );
+
   it('rejeita dataPagamento null', async () => {
     const { mensagens } = await validar({ dataPagamento: null });
 

@@ -36,3 +36,10 @@ export function diasEmAtraso(
   }
   return diasEntre(pagamento.dataVencimento, referencia);
 }
+
+// RN09: inadimplente é quem tem pagamento atrasado há mais de DIAS_TOLERANCIA dias.
+export const DIAS_TOLERANCIA = 10;
+export type SituacaoFinanceira = 'EM_DIA' | 'INADIMPLENTE';
+
+// RN06: limite para datas no passado; barra erro de digitação no ano, por exemplo.
+export const DIAS_RETROATIVOS_MAX = 90;
