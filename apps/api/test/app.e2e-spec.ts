@@ -26,4 +26,20 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect({ status: 'ok' });
   });
+
+  it('GET /funcionarios sem token → 401', () => {
+    return request(app.getHttpServer()).get('/funcionarios').expect(401);
+  });
+
+  it('POST /auth/login com credencial inexistente → 401', () => {
+    return request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ login: 'inexistente', senha: 'senha-qualquer' })
+      .expect(401)
+      .expect({
+        statusCode: 401,
+        message: 'Login ou senha inválidos',
+        error: 'Unauthorized',
+      });
+  });
 });
