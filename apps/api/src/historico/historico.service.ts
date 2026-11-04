@@ -3,10 +3,13 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { paginacaoPrisma, paginate } from '../common/utils/paginate';
+import type { Prisma } from '../generated/prisma/client';
 import { MembrosService } from '../membros/membros.service';
 import { PagamentosService } from '../pagamentos/pagamentos.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
+import { QueryAtividadeDto } from './dto/query-atividade.dto';
 
 export const ATIVIDADE_SELECT = {
   id: true,
@@ -51,6 +54,36 @@ export class HistoricoService {
       },
       select: ATIVIDADE_SELECT,
     });
+  }
+
+  async findAll(query: QueryAtividadeDto) {
+    const where: Prisma.HistoricoAtividadeWhereInput = {
+      membroId: query.membroId,
+      funcionarioId: query.funcionarioId,
+      data: { gte: query.dataDe, lte: query.dataAte },
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.historicoAtividade.findMany({
+        where,
+        select: ATIVIDADE_SELECT,
+        // id desempata datas iguais, para a paginação não repetir nem pular
+        orderBy: [{ data: 'desc' }, { id: 'asc' }],
+        ...paginacaoPrisma(query),
+      }),
+      this.prisma.historicoAtividade.count({ where }),
+    ]);
+    return paginate(data, total, query);
+  }
+
+  async findOne(id: string) {
+    const atividade = await this.prisma.historicoAtividade.findUnique({
+      where: { id },
+      select: ATIVIDADE_SELECT,
+    });
+    if (!atividade) {
+      throw new NotFoundException('Atividade não encontrada');
+    }
+    return atividade;
   }
 
   // RN10: o treino informado precisa ser do próprio membro.
