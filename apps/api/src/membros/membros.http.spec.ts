@@ -1,7 +1,8 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { configurarApp } from '../configurar-app';
 import { MembrosController } from './membros.controller';
 import { MembrosService } from './membros.service';
 
@@ -34,14 +35,8 @@ describe('MembrosController (HTTP)', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
-    // mesmas opções do main.ts
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
+    // a mesma configuração do main.ts
+    configurarApp(app);
     await app.init();
   });
 
