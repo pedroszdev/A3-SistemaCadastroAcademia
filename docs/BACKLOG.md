@@ -208,8 +208,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] FUN-01 Back de funcionários
 - [x] FUN-02 Testes de funcionários
 - [x] AUTH-01 Login com JWT
-- [ ] AUTH-02 Autorização por cargo (RBAC)
-- [ ] AUTH-03 Testes de auth — 🟡 **parcial**: os testes de `AuthService` e `JwtAuthGuard` entraram com a AUTH-01. Faltam os do `RolesGuard`
+- [x] AUTH-02 Autorização por cargo (RBAC)
+- [x] AUTH-03 Testes de auth
 - [ ] AUTH-04 Login do aluno (migration + JWT com tipo)
 - [ ] AUTH-05 Testes do login do aluno
 - [ ] DASH-01 Endpoint do dashboard + testes
