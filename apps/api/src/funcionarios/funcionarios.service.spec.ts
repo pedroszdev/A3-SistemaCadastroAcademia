@@ -259,6 +259,15 @@ describe('FuncionariosService', () => {
       expect(prisma.funcionario.update).not.toHaveBeenCalled();
     });
 
+    it('bloqueia a auto-desativação com o id em maiúsculas (422)', async () => {
+      await expect(service.desativar(ID.toUpperCase(), ID)).rejects.toThrow(
+        new UnprocessableEntityException(
+          'Você não pode desativar o próprio usuário',
+        ),
+      );
+      expect(prisma.funcionario.update).not.toHaveBeenCalled();
+    });
+
     it('bloqueia desativar o último ADMIN ativo (422)', async () => {
       prisma.funcionario.findUnique.mockResolvedValue(
         funcionario({ cargo: Cargo.ADMIN }),
