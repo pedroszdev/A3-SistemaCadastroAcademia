@@ -203,13 +203,13 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] INF-03 Testes no front (Vitest)
 - [ ] INF-04 Pipeline do GitHub Actions
 - [x] INF-05 SonarCloud + primeira análise
-- [ ] INF-06 Seed do banco
+- [ ] INF-06 Seed do banco — 🟡 **parcial**: `pnpm db:seed` cria os 3 funcionários (entrou com a AUTH-01). Faltam membros, treinos, pagamentos e atividades
 - [ ] INF-07 Base comum da API (filtro de erros, paginação, datas)
 - [x] FUN-01 Back de funcionários
 - [x] FUN-02 Testes de funcionários
-- [ ] AUTH-01 Login com JWT
+- [ ] AUTH-01 Login com JWT — 🟡 **parcial**: o código e os testes estão prontos no PR da branch `feat/auth-login`. Faltam a aprovação e o merge
 - [ ] AUTH-02 Autorização por cargo (RBAC)
-- [ ] AUTH-03 Testes de auth
+- [ ] AUTH-03 Testes de auth — 🟡 **parcial**: os testes de `AuthService` e `JwtAuthGuard` entraram com a AUTH-01. Faltam os do `RolesGuard`
 - [ ] AUTH-04 Login do aluno (migration + JWT com tipo)
 - [ ] AUTH-05 Testes do login do aluno
 - [ ] DASH-01 Endpoint do dashboard + testes
@@ -582,6 +582,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 **O que fazer**
 - Decorator `@Roles(Cargo.ADMIN, ...)` + `RolesGuard`.
 - Aplicar nos controllers de funcionários e dashboard.
+- Em `PATCH /funcionarios/:id/desativar`, passar o id do `@UsuarioAtual()` como `solicitanteId`. Sem isso, a proibição de desativar a si mesmo (RN13) não vale por HTTP.
 - Avisar Gabriel e Yohan para aplicarem a **matriz da seção 4.2** nos controllers deles.
 
 **Resultado esperado**
