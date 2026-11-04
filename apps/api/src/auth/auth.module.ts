@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { FuncionariosModule } from '../funcionarios/funcionarios.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { EXPIRACAO_PADRAO, expiracaoEmSegundos } from './expiracao-token';
 import { JwtStrategy } from './jwt.strategy';
 
 @Module({
@@ -17,7 +18,9 @@ import { JwtStrategy } from './jwt.strategy';
         secret: config.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
           algorithm: 'HS256',
-          expiresIn: config.get('JWT_EXPIRES_IN', '8h'),
+          expiresIn: expiracaoEmSegundos(
+            config.get<string>('JWT_EXPIRES_IN', EXPIRACAO_PADRAO),
+          ),
         },
       }),
     }),
