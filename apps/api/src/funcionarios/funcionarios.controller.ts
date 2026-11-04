@@ -9,6 +9,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { UsuarioAtual } from '../auth/decorators/usuario-atual.decorator';
+import type { UsuarioAutenticado } from '../auth/usuario-autenticado';
 import { Cargo } from '../generated/prisma/enums';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
 import { QueryFuncionarioDto } from './dto/query-funcionario.dto';
@@ -44,8 +46,12 @@ export class FuncionariosController {
   }
 
   @Patch(':id/desativar')
-  desativar(@Param('id', ParseUUIDPipe) id: string) {
-    return this.funcionarios.desativar(id);
+  desativar(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UsuarioAtual() usuario: UsuarioAutenticado,
+  ) {
+    // RN13: ninguém desativa a si mesmo
+    return this.funcionarios.desativar(id, usuario.id);
   }
 
   @Patch(':id/reativar')
