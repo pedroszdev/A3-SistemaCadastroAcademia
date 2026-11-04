@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { FuncionariosModule } from './funcionarios/funcionarios.module';
 import { HistoricoModule } from './historico/historico.module';
+import { MembrosModule } from './membros/membros.module';
 import { PagamentosModule } from './pagamentos/pagamentos.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -16,6 +17,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     AuthModule,
     FuncionariosModule,
+    MembrosModule,
     PagamentosModule,
     HistoricoModule,
   ],
