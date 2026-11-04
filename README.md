@@ -26,7 +26,7 @@ Monorepo gerenciado com **pnpm workspaces**.
 
 ```bash
 pnpm install
-cp apps/api/.env.example apps/api/.env   # defina JWT_SECRET (a API não sobe sem ele)
+cp apps/api/.env.example apps/api/.env   # defina JWT_SECRET com 32+ caracteres: openssl rand -hex 32
 cp apps/web/.env.example apps/web/.env.local
 pnpm db:up          # sobe o PostgreSQL
 pnpm db:migrate     # aplica as migrations
