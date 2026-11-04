@@ -1,18 +1,37 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import type { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import type { UsuarioAutenticado } from '../auth/usuario-autenticado';
+import { Cargo } from '../generated/prisma/enums';
 import { HistoricoController } from './historico.controller';
 import { HistoricoService } from './historico.service';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 const MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789def';
+const FUNCIONARIO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789a01';
+const OUTRO_FUNCIONARIO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789a02';
 
-// Exercita roteamento e pipes sobre HTTP, sem banco: o service é mockado.
+const USUARIO: UsuarioAutenticado = {
+  id: FUNCIONARIO_ID,
+  tipo: 'FUNCIONARIO',
+  cargo: Cargo.INSTRUTOR,
+};
+
+const CORPO = {
+  membroId: MEMBRO_ID,
+  atividade: 'Supino reto',
+  data: '2026-10-15',
+  tempoExecucao: 45,
+};
+
+// Exercita roteamento, pipes e @UsuarioAtual sobre HTTP, sem banco: o service é mockado.
 describe('HistoricoController (HTTP)', () => {
   let app: INestApplication<App>;
   const service = {
     findAll: jest.fn(),
+    registrar: jest.fn(),
     findOne: jest.fn(),
   };
 
@@ -23,6 +42,11 @@ describe('HistoricoController (HTTP)', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    // simula o usuário que o JwtAuthGuard poria na request a partir do token
+    app.use((req: Request, _res: Response, next: NextFunction) => {
+      (req as Request & { user: UsuarioAutenticado }).user = USUARIO;
+      next();
+    });
     // mesmas opções do main.ts
     app.useGlobalPipes(
       new ValidationPipe({
@@ -87,6 +111,45 @@ describe('HistoricoController (HTTP)', () => {
       await http().get('/atividades/abc').expect(400);
 
       expect(service.findOne).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /atividades', () => {
+    it('responde 201 e registra com o funcionário do token (RN11)', async () => {
+      service.registrar.mockResolvedValue({ id: ID });
+
+      await http().post('/atividades').send(CORPO).expect(201);
+
+      expect(service.registrar).toHaveBeenCalledWith(
+        {
+          membroId: MEMBRO_ID,
+          atividade: 'Supino reto',
+          data: new Date('2026-10-15T00:00:00.000Z'),
+          tempoExecucao: 45,
+        },
+        FUNCIONARIO_ID,
+      );
+    });
+
+    it('rejeita funcionarioId no body pela whitelist, sem chamar o service', async () => {
+      await http()
+        .post('/atividades')
+        .send({ ...CORPO, funcionarioId: OUTRO_FUNCIONARIO_ID })
+        .expect(400);
+
+      expect(service.registrar).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['tempoExecucao 0', { tempoExecucao: 0 }],
+      ['data futura', { data: '2999-01-01' }],
+    ])('rejeita body inválido (%s), sem chamar o service', async (_, extra) => {
+      await http()
+        .post('/atividades')
+        .send({ ...CORPO, ...extra })
+        .expect(400);
+
+      expect(service.registrar).not.toHaveBeenCalled();
     });
   });
 });
