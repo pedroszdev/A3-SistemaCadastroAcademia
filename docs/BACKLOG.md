@@ -277,7 +277,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] WEB-Y4 Componentes para a ficha do membro
 - [ ] WEB-Y5 Testes do front (pagamentos/histórico)
 - [ ] WEB-Y6 Portal do aluno: Meu histórico
-- [ ] E2E-01 Utilitários de e2e (banco limpo, login)
+- [x] E2E-01 Utilitários de e2e (banco limpo, login)
 - [ ] E2E-02 e2e do fluxo principal
 - [ ] E2E-03 e2e da regra de inadimplência
 - [ ] QA-01 Issues do Sonar no meu código
