@@ -270,6 +270,30 @@ describe('HistoricoService', () => {
       });
       expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
     });
+
+    it.each([
+      [
+        'só dataDe',
+        { dataDe: new Date('2026-10-01') },
+        { gte: new Date('2026-10-01'), lte: undefined },
+      ],
+      [
+        'só dataAte',
+        { dataAte: new Date('2026-10-31') },
+        { gte: undefined, lte: new Date('2026-10-31') },
+      ],
+    ])(
+      'com %s deixa o outro limite do período aberto',
+      async (_, periodo, data) => {
+        await service.findAll({ ...base, ...periodo });
+
+        const where = { membroId: undefined, funcionarioId: undefined, data };
+        expect(primeiroArg(prisma.historicoAtividade.findMany)).toMatchObject({
+          where,
+        });
+        expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
+      },
+    );
   });
 
   describe('findAllDoMembro', () => {
@@ -402,6 +426,23 @@ describe('HistoricoService', () => {
       const resumo = await service.resumoMembro(MEMBRO_ID);
 
       expect(resumo).toEqual({ totalAtividades: 0, totalMinutos: 0 });
+    });
+
+    it('a partir de uma data, sem limite final', async () => {
+      const de = new Date('2026-10-01');
+      prisma.historicoAtividade.aggregate.mockResolvedValue({
+        _count: { _all: 2 },
+        _sum: { tempoExecucao: 90 },
+      });
+
+      const resumo = await service.resumoMembro(MEMBRO_ID, de);
+
+      expect(prisma.historicoAtividade.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { membroId: MEMBRO_ID, data: { gte: de, lte: undefined } },
+        }),
+      );
+      expect(resumo).toEqual({ totalAtividades: 2, totalMinutos: 90 });
     });
 
     it('sem período não restringe a data', async () => {

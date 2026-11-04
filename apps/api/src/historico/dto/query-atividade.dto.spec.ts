@@ -29,6 +29,14 @@ describe('QueryAtividadeDto', () => {
     expect(dto.dataAte?.toISOString()).toBe('2026-10-31T00:00:00.000Z');
   });
 
+  it('aceita só dataAte, sem dataDe', async () => {
+    const { dto, mensagens } = await validar({ dataAte: '2026-10-31' });
+
+    expect(mensagens).toEqual([]);
+    expect(dto.dataDe).toBeUndefined();
+    expect(dto.dataAte?.toISOString()).toBe('2026-10-31T00:00:00.000Z');
+  });
+
   it('aceita todos os filtros juntos', async () => {
     const { mensagens } = await validar({
       membroId: '0199f0a2-7b3c-7d4e-8f00-123456789abc',
