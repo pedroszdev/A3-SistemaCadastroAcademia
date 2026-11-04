@@ -76,9 +76,10 @@ export class HistoricoService {
     return paginate(data, total, query);
   }
 
-  async findOne(id: string) {
+  // RN16: com membroId (o do token, na rota do aluno), a atividade de outro membro dá 404.
+  async findOne(id: string, membroId?: string) {
     const atividade = await this.prisma.historicoAtividade.findUnique({
-      where: { id },
+      where: { id, membroId },
       select: ATIVIDADE_SELECT,
     });
     if (!atividade) {
