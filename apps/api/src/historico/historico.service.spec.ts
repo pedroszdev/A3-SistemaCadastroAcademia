@@ -293,6 +293,18 @@ describe('HistoricoService', () => {
         new NotFoundException('Atividade não encontrada'),
       );
     });
+
+    it('com membroId, filtra no where e lança 404 para atividade de outro membro (RN16)', async () => {
+      prisma.historicoAtividade.findUnique.mockResolvedValue(null);
+
+      await expect(service.findOne(ID, OUTRO_MEMBRO_ID)).rejects.toThrow(
+        new NotFoundException('Atividade não encontrada'),
+      );
+      expect(prisma.historicoAtividade.findUnique).toHaveBeenCalledWith({
+        where: { id: ID, membroId: OUTRO_MEMBRO_ID },
+        select: ATIVIDADE_SELECT,
+      });
+    });
   });
 
   describe('resumoMembro', () => {
