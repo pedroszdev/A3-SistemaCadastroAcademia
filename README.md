@@ -26,27 +26,40 @@ Monorepo gerenciado com **pnpm workspaces**.
 
 ```bash
 pnpm install
-cp apps/api/.env.example apps/api/.env
+cp apps/api/.env.example apps/api/.env   # defina JWT_SECRET (a API não sobe sem ele)
 cp apps/web/.env.example apps/web/.env.local
 pnpm db:up          # sobe o PostgreSQL
 pnpm db:migrate     # aplica as migrations
+pnpm db:seed        # cria os funcionários de desenvolvimento
 pnpm dev            # API em :3000 e front em :3001
 ```
 
 ## Scripts da raiz
 
-| Script            | O que faz                              |
-| ----------------- | -------------------------------------- |
-| `pnpm dev`        | API + front em paralelo                |
-| `pnpm dev:api`    | Só a API em modo watch                 |
-| `pnpm dev:web`    | Só o front                             |
-| `pnpm build`      | Build de todos os apps                 |
-| `pnpm lint`       | ESLint em todos os apps                |
-| `pnpm format`     | Prettier na API                        |
-| `pnpm db:up`      | Sobe o PostgreSQL via Docker           |
-| `pnpm db:down`    | Derruba os containers                  |
-| `pnpm db:migrate` | `prisma migrate dev` na API            |
-| `pnpm db:studio`  | Abre o Prisma Studio                   |
+| Script            | O que faz                               |
+| ----------------- | --------------------------------------- |
+| `pnpm dev`        | API + front em paralelo                 |
+| `pnpm dev:api`    | Só a API em modo watch                  |
+| `pnpm dev:web`    | Só o front                              |
+| `pnpm build`      | Build de todos os apps                  |
+| `pnpm lint`       | ESLint em todos os apps                 |
+| `pnpm format`     | Prettier na API                         |
+| `pnpm db:up`      | Sobe o PostgreSQL via Docker            |
+| `pnpm db:down`    | Derruba os containers                   |
+| `pnpm db:migrate` | `prisma migrate dev` na API             |
+| `pnpm db:studio`  | Abre o Prisma Studio                    |
+| `pnpm db:seed`    | Cria os funcionários de desenvolvimento |
+
+## Logins de desenvolvimento
+
+O `pnpm db:seed` cria três funcionários, só para uso local (a senha de todos é `senha1234`).
+Rodar de novo não duplica nem redefine senhas.
+
+| Login       | Cargo           |
+| ----------- | --------------- |
+| `admin`     | `ADMIN`         |
+| `recepcao`  | `RECEPCIONISTA` |
+| `instrutor` | `INSTRUTOR`     |
 
 ## Modelo de dados
 
