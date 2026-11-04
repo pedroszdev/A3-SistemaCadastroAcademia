@@ -207,7 +207,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] INF-07 Base comum da API (filtro de erros, paginação, datas)
 - [x] FUN-01 Back de funcionários
 - [x] FUN-02 Testes de funcionários
-- [ ] AUTH-01 Login com JWT — 🟡 **parcial**: o código e os testes estão prontos no PR da branch `feat/auth-login`. Faltam a aprovação e o merge
+- [x] AUTH-01 Login com JWT
 - [ ] AUTH-02 Autorização por cargo (RBAC)
 - [ ] AUTH-03 Testes de auth — 🟡 **parcial**: os testes de `AuthService` e `JwtAuthGuard` entraram com a AUTH-01. Faltam os do `RolesGuard`
 - [ ] AUTH-04 Login do aluno (migration + JWT com tipo)
