@@ -199,15 +199,15 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] ADM-05 Canal e check-in semanal
 - [ ] ADM-06 Documento de escopo (coordenação + RNFs)
 - [x] INF-01 Proteção da main, templates e CONTRIBUTING
-- [ ] INF-02 Jest da API com cobertura + e2e — 🟡 **parcial**: Jest, ts-jest e @nestjs/testing já estão instalados, com a config básica no `package.json`. Faltam a cobertura (exclusões, lcov, `test:cov`), o `jest-e2e.json`, o supertest e remover o `--passWithNoTests`
-- [ ] INF-03 Testes no front (Vitest)
-- [ ] INF-04 Pipeline do GitHub Actions
+- [x] INF-02 Jest da API com cobertura + e2e
+- [x] INF-03 Testes no front (Vitest)
+- [ ] INF-04 Pipeline do GitHub Actions — 🟡 **parcial**: o `ci.yml` roda lint, build, testes com cobertura, e2e com Postgres e o Sonar em todo PR, e o badge está no README. Faltam os prints de um PR com o check e da aba Actions
 - [x] INF-05 SonarCloud + primeira análise
 - [ ] INF-06 Seed do banco — 🟡 **parcial**: `pnpm db:seed` cria os 3 funcionários (entrou com a AUTH-01). Faltam membros, treinos, pagamentos e atividades
-- [ ] INF-07 Base comum da API (filtro de erros, paginação, datas)
+- [x] INF-07 Base comum da API (filtro de erros, paginação, datas)
 - [x] FUN-01 Back de funcionários
 - [x] FUN-02 Testes de funcionários
-- [ ] AUTH-01 Login com JWT — 🟡 **parcial**: o código e os testes estão prontos no PR da branch `feat/auth-login`. Faltam a aprovação e o merge
+- [x] AUTH-01 Login com JWT
 - [ ] AUTH-02 Autorização por cargo (RBAC)
 - [ ] AUTH-03 Testes de auth — 🟡 **parcial**: os testes de `AuthService` e `JwtAuthGuard` entraram com a AUTH-01. Faltam os do `RolesGuard`
 - [ ] AUTH-04 Login do aluno (migration + JWT com tipo)
@@ -268,8 +268,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] PAG-06 Testes de pagamentos
 - [x] HIS-01 DTOs de histórico
 - [x] HIS-02 Service de histórico
-- [ ] HIS-03 Controller de histórico
-- [ ] HIS-04 Testes de histórico — 🟡 **parcial**: os testes do `HistoricoService` estão prontos (100% de cobertura). Faltam os testes do controller, que entram com a HIS-03
+- [ ] HIS-03 Controller de histórico — 🟡 **parcial**: as rotas e os testes estão prontos. Falta aplicar o `@Roles` (registrar: ADMIN, INSTRUTOR; consultar: ADMIN, RECEPCIONISTA, INSTRUTOR) quando a AUTH-02 entrar
+- [x] HIS-04 Testes de histórico
 - [ ] HIS-05 Histórico do aluno (`/me/atividades`)
 - [ ] WEB-Y1 Tela de pagamentos
 - [ ] WEB-Y2 Formulário de pagamento
@@ -414,7 +414,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### INF-02 · Jest da API com cobertura e e2e
-**Responsável:** Pedro · **Sprint:** 1 · **Status:** 🟡 parcial (Jest instalado e configurado sem cobertura)
+**Responsável:** Pedro · **Sprint:** 1 · **Status:** ✅ concluída
 
 **O que fazer**
 - No `apps/api/package.json` (bloco `jest`):

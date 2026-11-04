@@ -9,7 +9,10 @@ import { MembrosService } from '../membros/membros.service';
 import { PagamentosService } from '../pagamentos/pagamentos.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
-import { QueryAtividadeDto } from './dto/query-atividade.dto';
+import {
+  QueryAtividadeDto,
+  QueryAtividadeMembroDto,
+} from './dto/query-atividade.dto';
 
 export const ATIVIDADE_SELECT = {
   id: true,
@@ -74,6 +77,11 @@ export class HistoricoService {
       this.prisma.historicoAtividade.count({ where }),
     ]);
     return paginate(data, total, query);
+  }
+
+  async findAllDoMembro(membroId: string, query: QueryAtividadeMembroDto) {
+    await this.membros.findOne(membroId);
+    return this.findAll({ ...query, membroId });
   }
 
   // RN16: com membroId (o do token, na rota do aluno), a atividade de outro membro dá 404.

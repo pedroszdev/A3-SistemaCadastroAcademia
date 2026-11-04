@@ -45,7 +45,7 @@ describe('HistoricoService', () => {
     };
     treino: { findUnique: jest.Mock };
   };
-  let membros: { assertMembroAtivo: jest.Mock };
+  let membros: { assertMembroAtivo: jest.Mock; findOne: jest.Mock };
   let pagamentos: { assertMembroAdimplente: jest.Mock };
   let service: HistoricoService;
 
@@ -60,7 +60,7 @@ describe('HistoricoService', () => {
       },
       treino: { findUnique: jest.fn() },
     };
-    membros = { assertMembroAtivo: jest.fn() };
+    membros = { assertMembroAtivo: jest.fn(), findOne: jest.fn() };
     pagamentos = { assertMembroAdimplente: jest.fn() };
     service = new HistoricoService(
       prisma as unknown as PrismaService,
@@ -269,6 +269,73 @@ describe('HistoricoService', () => {
         where,
       });
       expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
+    });
+  });
+
+  describe('findAllDoMembro', () => {
+    beforeEach(() => {
+      prisma.historicoAtividade.findMany.mockResolvedValue([]);
+      prisma.historicoAtividade.count.mockResolvedValue(0);
+    });
+
+    it('confere o membro e lista só as atividades dele', async () => {
+      const itens = [atividade()];
+      prisma.historicoAtividade.findMany.mockResolvedValue(itens);
+      prisma.historicoAtividade.count.mockResolvedValue(1);
+
+      const resultado = await service.findAllDoMembro(MEMBRO_ID, {
+        page: 1,
+        pageSize: 20,
+      });
+
+      expect(membros.findOne).toHaveBeenCalledWith(MEMBRO_ID);
+      expect(primeiroArg(prisma.historicoAtividade.findMany)).toMatchObject({
+        where: { membroId: MEMBRO_ID },
+      });
+      expect(membros.findOne.mock.invocationCallOrder[0]).toBeLessThan(
+        prisma.historicoAtividade.findMany.mock.invocationCallOrder[0],
+      );
+      expect(resultado).toEqual({
+        data: itens,
+        total: 1,
+        page: 1,
+        pageSize: 20,
+      });
+    });
+
+    it('mantém período, funcionário e paginação da query', async () => {
+      const dataDe = new Date('2026-10-01');
+      const dataAte = new Date('2026-10-31');
+
+      await service.findAllDoMembro(MEMBRO_ID, {
+        page: 3,
+        pageSize: 5,
+        funcionarioId: FUNCIONARIO_ID,
+        dataDe,
+        dataAte,
+      });
+
+      expect(primeiroArg(prisma.historicoAtividade.findMany)).toMatchObject({
+        where: {
+          membroId: MEMBRO_ID,
+          funcionarioId: FUNCIONARIO_ID,
+          data: { gte: dataDe, lte: dataAte },
+        },
+        skip: 10,
+        take: 5,
+      });
+    });
+
+    it('propaga 404 quando o membro não existe, sem consultar atividades', async () => {
+      membros.findOne.mockRejectedValue(
+        new NotFoundException('Membro não encontrado'),
+      );
+
+      await expect(
+        service.findAllDoMembro(MEMBRO_ID, { page: 1, pageSize: 20 }),
+      ).rejects.toThrow(new NotFoundException('Membro não encontrado'));
+      expect(prisma.historicoAtividade.findMany).not.toHaveBeenCalled();
+      expect(prisma.historicoAtividade.count).not.toHaveBeenCalled();
     });
   });
 
