@@ -7,9 +7,11 @@ import type { UsuarioAutenticado } from '../auth/usuario-autenticado';
 import { Cargo } from '../generated/prisma/enums';
 import { HistoricoController } from './historico.controller';
 import { HistoricoService } from './historico.service';
+import { MembrosAtividadesController } from './membros-atividades.controller';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 const MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789def';
+const OUTRO_MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789c01';
 const FUNCIONARIO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789a01';
 const OUTRO_FUNCIONARIO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789a02';
 
@@ -33,11 +35,12 @@ describe('HistoricoController (HTTP)', () => {
     findAll: jest.fn(),
     registrar: jest.fn(),
     findOne: jest.fn(),
+    findAllDoMembro: jest.fn(),
   };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [HistoricoController],
+      controllers: [HistoricoController, MembrosAtividadesController],
       providers: [{ provide: HistoricoService, useValue: service }],
     }).compile();
 
@@ -150,6 +153,29 @@ describe('HistoricoController (HTTP)', () => {
         .expect(400);
 
       expect(service.registrar).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /membros/:id/atividades', () => {
+    it('chama findAllDoMembro com o id do path e a query convertida', async () => {
+      await http()
+        .get(`/membros/${MEMBRO_ID}/atividades`)
+        .query({ membroId: OUTRO_MEMBRO_ID, dataDe: '2026-10-01', page: '3' })
+        .expect(200);
+
+      expect(service.findAllDoMembro).toHaveBeenCalledWith(MEMBRO_ID, {
+        membroId: OUTRO_MEMBRO_ID,
+        dataDe: new Date('2026-10-01T00:00:00.000Z'),
+        page: 3,
+        pageSize: 20,
+      });
+      expect(service.findAll).not.toHaveBeenCalled();
+    });
+
+    it('responde 400 para id que não é UUID, sem chamar o service', async () => {
+      await http().get('/membros/abc/atividades').expect(400);
+
+      expect(service.findAllDoMembro).not.toHaveBeenCalled();
     });
   });
 });
