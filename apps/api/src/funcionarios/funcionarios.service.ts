@@ -21,7 +21,7 @@ export const FUNCIONARIO_SELECT = {
   ativo: true,
 } as const;
 
-const SALT_ROUNDS = 10;
+export const SALT_ROUNDS = 10;
 
 @Injectable()
 export class FuncionariosService {
