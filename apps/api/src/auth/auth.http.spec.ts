@@ -18,15 +18,18 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
+import { Roles } from './decorators/roles.decorator';
 import { UsuarioAtual } from './decorators/usuario-atual.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
+import { RolesGuard } from './roles.guard';
 import type { UsuarioAutenticado } from './usuario-autenticado';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 const SEGREDO = 'segredo-apenas-para-teste-com-32-caracteres';
 const SENHA = 'senha1234';
 const MENSAGEM_TOKEN = 'Token ausente, inválido ou expirado';
+const MENSAGEM_PROIBIDO = 'Você não tem permissão para acessar este recurso';
 
 @Controller('teste')
 class TesteController {
@@ -39,6 +42,12 @@ class TesteController {
   @Get('protegida')
   protegida(@UsuarioAtual() usuario: UsuarioAutenticado) {
     return usuario;
+  }
+
+  @Roles(Cargo.ADMIN)
+  @Get('admin')
+  admin() {
+    return { ok: true };
   }
 }
 
@@ -75,7 +84,9 @@ describe('Auth (HTTP)', () => {
       providers: [
         AuthService,
         JwtStrategy,
+        // mesma ordem do app.module: autentica, depois confere o cargo
         { provide: APP_GUARD, useClass: JwtAuthGuard },
+        { provide: APP_GUARD, useClass: RolesGuard },
         { provide: PrismaService, useValue: prisma },
         { provide: FuncionariosService, useValue: funcionarios },
         {
@@ -308,6 +319,45 @@ describe('Auth (HTTP)', () => {
         .expect(401);
 
       expect(resposta.body).toMatchObject({ message: MENSAGEM_TOKEN });
+    });
+  });
+
+  describe('RBAC na cadeia global', () => {
+    const tokenDeAdmin = () =>
+      jwt.signAsync({ sub: ID, tipo: 'FUNCIONARIO', cargo: Cargo.ADMIN });
+
+    it('401, e não 403, em rota com @Roles sem token', async () => {
+      const resposta = await http().get('/teste/admin').expect(401);
+
+      expect(resposta.body).toMatchObject({ message: MENSAGEM_TOKEN });
+    });
+
+    it('403 quando o cargo no banco não está no @Roles, mesmo com ADMIN no token', async () => {
+      prisma.funcionario.findUnique.mockResolvedValue(
+        registro({ cargo: Cargo.RECEPCIONISTA }),
+      );
+
+      const resposta = await http()
+        .get('/teste/admin')
+        .set('Authorization', `Bearer ${await tokenDeAdmin()}`)
+        .expect(403);
+
+      expect(resposta.body).toEqual({
+        statusCode: 403,
+        message: MENSAGEM_PROIBIDO,
+        error: 'Forbidden',
+      });
+    });
+
+    it('200 quando o cargo no banco está no @Roles', async () => {
+      prisma.funcionario.findUnique.mockResolvedValue(
+        registro({ cargo: Cargo.ADMIN }),
+      );
+
+      await http()
+        .get('/teste/admin')
+        .set('Authorization', `Bearer ${await tokenDeAdmin()}`)
+        .expect(200, { ok: true });
     });
   });
 });
