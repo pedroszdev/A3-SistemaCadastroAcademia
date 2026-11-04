@@ -18,14 +18,12 @@ jobs:
     name: Lint, build e testes
     runs-on: ubuntu-latest
 
-    # Valores do CI, nenhum é segredo real: Postgres efêmero e JWT_SECRET de teste.
-    # O DATABASE_URL é montado num passo para não deixar a senha embutida em
-    # connection string.
+    # Credenciais do Postgres efêmero do CI (não é segredo real); o DATABASE_URL
+    # é montado num passo para não deixar a senha embutida em connection string.
     env:
       PGUSER: academia
       PGPASSWORD: academia
       PGDATABASE: academia
-      JWT_SECRET: segredo-apenas-para-o-ci
 
     services:
       postgres:
@@ -51,6 +49,11 @@ jobs:
 
       - name: Configurar DATABASE_URL
         run: echo "DATABASE_URL=postgresql://${PGUSER}:${PGPASSWORD}@localhost:5432/${PGDATABASE}?schema=public" >> "$GITHUB_ENV"
+
+      # Gerado a cada execução: com 64 caracteres, passa no mínimo de 32 da API,
+      # e nenhum valor fica escrito no repositório.
+      - name: Gerar JWT_SECRET de teste
+        run: echo "JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
 
       - name: Setup do pnpm
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
