@@ -234,8 +234,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] MEM-01 Validador de CPF
 - [x] MEM-02 DTOs de membros
 - [x] MEM-03 Service de membros
-- [ ] MEM-04 Controller de membros
-- [ ] MEM-05 Testes de membros
+- [ ] MEM-04 Controller de membros — 🟡 **parcial**: as rotas e os testes estão prontos. Falta aplicar o `@Roles` (listar/ver: ADMIN, RECEPCIONISTA, INSTRUTOR; criar/editar/desativar: ADMIN, RECEPCIONISTA) quando a AUTH-02 entrar
+- [x] MEM-05 Testes de membros
 - [ ] MEM-06 Resumo/ficha do membro (API)
 - [ ] MEM-07 Liberar e redefinir o acesso do aluno
 - [ ] TRE-01 DTOs de treinos
