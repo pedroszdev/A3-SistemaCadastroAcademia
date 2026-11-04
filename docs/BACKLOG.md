@@ -200,7 +200,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] ADM-06 Documento de escopo (coordenação + RNFs)
 - [x] INF-01 Proteção da main, templates e CONTRIBUTING
 - [x] INF-02 Jest da API com cobertura + e2e
-- [ ] INF-03 Testes no front (Vitest)
+- [x] INF-03 Testes no front (Vitest)
 - [ ] INF-04 Pipeline do GitHub Actions
 - [x] INF-05 SonarCloud + primeira análise
 - [ ] INF-06 Seed do banco — 🟡 **parcial**: `pnpm db:seed` cria os 3 funcionários (entrou com a AUTH-01). Faltam membros, treinos, pagamentos e atividades
