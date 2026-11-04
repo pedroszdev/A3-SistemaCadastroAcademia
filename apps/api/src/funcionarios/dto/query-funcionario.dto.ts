@@ -1,6 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { paraBooleano } from '../../common/utils/para-booleano';
 import { Cargo } from '../../generated/prisma/enums';
 
 export class QueryFuncionarioDto extends PaginationQueryDto {
@@ -11,11 +12,7 @@ export class QueryFuncionarioDto extends PaginationQueryDto {
   cargo?: Cargo;
 
   @IsOptional()
-  @Transform(({ value }: { value: unknown }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value;
-  })
+  @Transform(paraBooleano)
   @IsBoolean({ message: 'ativo deve ser true ou false' })
   ativo?: boolean;
 }
