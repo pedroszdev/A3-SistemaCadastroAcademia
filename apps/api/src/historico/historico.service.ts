@@ -76,6 +76,12 @@ export class HistoricoService {
     return paginate(data, total, query);
   }
 
+  async findAllDoMembro(membroId: string, query: QueryAtividadeDto) {
+    await this.membros.findOne(membroId);
+    // o membroId do path prevalece sobre o da query
+    return this.findAll({ ...query, membroId });
+  }
+
   // RN16: com membroId (o do token, na rota do aluno), a atividade de outro membro dá 404.
   async findOne(id: string, membroId?: string) {
     const atividade = await this.prisma.historicoAtividade.findUnique({
