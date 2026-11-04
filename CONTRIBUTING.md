@@ -52,8 +52,39 @@ pnpm db:migrate                # aplica as migrations no banco local
 pnpm test                      # testes unitários da API e do web
 pnpm --filter api test:cov     # cobertura da API (apps/api/coverage)
 pnpm --filter web test:cov     # cobertura do web (apps/web/coverage)
-pnpm --filter api test:e2e     # e2e da API (precisa do banco no ar e migrado)
+pnpm --filter api test:e2e     # e2e da API (precisa do banco de teste, veja abaixo)
 pnpm lint                      # ESLint em tudo
+```
+
+### Banco de teste (e2e)
+
+Os e2e apagam o banco a cada spec, então rodam num banco separado, cujo nome termina em `_test`. O `limparBanco()` recusa rodar em qualquer outro, para nunca apagar o banco de desenvolvimento.
+
+```bash
+docker exec academia-db createdb -U academia academia_test
+DATABASE_URL="postgresql://academia:academia@localhost:5432/academia_test?schema=public" pnpm --filter api exec prisma migrate deploy
+DATABASE_URL="postgresql://academia:academia@localhost:5432/academia_test?schema=public" pnpm --filter api test:e2e
+```
+
+Os utilitários ficam em `apps/api/test/utils/`. Um e2e novo cabe em poucas linhas:
+
+```ts
+import { criarApp, limparBanco, loginComo, criarMembro, bearer, prismaDe } from './utils';
+// ... mais os imports de INestApplication, App, request e Cargo
+
+let app: INestApplication<App>;
+beforeAll(async () => (app = await criarApp()));
+beforeEach(() => limparBanco(prismaDe(app)));
+afterAll(() => app.close());
+
+it('GET /membros/:id/situacao → 200', async () => {
+  const { token } = await loginComo(app, Cargo.RECEPCIONISTA);
+  const membro = await criarMembro(prismaDe(app));
+  await request(app.getHttpServer())
+    .get(`/membros/${membro.id}/situacao`)
+    .set('Authorization', bearer(token))
+    .expect(200);
+});
 ```
 
 ## Bugs e issues
