@@ -55,9 +55,12 @@ O bloqueio fica em dois lugares:
 
    | Registro | Valor |
    | --- | --- |
-   | Ruleset criado por | _a preencher_ (admin do repositório) |
-   | Data | _a preencher_ |
-   | Saída dos comandos acima | _a preencher_ |
+   | Ruleset | "Sem merge até o CI rodar" (id `26615335`), `enforcement: active` |
+   | Criado por | Pedro (admin do repositório) |
+   | Data | 05/11/2026, 10:10 (horário de Brasília) |
+   | `.protected` | `true` |
+   | Regras ativas (`rules/branches/main`) | `deletion`, `non_fast_forward`, `pull_request` (1 aprovação, `allowed_merge_methods: ["merge", "rebase"]`), `required_status_checks` (`Lint, build e testes`, `integration_id` 15368) |
+   | Efeito no PR #31 | passou de mergeável com o CI rodando para `mergeStateStatus: BLOCKED`, `reviewDecision: REVIEW_REQUIRED` |
    | Print de *Settings → Rules → Rulesets* | `00-ruleset-main.png` (_a preencher_) |
 
 O quality gate usado é o **Sonar way**, o padrão do SonarCloud. Ele vale para o código novo:
