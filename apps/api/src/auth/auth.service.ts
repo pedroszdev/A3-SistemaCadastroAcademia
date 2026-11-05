@@ -6,11 +6,14 @@ import {
   FUNCIONARIO_SELECT,
   SALT_ROUNDS,
 } from '../funcionarios/funcionarios.service';
+import { isCpfValido } from '../common/validators/cpf';
 import { PrismaService } from '../prisma/prisma.service';
+import { LoginAlunoDto } from './dto/login-aluno.dto';
 import { LoginDto } from './dto/login.dto';
 import { TokenPayload } from './usuario-autenticado';
 
 const HASH_FICTICIO = hashSync(randomUUID(), SALT_ROUNDS);
+const CREDENCIAL_INVALIDA = 'Login ou senha inválidos';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +38,7 @@ export class AuthService {
       funcionario?.senhaHash ?? HASH_FICTICIO,
     );
     if (!funcionario || !senhaConfere || !funcionario.ativo) {
-      throw new UnauthorizedException('Login ou senha inválidos');
+      throw new UnauthorizedException(CREDENCIAL_INVALIDA);
     }
 
     const payload: TokenPayload = {
@@ -52,5 +55,28 @@ export class AuthService {
         cargo: funcionario.cargo,
       },
     };
+  }
+
+  async loginAluno(dto: LoginAlunoDto) {
+    // CPF inválido não existe: vira o 401 genérico sem ir ao banco.
+    const membro = isCpfValido(dto.cpf)
+      ? await this.prisma.membro.findUnique({
+          where: { cpf: dto.cpf },
+          select: { id: true, nome: true, ativo: true, senhaHash: true },
+        })
+      : null;
+
+    // Compara sempre, para o tempo de resposta não revelar se o CPF existe.
+    const senhaConfere = await compare(
+      dto.senha,
+      membro?.senhaHash ?? HASH_FICTICIO,
+    );
+    if (!membro?.senhaHash || !senhaConfere || !membro.ativo) {
+      throw new UnauthorizedException(CREDENCIAL_INVALIDA);
+    }
+
+    const payload: TokenPayload = { sub: membro.id, tipo: 'ALUNO' };
+    const accessToken = await this.jwt.signAsync(payload);
+    return { accessToken, aluno: { id: membro.id, nome: membro.nome } };
   }
 }
