@@ -23,20 +23,42 @@ PR para a main
 O bloqueio fica em dois lugares:
 
 1. **No workflow.** O [`sonar-project.properties`](../../../sonar-project.properties) define `sonar.qualitygate.wait=true` e `sonar.qualitygate.timeout=300`. Com isso, o passo "Análise do SonarCloud" espera o SonarCloud calcular o gate e só fica verde se o gate for **Passed**. Se o gate reprovar, ou se o resultado não chegar em 5 minutos, o passo falha.
-2. **Na proteção da `main`.** O check `Lint, build e testes` é obrigatório para todos, admins inclusive. Configuração lida em 04/11/2026 com `gh api repos/pedroszdev/A3-SistemaCadastroAcademia/branches/main --jq .protection`:
+2. **Na proteção da `main`.** Um ruleset da `main` exige o check `Lint, build e testes` (do GitHub Actions, `integration_id` 15368), 1 aprovação e merge só por PR, sem bypass, nem para admin. Como a espera pelo gate roda **dentro** desse job, nenhum check extra precisa ser exigido: um gate reprovado já deixa vermelho o check que a proteção exige.
 
-   ```json
-   {
-     "enabled": true,
-     "required_status_checks": {
-       "checks": [{ "app_id": 15368, "context": "Lint, build e testes" }],
-       "contexts": ["Lint, build e testes"],
-       "enforcement_level": "everyone"
-     }
-   }
+   **Achado de 05/11/2026.** Até esta data, a `main` **não estava protegida**, embora o `CONTRIBUTING.md` e a INF-01 do backlog digam que estava:
+   - `gh api repos/pedroszdev/A3-SistemaCadastroAcademia/branches/main --jq .protected` devolvia `false`;
+   - `gh api repos/pedroszdev/A3-SistemaCadastroAcademia/rules/branches/main` devolvia `[]`;
+   - no PR #31, o botão de merge ficava liberado com o CI ainda rodando.
+
+   Ou seja, antes do ruleset o gate deixava o check vermelho, mas nada impedia o merge.
+
+   **Configuração versionada.** O ruleset está em [`.github/rulesets/main.json`](../../../.github/rulesets/main.json) e é aplicado por um admin com:
+
+   ```bash
+   gh api -X POST repos/pedroszdev/A3-SistemaCadastroAcademia/rulesets --input .github/rulesets/main.json
    ```
 
-   O `app_id` 15368 é o GitHub Actions. Como a espera pelo gate roda **dentro** desse job, nenhum check extra precisa ser exigido: um gate reprovado já deixa vermelho o check que a proteção exige.
+   O ruleset aplica estas regras:
+   - sem bypass (`bypass_actors` vazio);
+   - PR obrigatório com 1 aprovação;
+   - merge só por merge commit ou rebase, nunca squash;
+   - check `Lint, build e testes` obrigatório;
+   - sem force push nem exclusão da `main`.
+
+   **Evidência da configuração.** Os comandos abaixo leem a configuração ativa e funcionam para qualquer pessoa com acesso de leitura:
+
+   ```bash
+   gh api repos/pedroszdev/A3-SistemaCadastroAcademia/branches/main --jq .protected   # true
+   gh api repos/pedroszdev/A3-SistemaCadastroAcademia/rules/branches/main \
+     --jq '.[] | {type, parameters}'                                                   # pull_request, required_status_checks, ...
+   ```
+
+   | Registro | Valor |
+   | --- | --- |
+   | Ruleset criado por | _a preencher_ (admin do repositório) |
+   | Data | _a preencher_ |
+   | Saída dos comandos acima | _a preencher_ |
+   | Print de *Settings → Rules → Rulesets* | `00-ruleset-main.png` (_a preencher_) |
 
 O quality gate usado é o **Sonar way**, o padrão do SonarCloud. Ele vale para o código novo:
 
