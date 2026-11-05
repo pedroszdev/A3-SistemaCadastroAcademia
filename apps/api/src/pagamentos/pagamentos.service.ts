@@ -191,6 +191,33 @@ export class PagamentosService {
     }
   }
 
+  // Receita = pagos (RN07), pela data do pagamento e não pelo vencimento.
+  async receitaDoPeriodo(de: Date, ateExclusivo: Date): Promise<number> {
+    const { _sum } = await this.prisma.pagamento.aggregate({
+      where: {
+        AND: [
+          filtroStatus('PAGO', de),
+          { dataPagamento: { gte: de, lt: ateExclusivo } },
+        ],
+      },
+      _sum: { valor: true },
+    });
+    return _sum.valor?.toNumber() ?? 0;
+  }
+
+  // RN09: mesmo limite do situacaoMembro (vencimento < hoje − 10 ⇔ atraso > 10 dias),
+  // mas só entre os ativos: o dashboard mostra quem a recepção ainda precisa cobrar.
+  async contarInadimplentes(): Promise<number> {
+    const limite = hoje();
+    limite.setUTCDate(limite.getUTCDate() - DIAS_TOLERANCIA);
+    return this.prisma.membro.count({
+      where: {
+        ativo: true,
+        pagamentos: { some: filtroStatus('ATRASADO', limite) },
+      },
+    });
+  }
+
   // RN08: a troca condicional não casou; descobre se foi 404 ou 409.
   private async explicarFalha(
     id: string,
