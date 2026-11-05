@@ -25,12 +25,12 @@ O bloqueio fica em dois lugares:
 1. **No workflow.** O [`sonar-project.properties`](../../../sonar-project.properties) define `sonar.qualitygate.wait=true` e `sonar.qualitygate.timeout=300`. Com isso, o passo "Análise do SonarCloud" espera o SonarCloud calcular o gate e só fica verde se o gate for **Passed**. Se o gate reprovar, ou se o resultado não chegar em 5 minutos, o passo falha.
 2. **Na proteção da `main`.** Um ruleset da `main` exige o check `Lint, build e testes` (do GitHub Actions, `integration_id` 15368), 1 aprovação e merge só por PR, sem bypass, nem para admin. Como a espera pelo gate roda **dentro** desse job, nenhum check extra precisa ser exigido: um gate reprovado já deixa vermelho o check que a proteção exige.
 
-   **Achado de 05/11/2026.** Até esta data, a `main` **não estava protegida**, embora o `CONTRIBUTING.md` e a INF-01 do backlog digam que estava:
+   **Achado de 05/11/2026.** A proteção da `main` foi configurada na INF-01, mas estava **desativada** nesta data:
    - `gh api repos/pedroszdev/A3-SistemaCadastroAcademia/branches/main --jq .protected` devolvia `false`;
-   - `gh api repos/pedroszdev/A3-SistemaCadastroAcademia/rules/branches/main` devolvia `[]`;
+   - `gh api repos/pedroszdev/A3-SistemaCadastroAcademia/rules/branches/main` devolvia `[]` (regras desativadas não aparecem);
    - no PR #31, o botão de merge ficava liberado com o CI ainda rodando.
 
-   Ou seja, antes do ruleset o gate deixava o check vermelho, mas nada impedia o merge.
+   Nesse período, o gate deixava o check vermelho, mas nada impedia o merge. A proteção foi refeita no mesmo dia, como o ruleset `26615335` descrito abaixo. Para não depender de uma configuração que pode ser desligada sem deixar rastro no código, as regras também ficam versionadas no repositório.
 
    **Configuração versionada.** O ruleset está em [`.github/rulesets/main.json`](../../../.github/rulesets/main.json) e é aplicado por um admin com:
 
@@ -56,8 +56,9 @@ O bloqueio fica em dois lugares:
    | Registro | Valor |
    | --- | --- |
    | Ruleset | "Sem merge até o CI rodar" (id `26615335`), `enforcement: active` |
-   | Criado por | Pedro (admin do repositório) |
-   | Data | 05/11/2026, 10:10 (horário de Brasília) |
+   | Criado por | Pedro (admin do repositório), substituindo a proteção desativada |
+   | Data | 05/11/2026, 10:10 (horário de Brasília; `created_at` do ruleset) |
+   | Bypass para quem não é admin | `current_user_can_bypass: "never"` |
    | `.protected` | `true` |
    | Regras ativas (`rules/branches/main`) | `deletion`, `non_fast_forward`, `pull_request` (1 aprovação, `allowed_merge_methods: ["merge", "rebase"]`), `required_status_checks` (`Lint, build e testes`, `integration_id` 15368) |
    | Efeito no PR #31 | passou de mergeável com o CI rodando para `mergeStateStatus: BLOCKED`, `reviewDecision: REVIEW_REQUIRED` |
