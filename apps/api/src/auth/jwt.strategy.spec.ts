@@ -7,18 +7,23 @@ import { TokenPayload } from './usuario-autenticado';
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 
 describe('JwtStrategy', () => {
-  let prisma: { funcionario: { findUnique: jest.Mock } };
+  let prisma: {
+    funcionario: { findUnique: jest.Mock };
+    membro: { findFirst: jest.Mock };
+  };
   let strategy: JwtStrategy;
 
-  const payload = (extra: Partial<TokenPayload> = {}): TokenPayload => ({
+  const payload = (): TokenPayload => ({
     sub: ID,
     tipo: 'FUNCIONARIO',
     cargo: Cargo.ADMIN,
-    ...extra,
   });
 
   beforeEach(() => {
-    prisma = { funcionario: { findUnique: jest.fn() } };
+    prisma = {
+      funcionario: { findUnique: jest.fn() },
+      membro: { findFirst: jest.fn() },
+    };
     const config = {
       getOrThrow: jest
         .fn()
@@ -114,4 +119,35 @@ describe('JwtStrategy', () => {
       expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
     },
   );
+
+  describe('aluno', () => {
+    const payloadAluno: TokenPayload = { sub: ID, tipo: 'ALUNO' };
+
+    it('devolve o aluno ativo com acesso liberado', async () => {
+      prisma.membro.findFirst.mockResolvedValue({ id: ID });
+
+      await expect(strategy.validate(payloadAluno)).resolves.toEqual({
+        id: ID,
+        tipo: 'ALUNO',
+      });
+      expect(prisma.membro.findFirst).toHaveBeenCalledWith({
+        where: { id: ID, ativo: true, senhaHash: { not: null } },
+        select: { id: true },
+      });
+      expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('recusa aluno inativo ou sem acesso (não encontrado)', async () => {
+      prisma.membro.findFirst.mockResolvedValue(null);
+
+      await expect(strategy.validate(payloadAluno)).resolves.toBeNull();
+    });
+
+    it('recusa sub fora do formato de UUID sem consultar o banco', async () => {
+      await expect(
+        strategy.validate({ sub: 'abc', tipo: 'ALUNO' }),
+      ).resolves.toBeNull();
+      expect(prisma.membro.findFirst).not.toHaveBeenCalled();
+    });
+  });
 });
