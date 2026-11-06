@@ -556,5 +556,20 @@ describe('Segurança: matriz de permissões (e2e)', () => {
 
       expect(protegidas).toEqual(naMatriz);
     });
+
+    // Rota @Public não passa pelo RolesGuard nem entra na MATRIZ: uma rota
+    // pública nova só passa no CI se for incluída aqui de propósito.
+    it('só a /health e os logins são públicos', () => {
+      const publicas = rotasRegistradas()
+        .filter((r) => r.publica)
+        .map((r) => r.chave)
+        .sort();
+
+      expect(publicas).toEqual([
+        'GET /health',
+        'POST /auth/login',
+        'POST /auth/login-aluno',
+      ]);
+    });
   });
 });
