@@ -26,27 +26,27 @@ Legenda de status: ✅ na `main` · 🔄 em PR aberto (não conta como concluíd
 Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/api/test/seguranca.e2e-spec.ts). Cada linha gera três tipos de caso, com estes nomes na saída do Jest:
 
 - `sem token → 401 › <MÉTODO> <rota> → 401`;
-- `por cargo › <CARGO> <MÉTODO> <rota> → 403` para cada cargo sem permissão, conferindo também o corpo `{ statusCode: 403, message: 'Você não tem permissão para acessar este recurso', error: 'Forbidden' }`;
-- `por cargo › <CARGO> <MÉTODO> <rota> → 2xx` para cada cargo permitido, com dados válidos.
+- `por papel › <PAPEL> <MÉTODO> <rota> → 403` para cada papel sem permissão (os 3 cargos e o ALUNO), conferindo também o corpo `{ statusCode: 403, message: 'Você não tem permissão para acessar este recurso', error: 'Forbidden' }`;
+- `por papel › <PAPEL> <MÉTODO> <rota> → 2xx` para cada papel permitido, com dados válidos.
 
 | Recurso (4.2) | Rotas | ADMIN | RECEP | INSTR | ALUNO | Implementação | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Funcionários (CRUD) | `GET/POST /funcionarios`, `GET/PATCH /funcionarios/:id`, `PATCH /funcionarios/:id/desativar` e `/reativar` | ✅ | ❌ | ❌ | ⏳ | PR [#27](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/27), merge `b70b666` | ✅ |
-| Membros — listar/ver | `GET /membros`, `GET /membros/:id` | ✅ | ✅ | ✅ | ⏳ | PR da issue #28 (`feat(membros)`) | ✅ após o merge |
-| Membros — criar/editar/desativar | `POST /membros`, `PATCH /membros/:id`, `PATCH /membros/:id/desativar` e `/reativar` | ✅ | ✅ | ❌ | ⏳ | PR da issue #28 (`feat(membros)`) | ✅ após o merge |
+| Funcionários (CRUD) | `GET/POST /funcionarios`, `GET/PATCH /funcionarios/:id`, `PATCH /funcionarios/:id/desativar` e `/reativar` | ✅ | ❌ | ❌ | ❌ | PR [#27](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/27), merge `b70b666` | ✅ |
+| Membros — listar/ver | `GET /membros`, `GET /membros/:id` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(membros)`) | ✅ após o merge |
+| Membros — criar/editar/desativar | `POST /membros`, `PATCH /membros/:id`, `PATCH /membros/:id/desativar` e `/reativar` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(membros)`) | ✅ após o merge |
 | Membros — liberar/redefinir acesso do aluno | ainda não existe | ✅ | ✅ | ❌ | ❌ | MEM-07 (Gabriel) | ⏳ |
 | Treinos — listar/ver (todos) | ainda não existe | ✅ | ✅ | ✅ | ❌ | TRE-03 (Gabriel) | ⏳ |
 | Treinos — criar/editar/excluir | ainda não existe | ✅ | ❌ | ✅ | ❌ | TRE-03 (Gabriel) | ⏳ |
 | Treinos — os próprios (`/me/treinos`) | ainda não existe | — | — | — | ✅ | TRE-05 (Gabriel) | ⏳ |
-| Pagamentos — tudo | `GET/POST /pagamentos`, `GET /pagamentos/:id`, `PATCH /pagamentos/:id/pagar` e `/cancelar` | ✅ | ✅ | ❌ | ⏳ | PR da issue #28 (`feat(pagamentos)`) | ✅ após o merge |
-| Situação financeira (RF45) | `GET /membros/:id/situacao` | ✅ | ✅ | ❌ | ⏳ | PR da issue #28 (`feat(pagamentos)`) | ✅ após o merge |
-| Histórico — listar/ver (todos) | `GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | ✅ | ✅ | ✅ | ⏳ | PR da issue #28 (`feat(historico)`) | ✅ após o merge |
-| Histórico — registrar | `POST /atividades` | ✅ | ❌ | ✅ | ⏳ | PR da issue #28 (`feat(historico)`) | ✅ após o merge |
+| Pagamentos — tudo | `GET/POST /pagamentos`, `GET /pagamentos/:id`, `PATCH /pagamentos/:id/pagar` e `/cancelar` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`) | ✅ após o merge |
+| Situação financeira (RF45) | `GET /membros/:id/situacao` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`) | ✅ após o merge |
+| Histórico — listar/ver (todos) | `GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`) | ✅ após o merge |
+| Histórico — registrar | `POST /atividades` | ✅ | ❌ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`) | ✅ após o merge |
 | Histórico — o próprio (`/me/atividades`) | ainda não existe | — | — | — | ✅ | HIS-05 (Yohan) | ⏳ |
 | Dashboard | `GET /dashboard` | ✅ | ✅ | ✅ | ❌ | PR [#33](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/33) (DASH-01) | 🔄 |
-| Meus dados | `GET /auth/me` | ✅ | ✅ | ✅ | ⏳ | PR da issue #28 (`feat(auth)`); ALUNO no PR [#32](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/32) | ✅ funcionários · 🔄 aluno |
+| Meus dados | `GET /auth/me` | ✅ | ✅ | ✅ | ✅ | PR [#32](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/32), merge `e9240a7`; `@Roles` testado no PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) | ✅ |
 
-A coluna ALUNO fica toda ⏳ porque o login do aluno (AUTH-04) está no PR #32, ainda aberto. Hoje não existe token de aluno na `main`, então não há como testar essa coluna. Com o #32, o `RolesGuard` passa a negar ao aluno toda rota que não tenha `@Roles('ALUNO')` (RN17), e a `MATRIZ` ganha a coluna ALUNO.
+O login do aluno (AUTH-04) entrou na `main` com o PR #32 (`e9240a7`). O `RolesGuard` nega ao aluno toda rota que não tenha `@Roles('ALUNO')` (RN17), e a `MATRIZ` testa a coluna ALUNO com um token de aluno real, obtido pelo `POST /auth/login-aluno`. O ❌ do ALUNO nas rotas de funcionário é um 403 testado. Acesso revogado e `senhaHash` fora das respostas estão no [`auth.e2e-spec.ts`](../../../apps/api/test/auth.e2e-spec.ts) da AUTH-04.
 
 ### Casos que a issue pede explicitamente
 
@@ -55,6 +55,7 @@ A coluna ALUNO fica toda ⏳ porque o login do aluno (AUTH-04) está no PR #32, 
 | INSTRUTOR não acessa pagamentos nem situação financeira | `contrato da issue #28 › INSTRUTOR não acessa pagamentos nem a situação financeira` (6 rotas → 403; nenhum pagamento gravado) |
 | RECEPCIONISTA não registra atividades | `contrato da issue #28 › RECEPCIONISTA não registra atividade: 403 e nada gravado` |
 | Somente ADMIN gerencia funcionários | `contrato da issue #28 › só ADMIN gerencia funcionários` (6 rotas × RECEPCIONISTA e INSTRUTOR → 403; nada criado) |
+| ALUNO é somente leitura (RN17) | `contrato da issue #28 › ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)` |
 | 401 sem autenticação | `sem token → 401` (as 23 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
 
 ## 3. Como reproduzir
@@ -68,17 +69,17 @@ pnpm --filter api exec prisma migrate deploy
 pnpm --filter api test:e2e -- seguranca
 ```
 
-Resultado na branch `feat/rbac-matriz` em 05/11/2026:
+Resultado na branch `feat/rbac-matriz` em 06/11/2026, já com a `main` do #32:
 
 ```
-Tests:       101 passed, 101 total      # seguranca.e2e-spec.ts
-Tests:       161 passed, 161 total      # todos os e2e (8 suítes)
-Tests:       550 passed, 550 total      # unitários, 100% de cobertura
+Tests:       125 passed, 125 total      # seguranca.e2e-spec.ts
+Tests:       191 passed, 191 total      # todos os e2e (8 suítes)
+Tests:       584 passed, 584 total      # unitários, 100% de cobertura
 ```
 
-São 101 casos: 23 de 401, 69 por cargo (23 rotas × 3 cargos), 4 do contrato da issue, 3 de token e 2 de cobertura da matriz.
+São 125 casos: 23 de 401, 92 por papel (23 rotas × 4 papéis), 5 do contrato da issue, 3 de token e 2 de cobertura da matriz.
 
-**Prova de que o teste pega a falha.** Com os `@Roles` novos removidos (o estado da `main` revisada pelo professor), o mesmo arquivo falha em 15 casos, exatamente as violações apontadas na issue:
+**Prova de que o teste pega a falha.** Com os `@Roles` novos removidos (o estado da `main` revisada pelo professor), a versão do arquivo só com os cargos de funcionário falha em 15 casos, exatamente as violações apontadas na issue:
 
 ```
 INSTRUTOR POST /membros → 403
@@ -107,8 +108,7 @@ Datas propostas, a confirmar no check-in do grupo.
 | Pendência | Task | Responsável | Data | Como fecha a linha da matriz |
 | --- | --- | --- | --- | --- |
 | Dashboard | DASH-01 · PR #33 | Pedro | 09/11 | adicionar `GET /dashboard` à `MATRIZ` (o teste de cobertura exige) |
-| Login do aluno e coluna ALUNO | AUTH-04 · PR #32 | Pedro | 09/11 | coluna ALUNO na `MATRIZ`; aluno → 403 em todas as rotas de funcionário (RN17) |
 | Treinos | TRE-03 | Gabriel | 13/11 | linhas de `/treinos` na `MATRIZ` |
 | Liberar acesso do aluno | MEM-07 | Gabriel | 16/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
 | Treinos e histórico do aluno | TRE-05 · HIS-05 | Gabriel · Yohan | 16/11 | `/me/...` só para ALUNO; aluno A não vê dados do aluno B (RN16, 404) |
-| E2E-05 completo | E2E-05 | Pedro | 16/11 | casos de ALUNO: RN16, RN17, acesso revogado, sem `senhaHash` |
+| E2E-05 completo | E2E-05 | Pedro | 16/11 | RN16 (aluno A × aluno B → 404) e aluno → 403 em `POST /treinos` |
