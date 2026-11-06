@@ -185,6 +185,88 @@ describe("repassarParaApi", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("recusa com 403 um POST de outra origem sem chamar a API", async () => {
+    const { repassarParaApi } = await carregar();
+
+    const res = await repassarParaApi(
+      requisicao("/api/membros", {
+        method: "POST",
+        body: "{}",
+        headers: {
+          origin: "http://site-malicioso.exemplo",
+          cookie: "token=abc",
+        },
+      }),
+      ["membros"],
+    );
+
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("recusa com 403 um POST com Origin null", async () => {
+    const { repassarParaApi } = await carregar();
+
+    const res = await repassarParaApi(
+      requisicao("/api/membros", {
+        method: "POST",
+        body: "{}",
+        headers: { origin: "null", cookie: "token=abc" },
+      }),
+      ["membros"],
+    );
+
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("repassa POST da mesma origem", async () => {
+    const { repassarParaApi } = await carregar();
+
+    await repassarParaApi(
+      requisicao("/api/membros", {
+        method: "POST",
+        body: "{}",
+        headers: { origin: "http://localhost:3001", cookie: "token=abc" },
+      }),
+      ["membros"],
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("usa x-forwarded-host para conferir a origem", async () => {
+    const { repassarParaApi } = await carregar();
+
+    await repassarParaApi(
+      requisicao("/api/membros", {
+        method: "POST",
+        body: "{}",
+        headers: {
+          origin: "https://academia.exemplo.com",
+          "x-forwarded-host": "academia.exemplo.com",
+          cookie: "token=abc",
+        },
+      }),
+      ["membros"],
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("repassa GET mesmo com Origin de outro site", async () => {
+    const { repassarParaApi } = await carregar();
+
+    await repassarParaApi(
+      requisicao("/api/membros", {
+        headers: { origin: "http://site-malicioso.exemplo" },
+      }),
+      ["membros"],
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it("devolve 502 quando a API não responde", async () => {
     const { repassarParaApi } = await carregar();
     fetchMock.mockRejectedValue(new TypeError("fetch failed"));

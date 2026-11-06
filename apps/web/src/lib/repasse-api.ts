@@ -13,6 +13,24 @@ function rotaBloqueada(caminho: string[]): boolean {
   );
 }
 
+// Defesa contra CSRF, além do SameSite do cookie: métodos com corpo só passam se o Origin for do próprio site.
+function origemPermitida(req: Request): boolean {
+  if (METODOS_SEM_CORPO.includes(req.method)) return true;
+
+  const origem = req.headers.get("origin");
+  if (!origem) return true;
+
+  const esperado =
+    req.headers.get("x-forwarded-host") ??
+    req.headers.get("host") ??
+    new URL(req.url).host;
+  try {
+    return new URL(origem).host === esperado;
+  } catch {
+    return false;
+  }
+}
+
 export async function repassarParaApi(
   req: Request,
   caminho: string[],
@@ -21,6 +39,12 @@ export async function repassarParaApi(
     return Response.json(
       { statusCode: 404, message: "Não encontrado", error: "Not Found" },
       { status: 404 },
+    );
+  }
+  if (!origemPermitida(req)) {
+    return Response.json(
+      { statusCode: 403, message: "Origem não permitida", error: "Forbidden" },
+      { status: 403 },
     );
   }
 
