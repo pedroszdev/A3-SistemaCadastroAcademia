@@ -1,4 +1,4 @@
-import { COOKIE_TOKEN, lerCookie } from "./sessao";
+import { COOKIE_TOKEN, COOKIE_TOKEN_APAGADO, lerCookie } from "./sessao";
 
 const API_URL = process.env.API_URL ?? "http://localhost:3000";
 const METODOS_SEM_CORPO = ["GET", "HEAD"];
@@ -88,10 +88,7 @@ export async function repassarParaApi(
     respostaHeaders.set("Content-Type", "application/json");
   }
   if (res.status === 401) {
-    respostaHeaders.append(
-      "Set-Cookie",
-      `${COOKIE_TOKEN}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax`,
-    );
+    respostaHeaders.append("Set-Cookie", COOKIE_TOKEN_APAGADO);
   }
 
   return new Response(res.status === 204 ? null : await res.arrayBuffer(), {
