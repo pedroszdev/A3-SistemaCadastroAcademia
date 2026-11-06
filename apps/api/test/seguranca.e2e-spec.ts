@@ -1,6 +1,9 @@
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { segredoJwt } from '../src/auth/segredo-jwt';
 import { hoje } from '../src/common/utils/date';
 import { Cargo } from '../src/generated/prisma/enums';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -384,6 +387,50 @@ describe('Segurança: matriz de permissões (e2e)', () => {
         .set('Authorization', bearer(tokens[INSTRUTOR]))
         .send({})
         .expect(403);
+    });
+  });
+
+  describe('token', () => {
+    const rota = '/membros';
+
+    it('malformado → 401', async () => {
+      await request(app.getHttpServer())
+        .get(rota)
+        .set('Authorization', 'Bearer nao-e-um-jwt')
+        .expect(401);
+    });
+
+    it('assinado com outro segredo → 401', async () => {
+      const [adminId] = idsDosTokens;
+      const forjado = new JwtService({ secret: 'x'.repeat(64) }).sign({
+        sub: adminId,
+        tipo: 'FUNCIONARIO',
+        cargo: ADMIN,
+      });
+
+      await request(app.getHttpServer())
+        .get(rota)
+        .set('Authorization', bearer(forjado))
+        .expect(401);
+    });
+
+    it('expirado → 401', async () => {
+      const [adminId] = idsDosTokens;
+      const agora = Math.floor(Date.now() / 1000);
+      const expirado = new JwtService({
+        secret: segredoJwt(app.get(ConfigService)),
+      }).sign({
+        sub: adminId,
+        tipo: 'FUNCIONARIO',
+        cargo: ADMIN,
+        iat: agora - 120,
+        exp: agora - 60,
+      });
+
+      await request(app.getHttpServer())
+        .get(rota)
+        .set('Authorization', bearer(expirado))
+        .expect(401);
     });
   });
 });
