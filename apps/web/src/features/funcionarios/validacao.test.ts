@@ -17,6 +17,9 @@ describe("validarFuncionario", () => {
     ["  Al  ", true],
     // 99 letras + 1 emoji = 100 caracteres para a API, embora sejam 101 unidades UTF-16
     ["a".repeat(99) + "💪", false],
+    // o seletor de variação (o ️ de "❤️") não conta para a API: são 2 caracteres
+    ["❤️❤️", true],
+    ["❤️❤️❤️", false],
   ])("nome %j (erro: %s)", (nome, comErro) => {
     const erros = validarFuncionario({ ...valido, nome }, "criar");
 
@@ -34,6 +37,8 @@ describe("validarFuncionario", () => {
     ["ab", "login deve ter entre 3 e 30 caracteres"],
     ["a".repeat(31), "login deve ter entre 3 e 30 caracteres"],
     ["ana.01", "login deve ter apenas letras e números"],
+    // 16 emojis são 32 unidades UTF-16, mas 16 caracteres para a API
+    ["😀".repeat(16), "login deve ter apenas letras e números"],
   ])("login %j recusado", (login, mensagem) => {
     expect(validarFuncionario({ ...valido, login }, "criar").login).toBe(mensagem);
   });
