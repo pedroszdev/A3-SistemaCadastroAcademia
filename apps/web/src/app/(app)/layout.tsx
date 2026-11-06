@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { type ReactNode, Suspense } from "react";
 import { MenuLateral } from "@/components/layout/menu-lateral";
 import { ToastProvider } from "@/components/ui/toast";
@@ -11,6 +12,9 @@ import { COOKIE_TOKEN } from "@/lib/sessao";
 // Toda tela autenticada depende do usuário, então o conteúdo inteiro espera a
 // leitura do cookie dentro do Suspense (exigido pelo cacheComponents).
 async function AreaAutenticada({ children }: { children: ReactNode }) {
+  // A validade do token depende da hora atual (Date.now() no sessaoDaArea), que o
+  // prerender do cacheComponents não aceita: a área só renderiza na requisição.
+  await connection();
   const sessao = sessaoDaArea((await cookies()).get(COOKIE_TOKEN)?.value);
   if (!sessao) redirect(ROTA_LOGIN);
   const { usuario, cargo } = sessao;
