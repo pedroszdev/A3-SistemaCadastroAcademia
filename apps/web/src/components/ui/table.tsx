@@ -30,13 +30,46 @@ export function Table<T>({
   paginacao,
   vazio,
 }: TableProps<T>) {
-  if (linhas.length === 0) {
-    return vazio ?? <EmptyState titulo="Nenhum registro encontrado" />;
-  }
-
   const totalPaginas = paginacao
     ? Math.max(1, Math.ceil(paginacao.total / paginacao.pageSize))
     : 1;
+
+  const rodape = paginacao && (
+    <div className="flex items-center justify-between text-sm">
+      <span>
+        Página {paginacao.page} de {totalPaginas}
+      </span>
+      <div className="flex gap-2">
+        <Button
+          variante="secundario"
+          disabled={paginacao.page <= 1}
+          onClick={() => paginacao.onMudarPagina(paginacao.page - 1)}
+        >
+          Anterior
+        </Button>
+        <Button
+          variante="secundario"
+          disabled={paginacao.page >= totalPaginas}
+          onClick={() => paginacao.onMudarPagina(paginacao.page + 1)}
+        >
+          Próxima
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (linhas.length === 0) {
+    const estadoVazio = vazio ?? <EmptyState titulo="Nenhum registro encontrado" />;
+    if (paginacao && paginacao.page > 1) {
+      return (
+        <div className="flex flex-col gap-3">
+          {estadoVazio}
+          {rodape}
+        </div>
+      );
+    }
+    return estadoVazio;
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -62,29 +95,7 @@ export function Table<T>({
           ))}
         </tbody>
       </table>
-      {paginacao && (
-        <div className="flex items-center justify-between text-sm">
-          <span>
-            Página {paginacao.page} de {totalPaginas}
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variante="secundario"
-              disabled={paginacao.page <= 1}
-              onClick={() => paginacao.onMudarPagina(paginacao.page - 1)}
-            >
-              Anterior
-            </Button>
-            <Button
-              variante="secundario"
-              disabled={paginacao.page >= totalPaginas}
-              onClick={() => paginacao.onMudarPagina(paginacao.page + 1)}
-            >
-              Próxima
-            </Button>
-          </div>
-        </div>
-      )}
+      {rodape}
     </div>
   );
 }

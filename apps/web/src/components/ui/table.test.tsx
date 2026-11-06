@@ -54,6 +54,40 @@ describe("Table", () => {
     expect(screen.getByText("Sem membros")).toBeInTheDocument();
   });
 
+  it("mantém a paginação numa página vazia depois da primeira", async () => {
+    const onMudarPagina = vi.fn();
+    render(
+      <Table
+        colunas={COLUNAS}
+        linhas={[]}
+        chaveDaLinha={(m) => m.id}
+        paginacao={{ page: 3, pageSize: 2, total: 4, onMudarPagina }}
+      />,
+    );
+
+    expect(screen.getByText("Nenhum registro encontrado")).toBeInTheDocument();
+    const anterior = screen.getByRole("button", { name: "Anterior" });
+    expect(anterior).toBeEnabled();
+
+    await userEvent.click(anterior);
+
+    expect(onMudarPagina).toHaveBeenCalledWith(2);
+  });
+
+  it("não mostra paginação vazia na primeira página", () => {
+    render(
+      <Table
+        colunas={COLUNAS}
+        linhas={[]}
+        chaveDaLinha={(m) => m.id}
+        paginacao={{ page: 1, pageSize: 2, total: 0, onMudarPagina: vi.fn() }}
+      />,
+    );
+
+    expect(screen.getByText("Nenhum registro encontrado")).toBeInTheDocument();
+    expect(screen.queryByText(/Página/)).toBeNull();
+  });
+
   it("mostra a página atual e o total", () => {
     renderizar(2);
 
