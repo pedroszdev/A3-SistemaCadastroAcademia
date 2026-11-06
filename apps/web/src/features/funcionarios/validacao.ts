@@ -10,8 +10,15 @@ type Valores = { nome: string; login: string; cargo: string; senha: string };
 
 const MAX_BYTES_SENHA = 72;
 
+// Mesma contagem do isLength do validator, que o Length e o MinLength da API usam:
+// um emoji (par surrogate) vale 1, não 2.
+function tamanho(texto: string): number {
+  const pares = texto.match(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g)?.length ?? 0;
+  return texto.length - pares;
+}
+
 function validarSenha(senha: string): string | undefined {
-  if (senha.length < 8) return "senha deve ter no mínimo 8 caracteres";
+  if (tamanho(senha) < 8) return "senha deve ter no mínimo 8 caracteres";
   if (new TextEncoder().encode(senha).length > MAX_BYTES_SENHA) {
     return "senha deve ter no máximo 72 bytes";
   }

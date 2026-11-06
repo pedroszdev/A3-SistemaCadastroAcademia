@@ -49,6 +49,14 @@ describe("validarFuncionario", () => {
     expect(validarFuncionario({ ...valido, senha: "12345678" }, "criar").senha).toBeUndefined();
   });
 
+  it("conta o mínimo da senha como a API: um emoji vale 1 caractere", () => {
+    // 4 emojis são 8 unidades UTF-16, mas o MinLength(8) da API conta 4
+    expect(validarFuncionario({ ...valido, senha: "😀😀😀😀" }, "criar").senha).toBe(
+      "senha deve ter no mínimo 8 caracteres",
+    );
+    expect(validarFuncionario({ ...valido, senha: "😀".repeat(8) }, "criar").senha).toBeUndefined();
+  });
+
   it("limita a senha a 72 bytes, não a 72 caracteres", () => {
     expect(validarFuncionario({ ...valido, senha: "ç".repeat(40) }, "criar").senha).toBe(
       "senha deve ter no máximo 72 bytes",
