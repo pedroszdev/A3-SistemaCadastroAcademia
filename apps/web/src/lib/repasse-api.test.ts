@@ -132,6 +132,44 @@ describe("repassarParaApi", () => {
     expect(res.headers.has("Set-Cookie")).toBe(false);
   });
 
+  it("repassa Content-Disposition e Retry-After e não repassa Set-Cookie da API", async () => {
+    const { repassarParaApi } = await carregar();
+    fetchMock.mockResolvedValue(
+      new Response("nome\nAna", {
+        status: 429,
+        headers: {
+          "Content-Type": "text/csv",
+          "Content-Disposition": 'attachment; filename="membros.csv"',
+          "Retry-After": "30",
+          "Set-Cookie": "outro=1",
+        },
+      }),
+    );
+
+    const res = await repassarParaApi(requisicao("/api/membros"), ["membros"]);
+
+    expect(res.headers.get("Content-Disposition")).toBe(
+      'attachment; filename="membros.csv"',
+    );
+    expect(res.headers.get("Retry-After")).toBe("30");
+    expect(res.headers.has("Set-Cookie")).toBe(false);
+  });
+
+  it("repassa corpo binário sem alterar", async () => {
+    const { repassarParaApi } = await carregar();
+    fetchMock.mockResolvedValue(
+      new Response(new Uint8Array([0xff, 0x00, 0x80]), {
+        headers: { "Content-Type": "application/octet-stream" },
+      }),
+    );
+
+    const res = await repassarParaApi(requisicao("/api/membros"), ["membros"]);
+
+    expect(Array.from(new Uint8Array(await res.arrayBuffer()))).toEqual([
+      0xff, 0x00, 0x80,
+    ]);
+  });
+
   it("devolve 204 sem corpo", async () => {
     const { repassarParaApi } = await carregar();
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));

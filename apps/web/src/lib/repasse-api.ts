@@ -2,6 +2,15 @@ import { COOKIE_TOKEN, lerCookie } from "./sessao";
 
 const API_URL = process.env.API_URL ?? "http://localhost:3000";
 const METODOS_SEM_CORPO = ["GET", "HEAD"];
+// Lista fechada: set-cookie, content-encoding, content-length e afins da API ficam de fora de propósito.
+const HEADERS_DA_RESPOSTA = [
+  "content-type",
+  "content-disposition",
+  "retry-after",
+  "cache-control",
+  "etag",
+  "last-modified",
+];
 
 function rotaBloqueada(caminho: string[]): boolean {
   if (caminho.some((segmento) => segmento === "." || segmento === "..")) {
@@ -70,9 +79,14 @@ export async function repassarParaApi(
     );
   }
 
-  const respostaHeaders = new Headers({
-    "Content-Type": res.headers.get("content-type") ?? "application/json",
-  });
+  const respostaHeaders = new Headers();
+  for (const nome of HEADERS_DA_RESPOSTA) {
+    const valor = res.headers.get(nome);
+    if (valor) respostaHeaders.set(nome, valor);
+  }
+  if (!respostaHeaders.has("content-type")) {
+    respostaHeaders.set("Content-Type", "application/json");
+  }
   if (res.status === 401) {
     respostaHeaders.append(
       "Set-Cookie",
@@ -80,7 +94,7 @@ export async function repassarParaApi(
     );
   }
 
-  return new Response(res.status === 204 ? null : await res.text(), {
+  return new Response(res.status === 204 ? null : await res.arrayBuffer(), {
     status: res.status,
     headers: respostaHeaders,
   });
