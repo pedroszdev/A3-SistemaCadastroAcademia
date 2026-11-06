@@ -1,16 +1,13 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { redirect } from "next/navigation";
+import { describe, expect, it, vi } from "vitest";
 import Home from "./page";
 
-describe("Home", () => {
-  it("mostra o título do sistema", () => {
-    render(<Home />);
+vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 
-    expect(
-      screen.getByRole("heading", {
-        level: 1,
-        name: "Sistema de Cadastro de Academia",
-      }),
-    ).toBeInTheDocument();
+describe("Home", () => {
+  it("manda para o dashboard", () => {
+    Home();
+
+    expect(redirect).toHaveBeenCalledWith("/dashboard");
   });
 });
