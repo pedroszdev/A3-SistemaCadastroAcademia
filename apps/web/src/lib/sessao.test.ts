@@ -69,4 +69,8 @@ describe("lerCookie", () => {
   it("decodifica valores com %-encoding", () => {
     expect(lerCookie("token=a%20b%3D", "token")).toBe("a b=");
   });
+
+  it("devolve undefined para valor malformado", () => {
+    expect(lerCookie("token=%E0", "token")).toBeUndefined();
+  });
 });

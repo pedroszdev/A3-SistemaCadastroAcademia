@@ -17,7 +17,12 @@ export function lerCookie(
   for (const parte of cabecalho.split(";")) {
     const item = parte.trim();
     if (item.startsWith(`${nome}=`)) {
-      return decodeURIComponent(item.slice(nome.length + 1));
+      try {
+        return decodeURIComponent(item.slice(nome.length + 1));
+      } catch {
+        // Valor malformado conta como cookie ausente: a API responde 401 e o repasse apaga o cookie.
+        return undefined;
+      }
     }
   }
   return undefined;

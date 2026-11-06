@@ -94,6 +94,19 @@ describe("repassarParaApi", () => {
     );
   });
 
+  it("repassa sem Authorization quando o cookie do token está malformado", async () => {
+    const { repassarParaApi } = await carregar();
+
+    await repassarParaApi(
+      requisicao("/api/membros", { headers: { cookie: "token=%E0" } }),
+      ["membros"],
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const headers = new Headers(fetchMock.mock.calls[0][1]?.headers);
+    expect(headers.has("Authorization")).toBe(false);
+  });
+
   it("não manda corpo no GET", async () => {
     const { repassarParaApi } = await carregar();
 
