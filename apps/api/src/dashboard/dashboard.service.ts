@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { hoje } from '../common/utils/date';
 import { HistoricoService } from '../historico/historico.service';
 import { MembrosService } from '../membros/membros.service';
-import { PagamentosService } from '../pagamentos/pagamentos.service';
+import {
+  type MembroInadimplente,
+  PagamentosService,
+} from '../pagamentos/pagamentos.service';
 
 export interface ResumoDashboard {
   membrosAtivos: number;
@@ -56,5 +59,9 @@ export class DashboardService {
       receitaMes,
       atividadesHoje: atividadesHoje.total,
     };
+  }
+
+  inadimplentes(): Promise<MembroInadimplente[]> {
+    return this.pagamentos.listarInadimplentes();
   }
 }
