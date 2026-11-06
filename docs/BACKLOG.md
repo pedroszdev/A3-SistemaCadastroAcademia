@@ -219,7 +219,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] AUTH-05 Testes do login do aluno
 - [ ] DASH-01 Endpoint do dashboard + testes — 🟡 **parcial**: o `GET /dashboard` e os testes (unitários e e2e) estão prontos. Falta conferir os números com o seed quando a INF-06 criar membros, pagamentos e atividades
 - [x] WEB-01 Base do front (layout e componentes) — o token fica num cookie httpOnly e o navegador chama a API pelo repasse `app/api/[...caminho]`; a URL da API passou a ser `API_URL`, lida só no servidor
-- [ ] WEB-02 Autenticação no front
+- [x] WEB-02 Autenticação no front — o login passa pelo handler `app/api/sessao` (POST grava o cookie httpOnly até o `exp` do token; DELETE é o logout); o `src/proxy.ts` (o `middleware.ts` do Next 16) manda quem não tem sessão válida para `/login` e quem já está logado para `/dashboard`
 - [ ] WEB-03 Telas de funcionários
 - [ ] WEB-04 Tela do dashboard
 - [ ] WEB-05 Login e portal do aluno
@@ -1027,11 +1027,11 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### WEB-02 · Autenticação no front
-**Responsável:** Pedro · **Sprint:** 3 · **Depende de:** AUTH-01, WEB-01
+**Responsável:** Pedro · **Sprint:** 3 · **Depende de:** AUTH-01, WEB-01 · **Status:** ✅ concluída
 
 **O que fazer**
 - Tela `/login` com mensagem de erro genérica.
-- Guardar o token em cookie, com `middleware.ts` protegendo as rotas `(app)` e um contexto/hook `useUsuario()` com o cargo.
+- Guardar o token em cookie, com `proxy.ts` (o antigo `middleware.ts`, renomeado no Next 16) protegendo as rotas `(app)` e um contexto/hook `useUsuario()` com o cargo.
 - Logout.
 - Testes do formulário de login (sucesso, erro) e dos helpers de sessão.
 
@@ -1068,7 +1068,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 
 **O que fazer**
 - A tela `/login` ganha duas abas: **Funcionário** (login + senha) e **Aluno** (CPF com máscara + senha).
-- Depois do login, o `middleware.ts` redireciona conforme o `tipo` do token: funcionário → dashboard; aluno → `/aluno`. Um aluno que tenta acessar uma rota de funcionário é mandado de volta para `/aluno`.
+- Depois do login, o `proxy.ts` redireciona conforme o `tipo` do token: funcionário → dashboard; aluno → `/aluno`. Um aluno que tenta acessar uma rota de funcionário é mandado de volta para `/aluno`.
 - Layout do portal `(aluno)/layout.tsx`: cabeçalho com o nome do aluno, menu *Meus treinos* e *Meu histórico*, botão de sair. Deve funcionar bem **no celular**, porque é onde o aluno vai usar.
 - Testes: troca de abas, envio para a rota certa de cada aba, redirecionamento por tipo (helper de sessão).
 
