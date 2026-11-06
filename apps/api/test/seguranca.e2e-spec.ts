@@ -3,10 +3,11 @@ import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { ConfigService } from '@nestjs/config';
 import { MetadataScanner, ModulesContainer } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { hashSync } from 'bcryptjs';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { IS_PUBLIC_KEY } from '../src/auth/decorators/public.decorator';
-import { ROLES_KEY } from '../src/auth/decorators/roles.decorator';
+import { Papel, ROLES_KEY } from '../src/auth/decorators/roles.decorator';
 import { segredoJwt } from '../src/auth/segredo-jwt';
 import { hoje } from '../src/common/utils/date';
 import { Cargo } from '../src/generated/prisma/enums';
@@ -24,16 +25,20 @@ import {
   limparBanco,
   loginComo,
   prismaDe,
+  SENHA_PADRAO,
 } from './utils';
 
-// E2E-05 (parte de funcionário): a matriz 4.2 do backlog, rota por rota e cargo
-// por cargo, contra o AppModule real. Evidência da issue #28 em
+// E2E-05: a matriz 4.2 do backlog, rota por rota e papel por papel (os três
+// cargos e o ALUNO), contra o AppModule real. Evidência da issue #28 em
 // docs/evidencias/permissoes/README.md.
 
 const MENSAGEM_PROIBIDO = 'Você não tem permissão para acessar este recurso';
 const { ADMIN, RECEPCIONISTA, INSTRUTOR } = Cargo;
 const CARGOS = [ADMIN, RECEPCIONISTA, INSTRUTOR] as const;
-const TODOS = [...CARGOS];
+const ALUNO = 'ALUNO' as const;
+/** Os papéis do RolesGuard: os cargos de funcionário e o aluno. */
+const PAPEIS: Papel[] = [...CARGOS, ALUNO];
+const TODOS: Papel[] = [...CARGOS];
 const GESTAO = [ADMIN, RECEPCIONISTA];
 
 type Metodo = 'get' | 'post' | 'patch';
@@ -54,12 +59,13 @@ interface Linha {
   rota: string;
   id?: (m: Massa) => string;
   corpo?: (m: Massa) => object;
-  permitidos: Cargo[];
+  permitidos: Papel[];
   sucesso: 200 | 201;
 }
 
 /**
- * Matriz 4.2 do backlog, uma linha por rota de funcionário. Toda rota nova
+ * Matriz 4.2 do backlog, uma linha por rota protegida. O ALUNO só aparece em
+ * `permitidos` onde a rota tem `@Roles('ALUNO')` (RN17). Toda rota nova
  * entra aqui: o teste "toda rota está na matriz" falha se faltar.
  */
 const MATRIZ: Linha[] = [
@@ -227,7 +233,12 @@ const MATRIZ: Linha[] = [
   },
 
   // Meus dados
-  { metodo: 'get', rota: '/auth/me', permitidos: TODOS, sucesso: 200 },
+  {
+    metodo: 'get',
+    rota: '/auth/me',
+    permitidos: [...CARGOS, ALUNO],
+    sucesso: 200,
+  },
 ];
 
 const chave = (metodo: string, rota: string) =>
@@ -236,11 +247,12 @@ const chave = (metodo: string, rota: string) =>
 describe('Segurança: matriz de permissões (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
-  const tokens = {} as Record<Cargo, string>;
+  const tokens = {} as Record<Papel, string>;
   const idsDosTokens: string[] = [];
+  let alunoId: string;
   let massa: Massa;
 
-  // Os funcionários dos tokens são criados uma vez; a massa, a cada teste.
+  // Os donos dos tokens são criados uma vez; a massa, a cada teste.
   beforeAll(async () => {
     app = await criarApp();
     prisma = prismaDe(app);
@@ -250,6 +262,17 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       tokens[cargo] = token;
       idsDosTokens.push(funcionario.id);
     }
+
+    // aluno com acesso liberado (RN15), logado de verdade pelo CPF
+    const aluno = await criarMembro(prisma, {
+      senhaHash: hashSync(SENHA_PADRAO, 4),
+    });
+    alunoId = aluno.id;
+    const resposta = await request(app.getHttpServer())
+      .post('/auth/login-aluno')
+      .send({ cpf: aluno.cpf, senha: SENHA_PADRAO })
+      .expect(200);
+    tokens[ALUNO] = (resposta.body as { accessToken: string }).accessToken;
   });
 
   // Ordem das FKs: filhos antes do membro e do funcionário.
@@ -257,7 +280,7 @@ describe('Segurança: matriz de permissões (e2e)', () => {
     await prisma.historicoAtividade.deleteMany();
     await prisma.pagamento.deleteMany();
     await prisma.treino.deleteMany();
-    await prisma.membro.deleteMany();
+    await prisma.membro.deleteMany({ where: { id: { not: alunoId } } });
     await prisma.funcionario.deleteMany({
       where: { id: { notIn: idsDosTokens } },
     });
@@ -318,15 +341,15 @@ describe('Segurança: matriz de permissões (e2e)', () => {
     );
   });
 
-  describe('por cargo', () => {
+  describe('por papel', () => {
     const casos = MATRIZ.flatMap((l) =>
-      CARGOS.map(
-        (cargo) =>
+      PAPEIS.map(
+        (papel) =>
           [
-            cargo,
+            papel,
             l.metodo.toUpperCase(),
             l.rota,
-            l.permitidos.includes(cargo) ? l.sucesso : 403,
+            l.permitidos.includes(papel) ? l.sucesso : 403,
             l,
           ] as const,
       ),
@@ -334,8 +357,8 @@ describe('Segurança: matriz de permissões (e2e)', () => {
 
     it.each(casos)(
       '%s %s %s → %i',
-      async (cargo, _metodo, _rota, esperado, l) => {
-        const resposta = await chamar(l, tokens[cargo]).expect(esperado);
+      async (papel, _metodo, _rota, esperado, l) => {
+        const resposta = await chamar(l, tokens[papel]).expect(esperado);
 
         if (esperado === 403) {
           expect(resposta.body).toEqual({
@@ -383,6 +406,19 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       expect(
         await prisma.funcionario.count({ where: { login: 'funcionarionovo' } }),
       ).toBe(0);
+    });
+
+    it('ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)', async () => {
+      const rotas = MATRIZ.filter((l) => !l.permitidos.includes(ALUNO));
+      expect(rotas).toHaveLength(MATRIZ.length - 1);
+
+      for (const l of rotas) {
+        await chamar(l, tokens[ALUNO]).expect(403);
+      }
+      expect(await prisma.pagamento.count()).toBe(1);
+      expect(await prisma.historicoAtividade.count()).toBe(1);
+      // a massa (2) e o próprio aluno; nenhum membro criado
+      expect(await prisma.membro.count()).toBe(3);
     });
 
     it('corpo inválido com cargo sem permissão → 403, não 400', async () => {
