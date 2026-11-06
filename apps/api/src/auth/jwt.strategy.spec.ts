@@ -99,7 +99,7 @@ describe('JwtStrategy', () => {
     await expect(strategy.validate(payload())).resolves.toBeNull();
   });
 
-  it('recusa token com tipo diferente de FUNCIONARIO sem consultar o banco', async () => {
+  it('recusa token com tipo desconhecido sem consultar o banco', async () => {
     const outroTipo = {
       ...payload(),
       tipo: 'MEMBRO',
@@ -107,6 +107,7 @@ describe('JwtStrategy', () => {
 
     await expect(strategy.validate(outroTipo)).resolves.toBeNull();
     expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
+    expect(prisma.membro.findFirst).not.toHaveBeenCalled();
   });
 
   // Sem essa barreira, o Postgres recusa o id e a requisição vira 500.
