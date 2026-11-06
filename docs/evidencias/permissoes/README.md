@@ -17,7 +17,7 @@ requisição
 - O cargo vem do banco a cada requisição ([`jwt.strategy.ts`](../../../apps/api/src/auth/jwt.strategy.ts)), não do token. Um funcionário rebaixado ou desativado perde o acesso na hora.
 - O `@Roles(...)` pode ficar na classe e ser sobrescrito no método ([`roles.guard.ts`](../../../apps/api/src/auth/roles.guard.ts), `getAllAndOverride`). Exemplo: em `/atividades`, a classe libera a consulta para os 3 cargos e o `POST` restringe a ADMIN e INSTRUTOR.
 - A autorização roda antes da validação do corpo: um cargo sem permissão recebe 403 mesmo com o corpo inválido, sem descobrir nada sobre o formato esperado.
-- **Nenhuma rota fica sem declaração.** O teste `cobertura da matriz` percorre todas as rotas registradas no `AppModule` e falha se alguma não tiver `@Roles` nem `@Public`, ou se uma rota protegida não estiver na `MATRIZ` do teste. Uma rota nova (dashboard, treinos, `/me` do aluno) só passa no CI com a linha dela na matriz. As rotas públicas também têm lista fechada (`GET /health`, `POST /auth/login` e `POST /auth/login-aluno`): um `@Public()` novo faz o teste falhar até ser incluído de propósito.
+- **Nenhuma rota fica sem declaração.** O teste `cobertura da matriz` percorre todas as rotas registradas no `AppModule` e falha se alguma não tiver `@Roles` nem `@Public`, ou se uma rota protegida não estiver na `MATRIZ` do teste. Uma rota nova (treinos, `/me` do aluno) só passa no CI com a linha dela na matriz. As rotas públicas também têm lista fechada (`GET /health`, `POST /auth/login` e `POST /auth/login-aluno`): um `@Public()` novo faz o teste falhar até ser incluído de propósito.
 
 ## 2. Matriz verificável
 
@@ -43,7 +43,7 @@ Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/
 | Histórico — listar/ver (todos) | `GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`) | ✅ após o merge |
 | Histórico — registrar | `POST /atividades` | ✅ | ❌ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`) | ✅ após o merge |
 | Histórico — o próprio (`/me/atividades`) | ainda não existe | — | — | — | ✅ | HIS-05 (Yohan) | ⏳ |
-| Dashboard | `GET /dashboard` | ✅ | ✅ | ✅ | ❌ | PR [#33](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/33) (DASH-01) | 🔄 |
+| Dashboard | `GET /dashboard` | ✅ | ✅ | ✅ | ❌ | PR [#33](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/33) (DASH-01), merge `6565f38`; linha na `MATRIZ` no PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) | ✅ |
 | Meus dados | `GET /auth/me` | ✅ | ✅ | ✅ | ✅ | PR [#32](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/32), merge `e9240a7`; `@Roles` testado no PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) | ✅ |
 
 O login do aluno (AUTH-04) entrou na `main` com o PR #32 (`e9240a7`). O `RolesGuard` nega ao aluno toda rota que não tenha `@Roles('ALUNO')` (RN17), e a `MATRIZ` testa a coluna ALUNO com um token de aluno real, obtido pelo `POST /auth/login-aluno`. O ❌ do ALUNO nas rotas de funcionário é um 403 testado. Acesso revogado e `senhaHash` fora das respostas estão no [`auth.e2e-spec.ts`](../../../apps/api/test/auth.e2e-spec.ts) da AUTH-04.
@@ -56,7 +56,7 @@ O login do aluno (AUTH-04) entrou na `main` com o PR #32 (`e9240a7`). O `RolesGu
 | RECEPCIONISTA não registra atividades | `contrato da issue #28 › RECEPCIONISTA não registra atividade: 403 e nada gravado` |
 | Somente ADMIN gerencia funcionários | `contrato da issue #28 › só ADMIN gerencia funcionários` (6 rotas × RECEPCIONISTA e INSTRUTOR → 403; nada criado) |
 | ALUNO é somente leitura (RN17) | `contrato da issue #28 › ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)` |
-| 401 sem autenticação | `sem token → 401` (as 23 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
+| 401 sem autenticação | `sem token → 401` (as 24 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
 
 ## 3. Como reproduzir
 
@@ -69,15 +69,15 @@ pnpm --filter api exec prisma migrate deploy
 pnpm --filter api test:e2e -- seguranca
 ```
 
-Resultado na branch `feat/rbac-matriz` em 06/11/2026, já com a `main` do #32:
+Resultado na branch `feat/rbac-matriz` em 06/11/2026, já com a `main` do #32 e do #33:
 
 ```
-Tests:       126 passed, 126 total      # seguranca.e2e-spec.ts
-Tests:       192 passed, 192 total      # todos os e2e (8 suítes)
-Tests:       584 passed, 584 total      # unitários, 100% de cobertura
+Tests:       131 passed, 131 total      # seguranca.e2e-spec.ts
+Tests:       202 passed, 202 total      # todos os e2e (9 suítes)
+Tests:       592 passed, 592 total      # unitários, 100% de cobertura
 ```
 
-São 126 casos: 23 de 401, 92 por papel (23 rotas × 4 papéis), 5 do contrato da issue, 3 de token e 3 de cobertura da matriz.
+São 131 casos: 24 de 401, 96 por papel (24 rotas × 4 papéis), 5 do contrato da issue, 3 de token e 3 de cobertura da matriz.
 
 **Prova de que o teste pega a falha.** Com os `@Roles` novos removidos (o estado da `main` revisada pelo professor), a versão do arquivo só com os cargos de funcionário falha em 15 casos, exatamente as violações apontadas na issue:
 
@@ -107,7 +107,6 @@ Datas propostas, a confirmar no check-in do grupo.
 
 | Pendência | Task | Responsável | Data | Como fecha a linha da matriz |
 | --- | --- | --- | --- | --- |
-| Dashboard | DASH-01 · PR #33 | Pedro | 09/11 | adicionar `GET /dashboard` à `MATRIZ` (o teste de cobertura exige) |
 | Treinos | TRE-03 | Gabriel | 13/11 | linhas de `/treinos` na `MATRIZ` |
 | Liberar acesso do aluno | MEM-07 | Gabriel | 16/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
 | Treinos e histórico do aluno | TRE-05 · HIS-05 | Gabriel · Yohan | 16/11 | `/me/...` só para ALUNO; aluno A não vê dados do aluno B (RN16, 404) |
