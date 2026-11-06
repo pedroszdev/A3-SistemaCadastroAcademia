@@ -8,9 +8,13 @@ import { AuthService } from './auth.service';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 const SENHA = 'senha1234';
+const CPF = '52998224725';
 
 describe('AuthService', () => {
-  let prisma: { funcionario: { findUnique: jest.Mock } };
+  let prisma: {
+    funcionario: { findUnique: jest.Mock };
+    membro: { findUnique: jest.Mock };
+  };
   let jwt: { signAsync: jest.Mock };
   let service: AuthService;
 
@@ -24,8 +28,19 @@ describe('AuthService', () => {
     ...extra,
   });
 
+  const membro = (extra: Record<string, unknown> = {}) => ({
+    id: ID,
+    nome: 'João Aluno',
+    ativo: true,
+    senhaHash: hashSync(SENHA, 4),
+    ...extra,
+  });
+
   beforeEach(() => {
-    prisma = { funcionario: { findUnique: jest.fn() } };
+    prisma = {
+      funcionario: { findUnique: jest.fn() },
+      membro: { findUnique: jest.fn() },
+    };
     jwt = { signAsync: jest.fn().mockResolvedValue('token-assinado') };
     service = new AuthService(
       prisma as unknown as PrismaService,
@@ -91,5 +106,49 @@ describe('AuthService', () => {
 
     await expect(tentativa).rejects.toThrow('Login ou senha inválidos');
     expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
+  });
+
+  describe('loginAluno', () => {
+    it('devolve o token e o aluno sem senhaHash', async () => {
+      prisma.membro.findUnique.mockResolvedValue(membro());
+
+      const resultado = await service.loginAluno({ cpf: CPF, senha: SENHA });
+
+      expect(resultado).toEqual({
+        accessToken: 'token-assinado',
+        aluno: { id: ID, nome: 'João Aluno' },
+      });
+      expect(JSON.stringify(resultado)).not.toContain('senhaHash');
+      expect(prisma.membro.findUnique).toHaveBeenCalledWith({
+        where: { cpf: CPF },
+        select: { id: true, nome: true, ativo: true, senhaHash: true },
+      });
+      expect(jwt.signAsync).toHaveBeenCalledWith({ sub: ID, tipo: 'ALUNO' });
+    });
+
+    it.each([
+      ['CPF inexistente', null, SENHA],
+      ['senha errada', membro(), 'outra-senha'],
+      ['sem senhaHash', membro({ senhaHash: null }), SENHA],
+      ['aluno inativo', membro({ ativo: false }), SENHA],
+    ])('%s → 401 com mensagem genérica', async (_caso, registro, senha) => {
+      prisma.membro.findUnique.mockResolvedValue(registro);
+
+      const tentativa = service.loginAluno({ cpf: CPF, senha });
+
+      await expect(tentativa).rejects.toThrow(UnauthorizedException);
+      await expect(tentativa).rejects.toThrow('Login ou senha inválidos');
+      expect(jwt.signAsync).not.toHaveBeenCalled();
+    });
+
+    it.each([['123'], ['5299822472\0'], ['52998224726'], ['11111111111']])(
+      'CPF inválido %j → 401 genérico, sem consultar o banco',
+      async (cpf) => {
+        const tentativa = service.loginAluno({ cpf, senha: SENHA });
+
+        await expect(tentativa).rejects.toThrow('Login ou senha inválidos');
+        expect(prisma.membro.findUnique).not.toHaveBeenCalled();
+      },
+    );
   });
 });

@@ -215,8 +215,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] AUTH-01 Login com JWT
 - [x] AUTH-02 Autorização por cargo (RBAC)
 - [x] AUTH-03 Testes de auth
-- [ ] AUTH-04 Login do aluno (migration + JWT com tipo)
-- [ ] AUTH-05 Testes do login do aluno
+- [x] AUTH-04 Login do aluno (migration + JWT com tipo)
+- [x] AUTH-05 Testes do login do aluno
 - [ ] DASH-01 Endpoint do dashboard + testes
 - [ ] WEB-01 Base do front (layout e componentes) — 🟡 **parcial**: o client `lib/api.ts` com `ApiError` existe. Faltam o envio do token, o tratamento de 401, o layout e os componentes
 - [ ] WEB-02 Autenticação no front

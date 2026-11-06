@@ -28,6 +28,8 @@ model Membro {
   telefone     String
   endereco     String
   ativo        Boolean  @default(true)
+  /// hash da senha do aluno; nulo enquanto o acesso não for liberado
+  senhaHash    String?  @map("senha_hash")
   dataCadastro DateTime @default(now()) @map("data_cadastro")
 
   treinos    Treino[]

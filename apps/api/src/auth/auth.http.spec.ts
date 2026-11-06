@@ -14,6 +14,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { FuncionariosService } from '../funcionarios/funcionarios.service';
 import { Cargo } from '../generated/prisma/enums';
+import { MembrosService } from '../membros/membros.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -55,8 +56,12 @@ class TesteController {
 describe('Auth (HTTP)', () => {
   let app: INestApplication<App>;
   let jwt: JwtService;
-  const prisma = { funcionario: { findUnique: jest.fn() } };
+  const prisma = {
+    funcionario: { findUnique: jest.fn() },
+    membro: { findUnique: jest.fn(), findFirst: jest.fn() },
+  };
   const funcionarios = { findOne: jest.fn() };
+  const membros = { findOne: jest.fn() };
 
   const registro = (extra: Record<string, unknown> = {}) => ({
     id: ID,
@@ -89,6 +94,7 @@ describe('Auth (HTTP)', () => {
         { provide: APP_GUARD, useClass: RolesGuard },
         { provide: PrismaService, useValue: prisma },
         { provide: FuncionariosService, useValue: funcionarios },
+        { provide: MembrosService, useValue: membros },
         {
           provide: ConfigService,
           useValue: { getOrThrow: () => SEGREDO },
@@ -198,6 +204,94 @@ describe('Auth (HTTP)', () => {
       await http().post('/auth/login').send(corpo).expect(400);
 
       expect(prisma.funcionario.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('aluno', () => {
+    const CPF = '52998224725';
+
+    it('login 200 aceita CPF com máscara e assina { sub, tipo: ALUNO }', async () => {
+      prisma.membro.findUnique.mockResolvedValue({
+        id: ID,
+        nome: 'João Aluno',
+        ativo: true,
+        senhaHash: hashSync(SENHA, 4),
+      });
+
+      const resposta = await http()
+        .post('/auth/login-aluno')
+        .send({ cpf: '529.982.247-25', senha: SENHA })
+        .expect(200);
+
+      const body = resposta.body as { accessToken: string; aluno: unknown };
+      expect(body.aluno).toEqual({ id: ID, nome: 'João Aluno' });
+      expect(prisma.membro.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { cpf: CPF } }),
+      );
+      const payload = await jwt.verifyAsync<Record<string, unknown>>(
+        body.accessToken,
+      );
+      expect(payload).toMatchObject({ sub: ID, tipo: 'ALUNO' });
+    });
+
+    it('login 401 genérico para membro sem acesso liberado', async () => {
+      prisma.membro.findUnique.mockResolvedValue({
+        id: ID,
+        nome: 'João Aluno',
+        ativo: true,
+        senhaHash: null,
+      });
+
+      const resposta = await http()
+        .post('/auth/login-aluno')
+        .send({ cpf: CPF, senha: SENHA })
+        .expect(401);
+
+      expect(resposta.body).toMatchObject({
+        message: 'Login ou senha inválidos',
+      });
+    });
+
+    it('token de aluno: /auth/me 200 com os dados do membro', async () => {
+      const membro = { id: ID, nome: 'João Aluno', cpf: CPF };
+      prisma.membro.findFirst.mockResolvedValue({ id: ID });
+      membros.findOne.mockResolvedValue(membro);
+      const token = await jwt.signAsync({ sub: ID, tipo: 'ALUNO' });
+
+      const resposta = await http()
+        .get('/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(resposta.body).toEqual(membro);
+      expect(funcionarios.findOne).not.toHaveBeenCalled();
+    });
+
+    it.each(['/teste/admin', '/teste/protegida'])(
+      'token de aluno em %s (rota de funcionário) → 403',
+      async (rota) => {
+        prisma.membro.findFirst.mockResolvedValue({ id: ID });
+        const token = await jwt.signAsync({ sub: ID, tipo: 'ALUNO' });
+
+        const resposta = await http()
+          .get(rota)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(403);
+
+        expect(resposta.body).toMatchObject({ message: MENSAGEM_PROIBIDO });
+      },
+    );
+
+    it('token de aluno com acesso revogado ou inativo → 401', async () => {
+      prisma.membro.findFirst.mockResolvedValue(null);
+      const token = await jwt.signAsync({ sub: ID, tipo: 'ALUNO' });
+
+      const resposta = await http()
+        .get('/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(401);
+
+      expect(resposta.body).toMatchObject({ message: MENSAGEM_TOKEN });
     });
   });
 
