@@ -14,7 +14,7 @@ Relação com a A3: itens 2.7 (ferramentas), 2.10 (critérios de aceitação) e 
 PR para a main
   └─ workflow CI (.github/workflows/ci.yml), job "Lint, build e testes"
        ├─ lint, build, testes unitários (API e web, com cobertura), e2e da API
-       ├─ Verificar SONAR_TOKEN   → sem token fora de PR de fork: o job falha
+       ├─ Verificar SONAR_TOKEN   → sem token, em qualquer evento: o job falha
        └─ Análise do SonarCloud   → sonar.qualitygate.wait=true
             └─ gate FAILED → o passo falha → o job fica vermelho
                  └─ a proteção da main exige o check "Lint, build e testes" → merge bloqueado
@@ -23,7 +23,7 @@ PR para a main
 O bloqueio fica em dois lugares:
 
 1. **No workflow.** O [`sonar-project.properties`](../../../sonar-project.properties) define `sonar.qualitygate.wait=true` e `sonar.qualitygate.timeout=300`. Com isso, o passo "Análise do SonarCloud" espera o SonarCloud calcular o gate e só fica verde se o gate for **Passed**. Se o gate reprovar, ou se o resultado não chegar em 5 minutos, o passo falha.
-2. **Na proteção da `main`.** Um ruleset da `main` exige o check `Lint, build e testes` (do GitHub Actions, `integration_id` 15368), 1 aprovação e merge só por PR, sem bypass, nem para admin. Como a espera pelo gate roda **dentro** desse job, nenhum check extra precisa ser exigido: um gate reprovado já deixa vermelho o check que a proteção exige.
+2. **Na proteção da `main`.** Um ruleset da `main` exige o check `Lint, build e testes` (do GitHub Actions, `integration_id` 15368) rodado sobre a `main` atual, 1 aprovação dada depois do último push e merge só por PR, sem bypass, nem para admin. Como a espera pelo gate roda **dentro** desse job, nenhum check extra precisa ser exigido: um gate reprovado já deixa vermelho o check que a proteção exige.
 
    **Achado de 05/11/2026.** A proteção da `main` foi configurada na INF-01, mas estava **desativada** nesta data:
    - `gh api repos/pedroszdev/A3-SistemaCadastroAcademia/branches/main --jq .protected` devolvia `false`;
@@ -32,17 +32,25 @@ O bloqueio fica em dois lugares:
 
    Nesse período, o gate deixava o check vermelho, mas nada impedia o merge. A proteção foi refeita no mesmo dia, como o ruleset `26615335` descrito abaixo. Para não depender de uma configuração que pode ser desligada sem deixar rastro no código, as regras também ficam versionadas no repositório.
 
-   **Configuração versionada.** O ruleset está em [`.github/rulesets/main.json`](../../../.github/rulesets/main.json) e é aplicado por um admin com:
+   **Configuração versionada.** O ruleset está em [`.github/rulesets/main.json`](../../../.github/rulesets/main.json). O arquivo é a fonte da verdade: qualquer mudança na proteção passa por PR nele e depois é aplicada por um admin com `PUT`, que atualiza o ruleset existente em vez de criar outro:
 
    ```bash
-   gh api -X POST repos/pedroszdev/A3-SistemaCadastroAcademia/rulesets --input .github/rulesets/main.json
+   gh api -X PUT repos/pedroszdev/A3-SistemaCadastroAcademia/rulesets/26615335 --input .github/rulesets/main.json
+   ```
+
+   Para conferir se o ruleset ativo continua igual ao arquivo (sem saída = iguais):
+
+   ```bash
+   diff <(jq -S '{name, target, enforcement, bypass_actors, conditions, rules}' .github/rulesets/main.json) \
+        <(gh api repos/pedroszdev/A3-SistemaCadastroAcademia/rulesets/26615335 \
+            | jq -S '{name, target, enforcement, bypass_actors, conditions, rules}')
    ```
 
    O ruleset aplica estas regras:
    - sem bypass (`bypass_actors` vazio);
-   - PR obrigatório com 1 aprovação;
+   - PR obrigatório com 1 aprovação. Um push novo descarta as aprovações anteriores (`dismiss_stale_reviews_on_push`), e o último push precisa ser aprovado por outra pessoa (`require_last_push_approval`), então o diff final sempre passa por revisão;
    - merge só por merge commit ou rebase, nunca squash;
-   - check `Lint, build e testes` obrigatório;
+   - check `Lint, build e testes` obrigatório, rodado com a branch atualizada com a `main` (`strict_required_status_checks_policy`). Assim, o gate de cada PR é calculado sobre a `main` que ele vai encontrar no merge, e dois PRs aprovados separadamente não reprovam a `main` juntos;
    - sem force push nem exclusão da `main`.
 
    **Evidência da configuração.** Os comandos abaixo leem a configuração ativa e funcionam para qualquer pessoa com acesso de leitura:
@@ -56,11 +64,11 @@ O bloqueio fica em dois lugares:
    | Registro | Valor |
    | --- | --- |
    | Ruleset | "Sem merge até o CI rodar" (id `26615335`), `enforcement: active` |
-   | Criado por | Pedro (admin do repositório), substituindo a proteção desativada |
+   | Criado por | Pedro (admin do repositório), substituindo a proteção desativada; atualizado com `PUT` a partir do arquivo versionado |
    | Data | 05/11/2026, 10:10 (horário de Brasília; `created_at` do ruleset) |
-   | Bypass para quem não é admin | `current_user_can_bypass: "never"` |
+   | Bypass | `bypass_actors: []`: ninguém pode ignorar as regras, nem admin |
    | `.protected` | `true` |
-   | Regras ativas (`rules/branches/main`) | `deletion`, `non_fast_forward`, `pull_request` (1 aprovação, `allowed_merge_methods: ["merge", "rebase"]`), `required_status_checks` (`Lint, build e testes`, `integration_id` 15368) |
+   | Regras ativas (`rules/branches/main`) | `deletion`, `non_fast_forward`, `pull_request` (1 aprovação, `dismiss_stale_reviews_on_push` e `require_last_push_approval` ligados, `allowed_merge_methods: ["merge", "rebase"]`), `required_status_checks` (`Lint, build e testes`, `integration_id` 15368, `strict_required_status_checks_policy: true`) |
    | Efeito no PR #31 | passou de mergeável com o CI rodando para `mergeStateStatus: BLOCKED`, `reviewDecision: REVIEW_REQUIRED` |
    | Print de *Settings → Rules → Rulesets* | `00-ruleset-main.png` (_a preencher_) |
 
@@ -81,9 +89,11 @@ O quality gate usado é o **Sonar way**, o padrão do SonarCloud. Ele vale para 
 | --- | --- | --- |
 | Passo do Sonar verde quando… | o relatório foi **enviado** ao SonarCloud | o gate foi **aprovado** |
 | Gate reprovado | aparecia só no comentário do Sonar no PR, e o check do CI continuava verde | o passo falha e o check `Lint, build e testes` fica vermelho |
-| `SONAR_TOKEN` ausente | o passo era pulado em silêncio em qualquer evento | falha o job, exceto em PR de fork |
+| `SONAR_TOKEN` ausente | o passo era pulado em silêncio em qualquer evento | falha o job em qualquer evento |
 
-**Exceção para PR de fork.** O GitHub não entrega secrets a workflows disparados por PR de fork. Nesse caso, o passo "Verificar SONAR_TOKEN" emite um aviso e pula a análise. Em qualquer outro caso (push na `main`, PR de branch do próprio repositório, execução manual), faltar o token é erro. Assim, toda execução na `main` tem análise e gate. O grupo trabalha com branches do próprio repositório, então a exceção não se aplica aos PRs do projeto.
+**Sem exceção para PR de fork.** O GitHub não entrega os secrets do Actions a workflows disparados por PR de fork nem pelo Dependabot. Se esses PRs pulassem a análise, o check exigido ficaria verde sem gate e o merge seria liberado. Por isso, faltar o token é erro em qualquer evento: PR de fork fica vermelho e precisa ser refeito a partir de uma branch do próprio repositório, que é como o grupo já trabalha. Se o Dependabot for ativado, o `SONAR_TOKEN` precisa ser cadastrado também como secret do Dependabot.
+
+**Toda execução na `main` termina.** O `concurrency` do workflow só cancela execuções anteriores em PR, onde o push novo substitui o antigo. No push na `main` e na execução manual, cada execução tem grupo próprio, então dois merges seguidos não cancelam um ao outro e cada commit da `main` tem sua análise e seu gate.
 
 ## 3. Escopo da análise e exclusões
 
@@ -162,7 +172,7 @@ Antes de registrar, confira se o `revision` da análise do Sonar é o mesmo comm
 Roteiro reproduzível para demonstrar um gate reprovado barrando o merge. O PR é descartável e **nunca** é mergeado:
 
 1. A partir da `main` atualizada, crie a branch `test/prova-quality-gate`.
-2. Acrescente em `apps/api/src/common/utils/` uma função com alguns `if`, sem teste. A cobertura do código novo fica abaixo de 80%.
+2. Acrescente em `apps/api/src/common/utils/` um arquivo com **pelo menos 30 linhas de código** novas (por exemplo, uma função com vários `if`/`switch`), sem teste. A cobertura do código novo fica abaixo de 80%. O tamanho importa: com menos de 20 linhas novas, o SonarCloud ignora as condições de cobertura e duplicação do gate, e o gate passa.
 3. Faça push e abra um PR para a `main` (**não** use draft, porque o draft já bloqueia o merge por conta própria e invalidaria a prova), com o título `[NÃO MERGEAR] prova do quality gate (#30)`.
 4. Aguarde o CI e confira os resultados:
    - no log do passo "Análise do SonarCloud", aparece `QUALITY GATE STATUS: FAILED`;
