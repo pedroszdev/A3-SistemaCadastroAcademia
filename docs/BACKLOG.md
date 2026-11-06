@@ -208,7 +208,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] INF-03 Testes no front (Vitest)
 - [ ] INF-04 Pipeline do GitHub Actions — 🟡 **parcial**: o `ci.yml` roda lint, build, testes com cobertura, e2e com Postgres e o Sonar em todo PR, e o badge está no README. Faltam os prints de um PR com o check e da aba Actions
 - [x] INF-05 SonarCloud + primeira análise
-- [ ] INF-06 Seed do banco — 🟡 **parcial**: `pnpm db:seed` cria os 3 funcionários (entrou com a AUTH-01). Faltam membros, treinos, pagamentos e atividades
+- [x] INF-06 Seed do banco — `pnpm db:seed` cria 3 funcionários, 10 membros (2 inativos, 2 alunos com acesso), 9 treinos, 15 pagamentos nos 4 status (1 inadimplente) e 30 atividades, com datas relativas a hoje; roda de novo sem erro e restaura os membros do seed. Coberto pelo e2e `test/seed.e2e-spec.ts`
 - [x] INF-07 Base comum da API (filtro de erros, paginação, datas)
 - [x] FUN-01 Back de funcionários
 - [x] FUN-02 Testes de funcionários
@@ -217,7 +217,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] AUTH-03 Testes de auth
 - [x] AUTH-04 Login do aluno (migration + JWT com tipo)
 - [x] AUTH-05 Testes do login do aluno
-- [ ] DASH-01 Endpoint do dashboard + testes — 🟡 **parcial**: o `GET /dashboard` e os testes (unitários e e2e) estão prontos. Falta conferir os números com o seed quando a INF-06 criar membros, pagamentos e atividades
+- [x] DASH-01 Endpoint do dashboard + testes — o `GET /dashboard` e os testes (unitários e e2e) estão prontos; o `test/seed.e2e-spec.ts` confere os números com o seed
 - [x] WEB-01 Base do front (layout e componentes) — o token fica num cookie httpOnly e o navegador chama a API pelo repasse `app/api/[...caminho]`; a URL da API passou a ser `API_URL`, lida só no servidor
 - [x] WEB-02 Autenticação no front — o login passa pelo handler `app/api/sessao` (POST grava o cookie httpOnly até o `exp` do token; DELETE é o logout); o `src/proxy.ts` (o `middleware.ts` do Next 16) manda quem não tem sessão válida para `/login` e quem já está logado para `/dashboard`
 - [x] WEB-03 Telas de funcionários — tudo em `/funcionarios`: lista paginada com filtro de cargo e situação, criar e editar num Dialog (login travado na edição, senha em branco mantém a atual) e desativar/reativar com confirmação. Quem não é ADMIN vê "Acesso restrito" e a tela nem chama a API
