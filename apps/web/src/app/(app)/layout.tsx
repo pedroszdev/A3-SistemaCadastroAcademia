@@ -5,15 +5,15 @@ import { MenuLateral } from "@/components/layout/menu-lateral";
 import { ToastProvider } from "@/components/ui/toast";
 import { BotaoSair } from "@/features/auth/botao-sair";
 import { UsuarioProvider } from "@/features/auth/usuario";
-import { ROTA_LOGIN } from "@/lib/protecao-rotas";
-import { COOKIE_TOKEN, lerUsuarioDoToken } from "@/lib/sessao";
+import { ROTA_LOGIN, sessaoDaArea } from "@/lib/protecao-rotas";
+import { COOKIE_TOKEN } from "@/lib/sessao";
 
 // Toda tela autenticada depende do usuário, então o conteúdo inteiro espera a
 // leitura do cookie dentro do Suspense (exigido pelo cacheComponents).
 async function AreaAutenticada({ children }: { children: ReactNode }) {
-  const usuario = lerUsuarioDoToken((await cookies()).get(COOKIE_TOKEN)?.value);
-  if (!usuario) redirect(ROTA_LOGIN);
-  const cargo = usuario.tipo === "FUNCIONARIO" ? usuario.cargo : null;
+  const sessao = sessaoDaArea((await cookies()).get(COOKIE_TOKEN)?.value);
+  if (!sessao) redirect(ROTA_LOGIN);
+  const { usuario, cargo } = sessao;
 
   return (
     <UsuarioProvider usuario={usuario}>
