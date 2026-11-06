@@ -232,6 +232,9 @@ const MATRIZ: Linha[] = [
     sucesso: 201,
   },
 
+  // Dashboard: todos os funcionários
+  { metodo: 'get', rota: '/dashboard', permitidos: TODOS, sucesso: 200 },
+
   // Meus dados
   {
     metodo: 'get',
