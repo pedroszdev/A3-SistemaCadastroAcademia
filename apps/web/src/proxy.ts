@@ -16,7 +16,10 @@ export function proxy(req: NextRequest) {
   return res;
 }
 
-// Fora: o repasse /api (a API responde 401 por conta própria) e os arquivos estáticos.
+// Fora: o repasse /api (a API responde 401 por conta própria), os arquivos do Next
+// e os estáticos por extensão. Rota com ponto, como /membros/joao.silva, passa.
 export const config = {
-  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|.*\\.[^/]+$).*)"],
+  matcher: [
+    "/((?!api/|_next/static|_next/image|.*\\.(?:ico|png|jpe?g|gif|svg|webp|avif|txt|xml|webmanifest|css|js|map|woff2?)$).*)",
+  ],
 };
