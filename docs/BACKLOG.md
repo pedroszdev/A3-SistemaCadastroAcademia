@@ -223,7 +223,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] WEB-03 Telas de funcionários
 - [ ] WEB-04 Tela do dashboard
 - [ ] WEB-05 Login e portal do aluno
-- [ ] E2E-05 e2e de segurança (401/403) — 🟡 **parcial**: `test/seguranca.e2e-spec.ts` cobre a matriz 4.2 inteira dos funcionários (401, 403 e sucesso por rota e cargo, token inválido e expirado, e a checagem de que toda rota declara `@Roles` ou `@Public`), no PR da issue #28. Faltam os casos de ALUNO (RN16, RN17, acesso revogado), que dependem da AUTH-04 (#32)
+- [ ] E2E-05 e2e de segurança (401/403) — 🟡 **parcial**: `test/seguranca.e2e-spec.ts` cobre a matriz 4.2 das rotas que existem (401, 403 e sucesso por rota e por papel, incluindo o ALUNO; token inválido e expirado; e a checagem de que toda rota declara `@Roles` ou `@Public`), no PR #35 da issue #28. A RN17 (aluno → 403 em toda rota de funcionário) está coberta; acesso revogado e `senhaHash` fora das respostas estão no `auth.e2e-spec.ts` da AUTH-04. Falta a RN16 (aluno A × aluno B → 404), que depende das rotas `/me` da TRE-05 e da HIS-05
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-02 Cobertura consolidada
 - [ ] QA-05 Evidências (prints antes/depois)
@@ -239,7 +239,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] MEM-01 Validador de CPF
 - [x] MEM-02 DTOs de membros
 - [x] MEM-03 Service de membros
-- [x] MEM-04 Controller de membros — `@Roles` (listar/ver: ADMIN, RECEPCIONISTA, INSTRUTOR; criar/editar/desativar/reativar: ADMIN, RECEPCIONISTA) commitado pelo Pedro no PR da issue #28 (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
+- [x] MEM-04 Controller de membros — `@Roles` (listar/ver: ADMIN, RECEPCIONISTA, INSTRUTOR; criar/editar/desativar/reativar: ADMIN, RECEPCIONISTA) commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
 - [x] MEM-05 Testes de membros
 - [ ] MEM-06 Resumo/ficha do membro (API)
 - [ ] MEM-07 Liberar e redefinir o acesso do aluno
@@ -268,12 +268,12 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] PAG-01 DTOs de pagamentos
 - [x] PAG-02 Cálculo de status (função pura)
 - [x] PAG-03 Service de pagamentos
-- [x] PAG-04 Situação financeira / inadimplência — `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) em `GET /membros/:id/situacao` commitado pelo Pedro no PR da issue #28 (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
-- [x] PAG-05 Controller de pagamentos — `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) no `PagamentosController` commitado pelo Pedro no PR da issue #28 (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
+- [x] PAG-04 Situação financeira / inadimplência — `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) em `GET /membros/:id/situacao` commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
+- [x] PAG-05 Controller de pagamentos — `@Roles(ADMIN, RECEPCIONISTA)` (INSTRUTOR → 403) no `PagamentosController` commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
 - [x] PAG-06 Testes de pagamentos
 - [x] HIS-01 DTOs de histórico
 - [x] HIS-02 Service de histórico
-- [x] HIS-03 Controller de histórico — `@Roles` (registrar: ADMIN, INSTRUTOR; consultar: ADMIN, RECEPCIONISTA, INSTRUTOR) commitado pelo Pedro no PR da issue #28 (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
+- [x] HIS-03 Controller de histórico — `@Roles` (registrar: ADMIN, INSTRUTOR; consultar: ADMIN, RECEPCIONISTA, INSTRUTOR) commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
 - [x] HIS-04 Testes de histórico
 - [ ] HIS-05 Histórico do aluno (`/me/atividades`)
 - [ ] WEB-Y1 Tela de pagamentos
@@ -1305,7 +1305,8 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 **Como está feito** (parte de funcionário, issue #28)
 - A `MATRIZ` no topo do arquivo é a seção 4.2 em forma de dados: método, rota, cargos permitidos, status de sucesso e corpo válido. Os casos de 401, 403 e sucesso são gerados dela com `it.each`.
 - O bloco "cobertura da matriz" lê as rotas registradas no `AppModule` e falha se alguma não tiver `@Roles` nem `@Public`, ou se uma rota protegida não estiver na `MATRIZ`.
-- **Falta:** os casos de ALUNO desta lista, que entram com a AUTH-04 (#32), a TRE-05 e a HIS-05.
+- O ALUNO já está na `MATRIZ`: 200 em `GET /auth/me` e 403 em todas as rotas de funcionário (RN17). Acesso revogado e `senhaHash` ficam no `auth.e2e-spec.ts` (AUTH-04, #32).
+- **Falta:** a RN16 e o `POST /treinos` do aluno, que entram com a TRE-03, a TRE-05 e a HIS-05.
 
 **Resultado esperado**
 - O RNF de segurança está coberto por testes. Isso entra no relatório como "testes de segurança" (2.4). A evidência fica em [`docs/evidencias/permissoes/README.md`](evidencias/permissoes/README.md).
@@ -1577,7 +1578,7 @@ Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada
 
 | Issue | Assunto | Responsável | PRs e commits | Status | Prazo |
 | --- | --- | --- | --- | --- | --- |
-| [#28](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/28) | Matriz de permissões na `main`, validada por HTTP | Pedro | #27 (`b70b666`); PR da branch `feat/rbac-matriz`; evidência em [`docs/evidencias/permissoes`](evidencias/permissoes/README.md) | 🟡 funcionários cobertos (após o merge); a coluna ALUNO aguarda o #32 | 11/11 |
+| [#28](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/28) | Matriz de permissões na `main`, validada por HTTP | Pedro | #27 (`b70b666`); PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35); evidência em [`docs/evidencias/permissoes`](evidencias/permissoes/README.md) | 🟡 matriz das rotas existentes coberta, inclusive o ALUNO (#35 em revisão); faltam treinos, dashboard e as rotas `/me` | 11/11 |
 | [#29](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/29) | Lacunas entre escopo, fluxo principal (CA01–CA08) e evidências | Pedro (coordena); Gabriel e Yohan nos módulos deles | #26 (`b208bd1`, inadimplência) | ⏳ falta o escopo completo, o `fluxo-principal.e2e-spec.ts` (E2E-02) e a rastreabilidade | 11/11 |
 | [#30](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/30) | Quality gate barrando o merge e escopo das métricas | Pedro | #31 (`4a3c095`); #34 (prova, não mergear); [`docs/evidencias/quality-gate`](evidencias/quality-gate/README.md) | 🟡 documentado; aguardando a conferência do professor | 11/11 |
 
