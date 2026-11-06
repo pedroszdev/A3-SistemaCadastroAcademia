@@ -28,9 +28,9 @@ A nota individual da A3 é medida pelos **commits de código-fonte** de cada um,
 1. Crie uma branch a partir da `main` atualizada: `feat/membros-service`, `test/pagamentos-status`, `fix/historico-data-futura`.
 2. Abra um PR para a `main` e preencha o template (o que muda, como testar, DoD, `Closes #`).
 3. O PR só entra com:
-   - o check **"Lint, build e testes"** verde (lint, build, testes unitários e e2e);
-   - o comentário do SonarCloud no PR sem bug, vulnerabilidade ou hotspot novo, e cobertura do código novo ≥ 80%. O quality gate do Sonar é conferido nesse comentário, não faz parte do check do CI;
-   - **1 aprovação** de outro integrante. Revisem os PRs abertos em até 24h.
+   - o check **"Lint, build e testes"** verde (lint, build, testes unitários, e2e e quality gate do Sonar), rodado com a branch **atualizada com a `main`**. Se a `main` andou, use "Update branch" no PR e espere o CI de novo;
+   - o **quality gate do SonarCloud aprovado**. É o Sonar way, aplicado ao código novo: notas de confiabilidade, segurança e manutenibilidade A, cobertura ≥ 80%, duplicação ≤ 3% e 100% dos security hotspots revisados ([tabela completa](docs/evidencias/quality-gate/README.md#1-como-o-gate-barra-o-merge)). O passo do Sonar espera o resultado do gate e falha se ele reprovar, então gate reprovado deixa o check vermelho e barra o merge. O comentário do SonarCloud no PR mostra o detalhe. Não há exceção: PR de fork não recebe o `SONAR_TOKEN` e falha, então abra o PR a partir de uma branch do próprio repositório;
+   - **1 aprovação** de outro integrante, dada **depois do último push**. Um push novo descarta a aprovação anterior. Revisem os PRs abertos em até 24h.
 4. Merge com **"Create a merge commit"** ou **"Rebase and merge"**. **Nunca "Squash"**: ele junta os commits e apaga o histórico que o professor avalia.
 
 A `main` é protegida: ninguém, nem admin, dá push direto nela.
