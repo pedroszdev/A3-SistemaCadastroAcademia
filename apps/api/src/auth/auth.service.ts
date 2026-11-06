@@ -12,6 +12,8 @@ import { LoginAlunoDto } from './dto/login-aluno.dto';
 import { LoginDto } from './dto/login.dto';
 import { TokenPayload } from './usuario-autenticado';
 
+// O tempo do compare só não revela se a conta existe enquanto todo senhaHash
+// (de funcionário e de aluno, inclusive o da MEM-07) usar este mesmo SALT_ROUNDS.
 const HASH_FICTICIO = hashSync(randomUUID(), SALT_ROUNDS);
 const CREDENCIAL_INVALIDA = 'Login ou senha inválidos';
 
