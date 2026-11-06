@@ -12,10 +12,11 @@ import { COOKIE_TOKEN } from "@/lib/sessao";
 // Toda tela autenticada depende do usuário, então o conteúdo inteiro espera a
 // leitura do cookie dentro do Suspense (exigido pelo cacheComponents).
 async function AreaAutenticada({ children }: { children: ReactNode }) {
-  // A validade do token depende da hora atual (Date.now() no sessaoDaArea), que o
-  // prerender do cacheComponents não aceita: a área só renderiza na requisição.
+  const token = (await cookies()).get(COOKIE_TOKEN)?.value;
+  // A validade do token usa Date.now(); o connection() deixa essa leitura só para
+  // a hora do request, fora do prerender (senão o Next acusa "Blocking Route").
   await connection();
-  const sessao = sessaoDaArea((await cookies()).get(COOKIE_TOKEN)?.value);
+  const sessao = sessaoDaArea(token);
   if (!sessao) redirect(ROTA_LOGIN);
   const { usuario, cargo } = sessao;
 

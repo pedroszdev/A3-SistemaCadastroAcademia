@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
+/* Os componentes usam cores fixas de tema claro (zinc, bg-white). Sem isso, o modo
+   escuro do sistema deixava a página preta com títulos escuros e inputs brancos com
+   texto claro. color-scheme também mantém claros os controles nativos (select, input). */
 :root {
-  /* As telas usam só a paleta clara (zinc), então o tema escuro do sistema não vale aqui. */
   color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
