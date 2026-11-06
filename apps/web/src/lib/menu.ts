@@ -25,3 +25,14 @@ export function itensDoMenu(cargo: Cargo | null): ItemMenu[] {
   if (!cargo) return [];
   return ITENS_MENU.filter((item) => item.cargos.includes(cargo));
 }
+
+export type ItemMenuAluno = Pick<ItemMenu, "rotulo" | "href">;
+
+export const ITENS_MENU_ALUNO: readonly ItemMenuAluno[] = [
+  { rotulo: "Meus treinos", href: "/aluno/treinos" },
+  { rotulo: "Meu histórico", href: "/aluno/historico" },
+];
+
+export function estaAtivo(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
