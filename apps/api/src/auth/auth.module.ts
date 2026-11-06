@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { FuncionariosModule } from '../funcionarios/funcionarios.module';
+import { MembrosModule } from '../membros/membros.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { EXPIRACAO_PADRAO, expiracaoEmSegundos } from './expiracao-token';
@@ -13,6 +14,7 @@ import { segredoJwt } from './segredo-jwt';
   imports: [
     PassportModule,
     FuncionariosModule,
+    MembrosModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService): JwtModuleOptions => ({

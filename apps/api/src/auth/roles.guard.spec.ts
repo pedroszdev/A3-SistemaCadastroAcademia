@@ -29,6 +29,13 @@ class ControllerDoAdmin {
   }
 }
 
+class ControllerDoAluno {
+  @Roles('ALUNO')
+  proprio() {
+    return undefined;
+  }
+}
+
 class ControllerAberto {
   livre() {
     return undefined;
@@ -37,6 +44,10 @@ class ControllerAberto {
 
 function usuario(cargo: Cargo): UsuarioAutenticado {
   return { id: 'x', tipo: 'FUNCIONARIO', cargo };
+}
+
+function aluno(): UsuarioAutenticado {
+  return { id: 'x', tipo: 'ALUNO' };
 }
 
 function contexto(
@@ -120,5 +131,40 @@ describe('RolesGuard', () => {
 
     expect(() => guard.canActivate(admin)).toThrow(ForbiddenException);
     expect(guard.canActivate(recepcionista)).toBe(true);
+  });
+
+  describe('aluno', () => {
+    it("libera o aluno em rota com @Roles('ALUNO')", () => {
+      const ctx = contexto(ControllerDoAluno, 'proprio', aluno());
+
+      expect(guard.canActivate(ctx)).toBe(true);
+    });
+
+    it.each([Cargo.ADMIN, Cargo.RECEPCIONISTA, Cargo.INSTRUTOR])(
+      "nega o cargo %s em rota só de @Roles('ALUNO')",
+      (cargo) => {
+        const ctx = contexto(ControllerDoAluno, 'proprio', usuario(cargo));
+
+        expect(() => guard.canActivate(ctx)).toThrow(
+          new ForbiddenException(MENSAGEM),
+        );
+      },
+    );
+
+    it('nega o aluno em rota só de funcionário', () => {
+      const ctx = contexto(ControllerDoAdmin, 'varios', aluno());
+
+      expect(() => guard.canActivate(ctx)).toThrow(
+        new ForbiddenException(MENSAGEM),
+      );
+    });
+
+    it('nega o aluno em rota sem @Roles', () => {
+      const ctx = contexto(ControllerAberto, 'livre', aluno());
+
+      expect(() => guard.canActivate(ctx)).toThrow(
+        new ForbiddenException(MENSAGEM),
+      );
+    });
   });
 });

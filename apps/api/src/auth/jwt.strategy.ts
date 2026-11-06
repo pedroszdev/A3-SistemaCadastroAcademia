@@ -21,11 +21,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  // Consulta o banco a cada requisição: funcionário desativado perde o acesso
-  // na hora e o cargo vale o atual, não o do momento do login.
+  // Consulta o banco a cada requisição: funcionário ou aluno desativado (ou
+  // aluno com acesso revogado) perde o acesso na hora e o cargo vale o atual,
+  // não o do momento do login.
   async validate(payload: TokenPayload): Promise<UsuarioAutenticado | null> {
     // sub fora do formato de UUID vira 401 aqui, em vez de 500 no Postgres.
-    if (payload.tipo !== 'FUNCIONARIO' || !isUUID(payload.sub)) {
+    if (!isUUID(payload.sub)) {
+      return null;
+    }
+
+    if (payload.tipo === 'ALUNO') {
+      const aluno = await this.prisma.membro.findFirst({
+        where: { id: payload.sub, ativo: true, senhaHash: { not: null } },
+        select: { id: true },
+      });
+      return aluno ? { id: aluno.id, tipo: 'ALUNO' } : null;
+    }
+
+    if (payload.tipo !== 'FUNCIONARIO') {
       return null;
     }
 
