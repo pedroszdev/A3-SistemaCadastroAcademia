@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decidirAcesso } from "./protecao-rotas";
+import { decidirAcesso, sessaoDaArea } from "./protecao-rotas";
 
 function jwt(payload: unknown) {
   return `cabecalho.${btoa(JSON.stringify(payload)).replaceAll("=", "")}.assinatura`;
@@ -56,5 +56,40 @@ describe("decidirAcesso", () => {
       redirecionarPara: "/dashboard",
       apagarCookie: false,
     });
+  });
+});
+
+describe("sessaoDaArea", () => {
+  it("devolve o usuário e o cargo do funcionário com sessão válida", () => {
+    expect(sessaoDaArea(valido, AGORA)).toEqual({
+      usuario: { tipo: "FUNCIONARIO", cargo: "ADMIN" },
+      cargo: "ADMIN",
+    });
+  });
+
+  it("devolve o aluno com sessão válida e sem cargo", () => {
+    const aluno = jwt({ tipo: "ALUNO", exp: AGORA + 60 });
+
+    expect(sessaoDaArea(aluno, AGORA)).toEqual({
+      usuario: { tipo: "ALUNO" },
+      cargo: null,
+    });
+  });
+
+  it.each([
+    ["sem token", undefined],
+    ["token malformado", "abc"],
+    ["token expirado", expirado],
+  ])("não abre a área com %s", (_, token) => {
+    expect(sessaoDaArea(token, AGORA)).toBeNull();
+  });
+
+  it("usa a hora atual quando não recebe o agora", () => {
+    const agora = Math.floor(Date.now() / 1000);
+    const vigente = jwt({ tipo: "FUNCIONARIO", cargo: "ADMIN", exp: agora + 60 });
+    const vencido = jwt({ tipo: "FUNCIONARIO", cargo: "ADMIN", exp: agora - 60 });
+
+    expect(sessaoDaArea(vigente)?.cargo).toBe("ADMIN");
+    expect(sessaoDaArea(vencido)).toBeNull();
   });
 });
