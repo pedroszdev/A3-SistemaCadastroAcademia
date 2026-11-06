@@ -10,11 +10,8 @@ import {
 } from 'class-validator';
 import { aparar } from '../../common/utils/aparar';
 import { IsDataCalendario } from '../../common/validators/is-data-calendario.decorator';
-import {
-  MENSAGEM_TIPO_TREINO,
-  TIPOS_TREINO,
-  TipoTreino,
-} from '../tipos-treino';
+import { MENSAGEM_TIPO_TREINO, TIPOS_TREINO } from '../tipos-treino';
+import type { TipoTreino } from '../tipos-treino';
 
 export class CreateTreinoDto {
   @IsUUID(undefined, { message: 'membroId deve ser um UUID válido' })

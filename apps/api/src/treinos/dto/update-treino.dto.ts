@@ -11,11 +11,8 @@ import {
 import { aparar } from '../../common/utils/aparar';
 import { IsDataCalendario } from '../../common/validators/is-data-calendario.decorator';
 import { SeVeio } from '../../common/validators/se-veio.decorator';
-import {
-  MENSAGEM_TIPO_TREINO,
-  TIPOS_TREINO,
-  TipoTreino,
-} from '../tipos-treino';
+import { MENSAGEM_TIPO_TREINO, TIPOS_TREINO } from '../tipos-treino';
+import type { TipoTreino } from '../tipos-treino';
 
 export class UpdateTreinoDto {
   @SeVeio()
