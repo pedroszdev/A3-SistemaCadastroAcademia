@@ -20,13 +20,14 @@ import {
 describe('Dashboard (e2e)', () => {
   let app: INestApplication<App>;
   let cpfAluno: string;
+  let membroA: { id: string; nome: string };
 
   beforeAll(async () => {
     app = await criarApp();
     const prisma = prismaDe(app);
     await limparBanco(prisma);
 
-    const membroA = await criarMembro(prisma);
+    membroA = await criarMembro(prisma);
     // B tem acesso ao portal (AUTH-04) para o teste do aluno, sem mudar as contagens
     const membroB = await criarMembro(prisma, {
       senhaHash: hashSync(SENHA_PADRAO, 4),
@@ -105,6 +106,44 @@ describe('Dashboard (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/dashboard')
+      .set('Authorization', bearer(accessToken))
+      .expect(403);
+  });
+
+  it.each([Cargo.ADMIN, Cargo.RECEPCIONISTA])(
+    '%s recebe a lista de inadimplentes',
+    async (cargo) => {
+      const { token } = await loginComo(app, cargo);
+
+      const resposta = await request(app.getHttpServer())
+        .get('/dashboard/inadimplentes')
+        .set('Authorization', bearer(token))
+        .expect(200);
+
+      expect(resposta.body).toEqual([
+        { id: membroA.id, nome: membroA.nome, maiorAtrasoDias: 15 },
+      ]);
+    },
+  );
+
+  it('instrutor não vê a lista de inadimplentes → 403', async () => {
+    const { token } = await loginComo(app, Cargo.INSTRUTOR);
+
+    await request(app.getHttpServer())
+      .get('/dashboard/inadimplentes')
+      .set('Authorization', bearer(token))
+      .expect(403);
+  });
+
+  it('aluno não vê a lista de inadimplentes → 403', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/auth/login-aluno')
+      .send({ cpf: cpfAluno, senha: SENHA_PADRAO })
+      .expect(200);
+    const { accessToken } = login.body as { accessToken: string };
+
+    await request(app.getHttpServer())
+      .get('/dashboard/inadimplentes')
       .set('Authorization', bearer(accessToken))
       .expect(403);
   });
