@@ -17,7 +17,7 @@ requisição
 - O cargo vem do banco a cada requisição ([`jwt.strategy.ts`](../../../apps/api/src/auth/jwt.strategy.ts)), não do token. Um funcionário rebaixado ou desativado perde o acesso na hora.
 - O `@Roles(...)` pode ficar na classe e ser sobrescrito no método ([`roles.guard.ts`](../../../apps/api/src/auth/roles.guard.ts), `getAllAndOverride`). Exemplo: em `/atividades`, a classe libera a consulta para os 3 cargos e o `POST` restringe a ADMIN e INSTRUTOR.
 - A autorização roda antes da validação do corpo: um cargo sem permissão recebe 403 mesmo com o corpo inválido, sem descobrir nada sobre o formato esperado.
-- **Nenhuma rota fica sem declaração.** O teste `cobertura da matriz` percorre todas as rotas registradas no `AppModule` e falha se alguma não tiver `@Roles` nem `@Public`, ou se uma rota protegida não estiver na `MATRIZ` do teste. Uma rota nova (dashboard, treinos, `/me` do aluno) só passa no CI com a linha dela na matriz.
+- **Nenhuma rota fica sem declaração.** O teste `cobertura da matriz` percorre todas as rotas registradas no `AppModule` e falha se alguma não tiver `@Roles` nem `@Public`, ou se uma rota protegida não estiver na `MATRIZ` do teste. Uma rota nova (dashboard, treinos, `/me` do aluno) só passa no CI com a linha dela na matriz. As rotas públicas também têm lista fechada (`GET /health`, `POST /auth/login` e `POST /auth/login-aluno`): um `@Public()` novo faz o teste falhar até ser incluído de propósito.
 
 ## 2. Matriz verificável
 
@@ -72,12 +72,12 @@ pnpm --filter api test:e2e -- seguranca
 Resultado na branch `feat/rbac-matriz` em 06/11/2026, já com a `main` do #32:
 
 ```
-Tests:       125 passed, 125 total      # seguranca.e2e-spec.ts
-Tests:       191 passed, 191 total      # todos os e2e (8 suítes)
+Tests:       126 passed, 126 total      # seguranca.e2e-spec.ts
+Tests:       192 passed, 192 total      # todos os e2e (8 suítes)
 Tests:       584 passed, 584 total      # unitários, 100% de cobertura
 ```
 
-São 125 casos: 23 de 401, 92 por papel (23 rotas × 4 papéis), 5 do contrato da issue, 3 de token e 2 de cobertura da matriz.
+São 126 casos: 23 de 401, 92 por papel (23 rotas × 4 papéis), 5 do contrato da issue, 3 de token e 3 de cobertura da matriz.
 
 **Prova de que o teste pega a falha.** Com os `@Roles` novos removidos (o estado da `main` revisada pelo professor), a versão do arquivo só com os cargos de funcionário falha em 15 casos, exatamente as violações apontadas na issue:
 
