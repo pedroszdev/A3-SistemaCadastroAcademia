@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { itensDoMenu } from "@/lib/menu";
+import { estaAtivo, itensDoMenu } from "@/lib/menu";
 import type { Cargo } from "@/lib/sessao";
 
 export function MenuLateral({ cargo }: { cargo: Cargo | null }) {
@@ -12,8 +12,7 @@ export function MenuLateral({ cargo }: { cargo: Cargo | null }) {
     <nav aria-label="Menu principal">
       <ul className="flex flex-col gap-1">
         {itensDoMenu(cargo).map((item) => {
-          const ativo =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const ativo = estaAtivo(pathname, item.href);
           return (
             <li key={item.href}>
               <Link
