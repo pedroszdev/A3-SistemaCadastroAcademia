@@ -1,0 +1,114 @@
+# Matriz de permissões verificável
+
+Responde à issue [#28](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/28). Este documento liga cada linha da [matriz 4.2 do backlog](../../BACKLOG.md#42-matriz-de-permissões-rbac) ao código que a aplica e ao teste HTTP que a comprova, e separa o que já está na `main` do que ainda está em PR aberto ou planejado.
+
+Relação com a A3: itens 2.4 (estratégia de testes, testes de segurança), 2.10 (critérios de aceitação) e 2.12 (relatórios de métricas).
+
+## 1. Como a autorização funciona
+
+```
+requisição
+  └─ JwtAuthGuard (global)   → rota sem @Public e sem token válido → 401
+       └─ RolesGuard (global) → cargo do banco fora do @Roles da rota → 403
+            └─ pipes, guards da rota e controller → 2xx / 400 / 404 / 409 / 422
+```
+
+- Os dois guards são registrados como `APP_GUARD` em [`app.module.ts`](../../../apps/api/src/app.module.ts), nessa ordem. Por isso, sem token a resposta é sempre 401, antes de olhar o cargo.
+- O cargo vem do banco a cada requisição ([`jwt.strategy.ts`](../../../apps/api/src/auth/jwt.strategy.ts)), não do token. Um funcionário rebaixado ou desativado perde o acesso na hora.
+- O `@Roles(...)` pode ficar na classe e ser sobrescrito no método ([`roles.guard.ts`](../../../apps/api/src/auth/roles.guard.ts), `getAllAndOverride`). Exemplo: em `/atividades`, a classe libera a consulta para os 3 cargos e o `POST` restringe a ADMIN e INSTRUTOR.
+- A autorização roda antes da validação do corpo: um cargo sem permissão recebe 403 mesmo com o corpo inválido, sem descobrir nada sobre o formato esperado.
+- **Nenhuma rota fica sem declaração.** O teste `cobertura da matriz` percorre todas as rotas registradas no `AppModule` e falha se alguma não tiver `@Roles` nem `@Public`, ou se uma rota protegida não estiver na `MATRIZ` do teste. Uma rota nova (dashboard, treinos, `/me` do aluno) só passa no CI com a linha dela na matriz.
+
+## 2. Matriz verificável
+
+Legenda de status: ✅ na `main` · 🔄 em PR aberto (não conta como concluído) · ⏳ planejado.
+
+Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/api/test/seguranca.e2e-spec.ts). Cada linha gera três tipos de caso, com estes nomes na saída do Jest:
+
+- `sem token → 401 › <MÉTODO> <rota> → 401`;
+- `por cargo › <CARGO> <MÉTODO> <rota> → 403` para cada cargo sem permissão, conferindo também o corpo `{ statusCode: 403, message: 'Você não tem permissão para acessar este recurso', error: 'Forbidden' }`;
+- `por cargo › <CARGO> <MÉTODO> <rota> → 2xx` para cada cargo permitido, com dados válidos.
+
+| Recurso (4.2) | Rotas | ADMIN | RECEP | INSTR | ALUNO | Implementação | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Funcionários (CRUD) | `GET/POST /funcionarios`, `GET/PATCH /funcionarios/:id`, `PATCH /funcionarios/:id/desativar` e `/reativar` | ✅ | ❌ | ❌ | ⏳ | PR [#27](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/27), merge `b70b666` | ✅ |
+| Membros — listar/ver | `GET /membros`, `GET /membros/:id` | ✅ | ✅ | ✅ | ⏳ | PR da issue #28 (`feat(membros)`) | ✅ após o merge |
+| Membros — criar/editar/desativar | `POST /membros`, `PATCH /membros/:id`, `PATCH /membros/:id/desativar` e `/reativar` | ✅ | ✅ | ❌ | ⏳ | PR da issue #28 (`feat(membros)`) | ✅ após o merge |
+| Membros — liberar/redefinir acesso do aluno | ainda não existe | ✅ | ✅ | ❌ | ❌ | MEM-07 (Gabriel) | ⏳ |
+| Treinos — listar/ver (todos) | ainda não existe | ✅ | ✅ | ✅ | ❌ | TRE-03 (Gabriel) | ⏳ |
+| Treinos — criar/editar/excluir | ainda não existe | ✅ | ❌ | ✅ | ❌ | TRE-03 (Gabriel) | ⏳ |
+| Treinos — os próprios (`/me/treinos`) | ainda não existe | — | — | — | ✅ | TRE-05 (Gabriel) | ⏳ |
+| Pagamentos — tudo | `GET/POST /pagamentos`, `GET /pagamentos/:id`, `PATCH /pagamentos/:id/pagar` e `/cancelar` | ✅ | ✅ | ❌ | ⏳ | PR da issue #28 (`feat(pagamentos)`) | ✅ após o merge |
+| Situação financeira (RF45) | `GET /membros/:id/situacao` | ✅ | ✅ | ❌ | ⏳ | PR da issue #28 (`feat(pagamentos)`) | ✅ após o merge |
+| Histórico — listar/ver (todos) | `GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | ✅ | ✅ | ✅ | ⏳ | PR da issue #28 (`feat(historico)`) | ✅ após o merge |
+| Histórico — registrar | `POST /atividades` | ✅ | ❌ | ✅ | ⏳ | PR da issue #28 (`feat(historico)`) | ✅ após o merge |
+| Histórico — o próprio (`/me/atividades`) | ainda não existe | — | — | — | ✅ | HIS-05 (Yohan) | ⏳ |
+| Dashboard | `GET /dashboard` | ✅ | ✅ | ✅ | ❌ | PR [#33](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/33) (DASH-01) | 🔄 |
+| Meus dados | `GET /auth/me` | ✅ | ✅ | ✅ | ⏳ | PR da issue #28 (`feat(auth)`); ALUNO no PR [#32](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/32) | ✅ funcionários · 🔄 aluno |
+
+A coluna ALUNO fica toda ⏳ porque o login do aluno (AUTH-04) está no PR #32, ainda aberto. Hoje não existe token de aluno na `main`, então não há como testar essa coluna. Com o #32, o `RolesGuard` passa a negar ao aluno toda rota que não tenha `@Roles('ALUNO')` (RN17), e a `MATRIZ` ganha a coluna ALUNO.
+
+### Casos que a issue pede explicitamente
+
+| Pedido da #28 | Teste |
+| --- | --- |
+| INSTRUTOR não acessa pagamentos nem situação financeira | `contrato da issue #28 › INSTRUTOR não acessa pagamentos nem a situação financeira` (6 rotas → 403; nenhum pagamento gravado) |
+| RECEPCIONISTA não registra atividades | `contrato da issue #28 › RECEPCIONISTA não registra atividade: 403 e nada gravado` |
+| Somente ADMIN gerencia funcionários | `contrato da issue #28 › só ADMIN gerencia funcionários` (6 rotas × RECEPCIONISTA e INSTRUTOR → 403; nada criado) |
+| 401 sem autenticação | `sem token → 401` (as 23 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
+
+## 3. Como reproduzir
+
+Com o Postgres do `docker-compose` no ar e o banco de teste criado (veja "Banco de teste" no [CONTRIBUTING](../../../CONTRIBUTING.md)):
+
+```bash
+export DATABASE_URL="postgresql://academia:academia@localhost:5432/academia_test?schema=public"
+export JWT_SECRET="$(openssl rand -hex 32)"
+pnpm --filter api exec prisma migrate deploy
+pnpm --filter api test:e2e -- seguranca
+```
+
+Resultado na branch `feat/rbac-matriz` em 05/11/2026:
+
+```
+Tests:       101 passed, 101 total      # seguranca.e2e-spec.ts
+Tests:       161 passed, 161 total      # todos os e2e (8 suítes)
+Tests:       550 passed, 550 total      # unitários, 100% de cobertura
+```
+
+São 101 casos: 23 de 401, 69 por cargo (23 rotas × 3 cargos), 4 do contrato da issue, 3 de token e 2 de cobertura da matriz.
+
+**Prova de que o teste pega a falha.** Com os `@Roles` novos removidos (o estado da `main` revisada pelo professor), o mesmo arquivo falha em 15 casos, exatamente as violações apontadas na issue:
+
+```
+INSTRUTOR POST /membros → 403
+INSTRUTOR PATCH /membros/:id → 403
+INSTRUTOR PATCH /membros/:id/desativar → 403
+INSTRUTOR PATCH /membros/:id/reativar → 403
+INSTRUTOR GET /membros/:id/situacao → 403
+INSTRUTOR GET /pagamentos → 403
+INSTRUTOR POST /pagamentos → 403
+INSTRUTOR GET /pagamentos/:id → 403
+INSTRUTOR PATCH /pagamentos/:id/pagar → 403
+INSTRUTOR PATCH /pagamentos/:id/cancelar → 403
+RECEPCIONISTA POST /atividades → 403
+INSTRUTOR não acessa pagamentos nem a situação financeira
+RECEPCIONISTA não registra atividade: 403 e nada gravado
+corpo inválido com cargo sem permissão → 403, não 400
+toda rota declara @Roles ou @Public
+```
+
+No CI, o mesmo arquivo roda no passo de e2e do job `Lint, build e testes`, que a proteção da `main` exige (veja [quality-gate](../quality-gate/README.md)).
+
+## 4. O que falta e quando
+
+Datas propostas, a confirmar no check-in do grupo.
+
+| Pendência | Task | Responsável | Data | Como fecha a linha da matriz |
+| --- | --- | --- | --- | --- |
+| Dashboard | DASH-01 · PR #33 | Pedro | 09/11 | adicionar `GET /dashboard` à `MATRIZ` (o teste de cobertura exige) |
+| Login do aluno e coluna ALUNO | AUTH-04 · PR #32 | Pedro | 09/11 | coluna ALUNO na `MATRIZ`; aluno → 403 em todas as rotas de funcionário (RN17) |
+| Treinos | TRE-03 | Gabriel | 13/11 | linhas de `/treinos` na `MATRIZ` |
+| Liberar acesso do aluno | MEM-07 | Gabriel | 16/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
+| Treinos e histórico do aluno | TRE-05 · HIS-05 | Gabriel · Yohan | 16/11 | `/me/...` só para ALUNO; aluno A não vê dados do aluno B (RN16, 404) |
+| E2E-05 completo | E2E-05 | Pedro | 16/11 | casos de ALUNO: RN16, RN17, acesso revogado, sem `senhaHash` |
