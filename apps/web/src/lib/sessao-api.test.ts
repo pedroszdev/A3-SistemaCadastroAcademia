@@ -107,6 +107,46 @@ describe("criarSessao", () => {
     expect(res.status).toBe(401);
   });
 
+  it.each(["text/plain", "application/x-www-form-urlencoded", "multipart/form-data"])(
+    "recusa com 415 o corpo enviado como %s, sem chamar a API",
+    async (tipo) => {
+      const { criarSessao } = await carregar();
+      fetchMock.mockResolvedValue(
+        Response.json({ accessToken: tokenComExp(agoraEmSegundos + 3600), funcionario }),
+      );
+
+      const res = await criarSessao(
+        new Request("http://localhost:3001/api/sessao", {
+          method: "POST",
+          headers: { "Content-Type": tipo },
+          body: JSON.stringify({ login: "maria01", senha: "senha1234" }),
+        }),
+      );
+
+      expect(res.status).toBe(415);
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(res.headers.has("Set-Cookie")).toBe(false);
+    },
+  );
+
+  it("aceita application/json com charset", async () => {
+    const { criarSessao } = await carregar();
+    fetchMock.mockResolvedValue(
+      Response.json({ accessToken: tokenComExp(agoraEmSegundos + 3600), funcionario }),
+    );
+
+    const res = await criarSessao(
+      new Request("http://localhost:3001/api/sessao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({ login: "maria01", senha: "senha1234" }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("devolve 502 quando a API não responde", async () => {
     const { criarSessao } = await carregar();
     fetchMock.mockRejectedValue(new TypeError("fetch failed"));

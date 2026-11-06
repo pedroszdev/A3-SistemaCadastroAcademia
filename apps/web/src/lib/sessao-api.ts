@@ -22,9 +22,19 @@ async function lerCredenciais(req: Request) {
   }
 }
 
+function ehJson(contentType: string | null): boolean {
+  return contentType?.split(";")[0].trim().toLowerCase() === "application/json";
+}
+
 // O login passa por aqui, e não pelo repasse, para o token ir direto para um
 // cookie httpOnly sem nunca chegar ao JavaScript do navegador.
 export async function criarSessao(req: Request): Promise<Response> {
+  // Só JSON: outro site não consegue mandar application/json sem preflight,
+  // então um <form> de fora não grava o cookie de outra conta (login CSRF).
+  if (!ehJson(req.headers.get("content-type"))) {
+    return erro(415, "O corpo precisa ser JSON", "Unsupported Media Type");
+  }
+
   const credenciais = await lerCredenciais(req);
 
   let res: Response;
