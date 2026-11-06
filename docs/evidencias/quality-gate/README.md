@@ -70,7 +70,7 @@ O bloqueio fica em dois lugares:
    | `.protected` | `true` |
    | Regras ativas (`rules/branches/main`) | `deletion`, `non_fast_forward`, `pull_request` (1 aprovação, `dismiss_stale_reviews_on_push` e `require_last_push_approval` ligados, `allowed_merge_methods: ["merge", "rebase"]`), `required_status_checks` (`Lint, build e testes`, `integration_id` 15368, `strict_required_status_checks_policy: true`) |
    | Efeito no PR #31 | passou de mergeável com o CI rodando para `mergeStateStatus: BLOCKED`, `reviewDecision: REVIEW_REQUIRED` |
-   | Print de *Settings → Rules → Rulesets* | `00-ruleset-main.png` (_a preencher_) |
+   | Print de *Settings → Rules → Rulesets* | opcional (`00-ruleset-main.png`, só o admin vê a tela): a configuração já está comprovada pelos comandos acima |
 
 O quality gate usado é o **Sonar way**, o padrão do SonarCloud. Ele vale para o código novo:
 
@@ -149,7 +149,7 @@ Cada linha liga um commit à sua execução do CI, à análise do SonarCloud e a
 | 10/10/2026 | `4f97f4b` | — (Automatic Analysis) | [antes](../sonar-antes/README.md) | não calculado | sem dados | — | 1 / 0 / 0 / 0 | 0,0% | — |
 | 04/11/2026 | `d823ab2` | [41853300624](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/41853300624) | `9159046e` | OK | 100% | 502 / 0 | 0 / 0 / — / — | — | 538 unitários API, 2 arquivos web, 32 e2e |
 | 04/11/2026 | `b70b666` | [41933291714](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/41933291714) | `f259a521` | OK | 100% | 520 / 0 | 0 / 0 / 0 / 1 | 0,0% | 550 unitários API (50 suítes), 2 arquivos web, 50 e2e (6 suítes) |
-| _a preencher_ | _merge deste PR_ | | | | | | | | |
+| 06/11/2026 | `4a3c095` (merge do PR #31, gate exigido no CI) | [42142822581](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42142822581) | `f24e20bf` | OK (`QUALITY GATE STATUS: PASSED` no log) | 100% | 520 / 0 | 0 / 0 / 0 / 1 | 0,0% | 550 unitários API (50 suítes), 2 arquivos web, 60 e2e (7 suítes) |
 
 **Origem dos números:**
 
@@ -177,17 +177,24 @@ Roteiro reproduzível para demonstrar um gate reprovado barrando o merge. O PR �
 4. Aguarde o CI e confira os resultados:
    - no log do passo "Análise do SonarCloud", aparece `QUALITY GATE STATUS: FAILED`;
    - o check `Lint, build e testes` fica vermelho;
-   - o botão de merge mostra "Required statuses must pass before merging".
-5. Salve os prints nesta pasta:
-   - `01-check-vermelho.png`: a lista de checks do PR;
-   - `02-merge-bloqueado.png`: a caixa de merge bloqueada;
-   - `03-sonar-gate-failed.png`: o comentário ou o dashboard do SonarCloud com a condição reprovada.
+   - o check `Lint, build e testes`, marcado como **Required**, fica vermelho;
+   - a caixa de merge mostra "Merging is blocked".
+
+   Como o ruleset também exige 1 aprovação, um PR sem review fica bloqueado por dois motivos. Para o print mostrar só o gate, peça a aprovação de outro integrante antes: com o PR aprovado, o merge continua bloqueado apenas pelo check vermelho.
+5. Salve nesta pasta um print da página do PR com o comentário do SonarCloud ("Quality Gate failed"), a lista de checks e a caixa de merge.
 6. Feche o PR **sem merge** e apague a branch.
 7. Preencha a tabela abaixo.
 
-| Print | PR | Execução do CI |
-| --- | --- | --- |
-| _a preencher_ | | |
+| Print | PR | Execução do CI | Resultado |
+| --- | --- | --- | --- |
+| [01-prova-gate-reprovado.png](01-prova-gate-reprovado.png) | [#34](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/34), fechado sem merge | [42143236680](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42143236680) | Gate **FAILED**: cobertura do código novo 0,0% (mínimo 80%) |
+
+**O que a execução 42143236680 mostra (06/11/2026):**
+- lint, build, 550 testes unitários da API, os testes do web e 60 e2e passaram;
+- o único passo com falha foi "Análise do SonarCloud": `QUALITY GATE STATUS: FAILED`, e o scanner saiu com código 3;
+- `api/qualitygates/project_status?pullRequest=34` devolve `ERROR`, e a única condição reprovada é `new_coverage` (0,0, limite 80).
+
+O check obrigatório `Lint, build e testes` ficou vermelho **só por causa do gate**, e o PR ficou `BLOCKED`. No print, a caixa de merge cita também a falta de review, porque o PR não tinha aprovação. O bloqueio pelo gate é independente disso: o check aparece como **Required** e falhando, e uma aprovação não liberaria o merge.
 
 ## 7. Manutenção
 
