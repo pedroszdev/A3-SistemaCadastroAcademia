@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { hashSync } from 'bcryptjs';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { hoje } from '../src/common/utils/date';
@@ -13,10 +14,12 @@ import {
   limparBanco,
   loginComo,
   prismaDe,
+  SENHA_PADRAO,
 } from './utils';
 
 describe('Dashboard (e2e)', () => {
   let app: INestApplication<App>;
+  let cpfAluno: string;
 
   beforeAll(async () => {
     app = await criarApp();
@@ -24,7 +27,11 @@ describe('Dashboard (e2e)', () => {
     await limparBanco(prisma);
 
     const membroA = await criarMembro(prisma);
-    const membroB = await criarMembro(prisma);
+    // B tem acesso ao portal (AUTH-04) para o teste do aluno, sem mudar as contagens
+    const membroB = await criarMembro(prisma, {
+      senhaHash: hashSync(SENHA_PADRAO, 4),
+    });
+    cpfAluno = membroB.cpf;
     const inativo = await criarMembro(prisma, { ativo: false });
 
     // RN09: 15 dias de atraso torna A inadimplente; 5 dias (B) ainda está na tolerância
@@ -88,4 +95,17 @@ describe('Dashboard (e2e)', () => {
       });
     },
   );
+
+  it('aluno → 403 (RN17)', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/auth/login-aluno')
+      .send({ cpf: cpfAluno, senha: SENHA_PADRAO })
+      .expect(200);
+    const { accessToken } = login.body as { accessToken: string };
+
+    await request(app.getHttpServer())
+      .get('/dashboard')
+      .set('Authorization', bearer(accessToken))
+      .expect(403);
+  });
 });
