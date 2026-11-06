@@ -218,7 +218,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] AUTH-04 Login do aluno (migration + JWT com tipo)
 - [x] AUTH-05 Testes do login do aluno
 - [ ] DASH-01 Endpoint do dashboard + testes — 🟡 **parcial**: o `GET /dashboard` e os testes (unitários e e2e) estão prontos. Falta conferir os números com o seed quando a INF-06 criar membros, pagamentos e atividades
-- [ ] WEB-01 Base do front (layout e componentes) — 🟡 **parcial**: o client `lib/api.ts` com `ApiError` existe. Faltam o envio do token, o tratamento de 401, o layout e os componentes
+- [x] WEB-01 Base do front (layout e componentes) — o token fica num cookie httpOnly e o navegador chama a API pelo repasse `app/api/[...caminho]`; a URL da API passou a ser `API_URL`, lida só no servidor
 - [ ] WEB-02 Autenticação no front
 - [ ] WEB-03 Telas de funcionários
 - [ ] WEB-04 Tela do dashboard
@@ -1013,7 +1013,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 > Padrão: `src/app/(app)/<modulo>/page.tsx` fino. A lógica fica em `src/features/<modulo>/` (`api.ts` com as chamadas, `schemas.ts` com validação, componentes) e tem teste.
 
 #### WEB-01 · Base do front
-**Responsável:** Pedro · **Sprint:** 3 (começar no fim da 2) · **Depende de:** INF-03 · **Status:** 🟡 parcial (client `api.ts` pronto)
+**Responsável:** Pedro · **Sprint:** 3 (começar no fim da 2) · **Depende de:** INF-03 · **Status:** ✅ concluída
 
 **O que fazer**
 - Layout autenticado `(app)/layout.tsx` com menu lateral, que mostra só os itens permitidos pelo cargo (matriz 4.2).
