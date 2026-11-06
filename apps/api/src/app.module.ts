@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { FuncionariosModule } from './funcionarios/funcionarios.module';
 import { HistoricoModule } from './historico/historico.module';
 import { MembrosModule } from './membros/membros.module';
@@ -21,6 +22,7 @@ import { PrismaModule } from './prisma/prisma.module';
     MembrosModule,
     PagamentosModule,
     HistoricoModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [

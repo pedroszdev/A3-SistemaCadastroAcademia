@@ -37,7 +37,7 @@ describe('PagamentosService', () => {
       updateMany: jest.Mock;
       aggregate: jest.Mock;
     };
-    membro: { findUnique: jest.Mock };
+    membro: { findUnique: jest.Mock; count: jest.Mock };
   };
   let service: PagamentosService;
 
@@ -53,7 +53,7 @@ describe('PagamentosService', () => {
         updateMany: jest.fn(),
         aggregate: jest.fn(),
       },
-      membro: { findUnique: jest.fn() },
+      membro: { findUnique: jest.fn(), count: jest.fn() },
     };
     service = new PagamentosService(prisma as unknown as PrismaService);
   });
@@ -415,6 +415,64 @@ describe('PagamentosService', () => {
         where: { id: ID },
         select: { status: true },
       });
+    });
+  });
+
+  describe('receitaDoPeriodo', () => {
+    const de = new Date('2026-10-01');
+    const ate = new Date('2026-11-01');
+
+    it('soma só os pagos com dataPagamento no intervalo e devolve número', async () => {
+      prisma.pagamento.aggregate.mockResolvedValue({
+        _sum: { valor: new Prisma.Decimal('250.50') },
+      });
+
+      await expect(service.receitaDoPeriodo(de, ate)).resolves.toBe(250.5);
+      expect(prisma.pagamento.aggregate).toHaveBeenCalledWith({
+        where: {
+          AND: [
+            {
+              status: { not: StatusPagamento.CANCELADO },
+              dataPagamento: { not: null },
+            },
+            { dataPagamento: { gte: de, lt: ate } },
+          ],
+        },
+        _sum: { valor: true },
+      });
+    });
+
+    it('sem pagamentos no intervalo a soma é nula e a receita é 0', async () => {
+      prisma.pagamento.aggregate.mockResolvedValue({ _sum: { valor: null } });
+
+      await expect(service.receitaDoPeriodo(de, ate)).resolves.toBe(0);
+    });
+  });
+
+  describe('contarInadimplentes', () => {
+    it('conta membros ativos com atraso anterior a hoje menos 10 dias (RN09)', async () => {
+      prisma.membro.count.mockResolvedValue(3);
+
+      await expect(service.contarInadimplentes()).resolves.toBe(3);
+      expect(prisma.membro.count).toHaveBeenCalledWith({
+        where: {
+          ativo: true,
+          pagamentos: {
+            some: {
+              status: { not: StatusPagamento.CANCELADO },
+              dataPagamento: null,
+              // hoje = 2026-10-10, menos 10 dias
+              dataVencimento: { lt: new Date('2026-09-30') },
+            },
+          },
+        },
+      });
+    });
+
+    it('sem inadimplentes devolve 0', async () => {
+      prisma.membro.count.mockResolvedValue(0);
+
+      await expect(service.contarInadimplentes()).resolves.toBe(0);
     });
   });
 
