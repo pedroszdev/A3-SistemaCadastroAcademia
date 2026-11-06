@@ -13,9 +13,11 @@ import {
   criarMembro,
   criarPagamento,
   criarTreino,
+  diaIso,
   diasAtras,
   limparBanco,
   loginComo,
+  noMesmoDia,
   prismaDe,
 } from './utils';
 
@@ -172,6 +174,45 @@ describe('Utilitários de e2e', () => {
     it('devolve o dia de calendário n dias antes de hoje()', () => {
       expect(diasEntre(diasAtras(15), hoje())).toBe(15);
       expect(diasAtras(0).getTime()).toBe(hoje().getTime());
+    });
+  });
+
+  describe('diaIso', () => {
+    it('formata o dia de calendário como AAAA-MM-DD', () => {
+      expect(diaIso(new Date('2026-11-05T00:00:00.000Z'))).toBe('2026-11-05');
+    });
+  });
+
+  describe('noMesmoDia', () => {
+    const DIA_1 = new Date('2026-11-05T00:00:00.000Z');
+    const DIA_2 = new Date('2026-11-06T00:00:00.000Z');
+
+    it('repassa a falha quando o dia não virou', async () => {
+      const cenario = jest.fn().mockRejectedValue(new Error('falhou'));
+
+      await expect(noMesmoDia(cenario, () => DIA_1)).rejects.toThrow('falhou');
+      expect(cenario).toHaveBeenCalledTimes(1);
+    });
+
+    it('roda de novo, uma vez, quando o dia virou durante a falha', async () => {
+      const relogio = jest
+        .fn<Date, []>()
+        .mockReturnValueOnce(DIA_1)
+        .mockReturnValue(DIA_2);
+      const cenario = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('virou o dia'))
+        .mockResolvedValue('ok');
+
+      await expect(noMesmoDia(cenario, relogio)).resolves.toBe('ok');
+      expect(cenario).toHaveBeenCalledTimes(2);
+    });
+
+    it('não roda de novo quando o cenário passa', async () => {
+      const cenario = jest.fn().mockResolvedValue('ok');
+
+      await expect(noMesmoDia(cenario, () => DIA_1)).resolves.toBe('ok');
+      expect(cenario).toHaveBeenCalledTimes(1);
     });
   });
 });

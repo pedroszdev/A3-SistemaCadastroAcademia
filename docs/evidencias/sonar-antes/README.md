@@ -39,3 +39,5 @@ A regra é de **PL/SQL (Oracle)** e foi aplicada a uma migration gerada pelo Pri
 | [02-security.png](02-security.png) | Segurança: rating A, 0 issues |
 | [03-reliability.png](03-reliability.png) | Confiabilidade: rating C, 1 issue média |
 | [04-issue-migration-sql.png](04-issue-migration-sql.png) | Detalhe da issue `plsql:CharVarchar` na migration |
+
+Veja também: [quality gate e escopo das métricas](../quality-gate/README.md), com os registros seguintes e a prova do bloqueio pelo gate.

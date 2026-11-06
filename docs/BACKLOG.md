@@ -210,8 +210,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] AUTH-01 Login com JWT
 - [x] AUTH-02 Autorização por cargo (RBAC)
 - [x] AUTH-03 Testes de auth
-- [ ] AUTH-04 Login do aluno (migration + JWT com tipo)
-- [ ] AUTH-05 Testes do login do aluno
+- [x] AUTH-04 Login do aluno (migration + JWT com tipo)
+- [x] AUTH-05 Testes do login do aluno
 - [ ] DASH-01 Endpoint do dashboard + testes — 🟡 **parcial**: o `GET /dashboard` e os testes (unitários e e2e) estão prontos. Falta conferir os números com o seed quando a INF-06 criar membros, pagamentos e atividades
 - [ ] WEB-01 Base do front (layout e componentes) — 🟡 **parcial**: o client `lib/api.ts` com `ApiError` existe. Faltam o envio do token, o tratamento de 401, o layout e os componentes
 - [ ] WEB-02 Autenticação no front
@@ -279,7 +279,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] WEB-Y6 Portal do aluno: Meu histórico
 - [x] E2E-01 Utilitários de e2e (banco limpo, login)
 - [ ] E2E-02 e2e do fluxo principal
-- [ ] E2E-03 e2e da regra de inadimplência
+- [x] E2E-03 e2e da regra de inadimplência
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-03 Triagem semanal das issues do professor
 - [ ] QA-04 Regressão manual pré-entrega

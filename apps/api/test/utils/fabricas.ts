@@ -44,6 +44,11 @@ export function diasAtras(dias: number): Date {
   return new Date(hoje().getTime() - dias * MS_POR_DIA);
 }
 
+/** Dia de calendário no formato que a API recebe por HTTP (AAAA-MM-DD). */
+export function diaIso(data: Date): string {
+  return data.toISOString().slice(0, 10);
+}
+
 export async function criarFuncionario(
   prisma: PrismaService,
   dados: Partial<{

@@ -1,13 +1,9 @@
 import { Cargo } from '../generated/prisma/enums';
 
-export interface TokenPayload {
-  sub: string;
-  tipo: 'FUNCIONARIO';
-  cargo: Cargo;
-}
+export type TokenPayload =
+  | { sub: string; tipo: 'FUNCIONARIO'; cargo: Cargo }
+  | { sub: string; tipo: 'ALUNO' };
 
-export interface UsuarioAutenticado {
-  id: string;
-  tipo: 'FUNCIONARIO';
-  cargo: Cargo;
-}
+export type UsuarioAutenticado =
+  | { id: string; tipo: 'FUNCIONARIO'; cargo: Cargo }
+  | { id: string; tipo: 'ALUNO' };
