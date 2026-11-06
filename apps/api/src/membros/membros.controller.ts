@@ -8,13 +8,15 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Cargo } from '../generated/prisma/enums';
 import { CreateMembroDto } from './dto/create-membro.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
 import { UpdateMembroDto } from './dto/update-membro.dto';
 import { MembrosService } from './membros.service';
 
-// Os @Roles da matriz 4.2 entram com a AUTH-02 (listar/ver: ADMIN, RECEPCIONISTA,
-// INSTRUTOR; criar/editar/desativar: ADMIN, RECEPCIONISTA).
+// Matriz 4.2: todos os funcionários listam e veem; só ADMIN e RECEPCIONISTA alteram.
+@Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA, Cargo.INSTRUTOR)
 @Controller('membros')
 export class MembrosController {
   constructor(private readonly membros: MembrosService) {}
@@ -25,6 +27,7 @@ export class MembrosController {
   }
 
   @Post()
+  @Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA)
   create(@Body() dto: CreateMembroDto) {
     return this.membros.create(dto);
   }
@@ -35,16 +38,19 @@ export class MembrosController {
   }
 
   @Patch(':id')
+  @Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA)
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateMembroDto) {
     return this.membros.update(id, dto);
   }
 
   @Patch(':id/desativar')
+  @Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA)
   desativar(@Param('id', ParseUUIDPipe) id: string) {
     return this.membros.desativar(id);
   }
 
   @Patch(':id/reativar')
+  @Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA)
   reativar(@Param('id', ParseUUIDPipe) id: string) {
     return this.membros.reativar(id);
   }
