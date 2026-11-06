@@ -30,7 +30,7 @@ cp apps/api/.env.example apps/api/.env   # defina JWT_SECRET com 32+ caracteres:
 cp apps/web/.env.example apps/web/.env.local
 pnpm db:up          # sobe o PostgreSQL
 pnpm db:migrate     # aplica as migrations
-pnpm db:seed        # cria os funcionários de desenvolvimento
+pnpm db:seed        # cria os dados fictícios de desenvolvimento
 pnpm dev            # API em :3000 e front em :3001
 ```
 
@@ -48,18 +48,32 @@ pnpm dev            # API em :3000 e front em :3001
 | `pnpm db:down`    | Derruba os containers                   |
 | `pnpm db:migrate` | `prisma migrate dev` na API             |
 | `pnpm db:studio`  | Abre o Prisma Studio                    |
-| `pnpm db:seed`    | Cria os funcionários de desenvolvimento |
+| `pnpm db:seed`    | Cria dados fictícios de desenvolvimento |
 
 ## Logins de desenvolvimento
 
-O `pnpm db:seed` cria três funcionários, só para uso local (a senha de todos é `senha1234`).
-Rodar de novo não duplica nem redefine senhas.
+O `pnpm db:seed` cria dados fictícios, só para uso local (a senha de todos é `senha1234`).
 
 | Login       | Cargo           |
 | ----------- | --------------- |
 | `admin`     | `ADMIN`         |
 | `recepcao`  | `RECEPCIONISTA` |
 | `instrutor` | `INSTRUTOR`     |
+
+Dois membros têm acesso de aluno (login em `POST /auth/login-aluno`, senha `senha1234`):
+
+| Aluno      | CPF              | Situação     |
+| ---------- | ---------------- | ------------ |
+| Ana Souza  | `418.723.956-19` | em dia       |
+| Bruno Lima | `153.509.460-56` | inadimplente |
+
+O seed também cria:
+
+- 10 membros, 2 deles inativos; Carla Mendes tem 5 dias de atraso, ainda na tolerância (em dia);
+- 9 treinos, 15 pagamentos nos 4 status (PAGO, PENDENTE, ATRASADO, CANCELADO) e 30 atividades, 3 delas hoje;
+- todas as datas são relativas a hoje, então a demonstração vale em qualquer dia.
+
+Rodar de novo não duplica nada: os funcionários que já existem ficam como estão (senha incluída) e os 10 membros do seed voltam ao estado de demonstração, com treinos, pagamentos e atividades recriados. O seed reconhece os membros dele pelo CPF, então membros com outros CPFs não são tocados.
 
 ## Modelo de dados
 
