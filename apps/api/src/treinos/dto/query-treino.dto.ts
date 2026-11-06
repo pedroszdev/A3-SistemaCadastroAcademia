@@ -1,0 +1,17 @@
+import { IsIn, IsOptional, IsUUID } from 'class-validator';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import {
+  MENSAGEM_TIPO_TREINO,
+  TIPOS_TREINO,
+  TipoTreino,
+} from '../tipos-treino';
+
+export class QueryTreinoDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsUUID(undefined, { message: 'membroId deve ser um UUID válido' })
+  membroId?: string;
+
+  @IsOptional()
+  @IsIn(TIPOS_TREINO, { message: MENSAGEM_TIPO_TREINO })
+  tipo?: TipoTreino;
+}
