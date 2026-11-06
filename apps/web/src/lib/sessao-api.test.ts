@@ -167,6 +167,118 @@ describe("criarSessao", () => {
   });
 });
 
+describe("criarSessaoAluno", () => {
+  const fetchMock = vi.fn<typeof fetch>();
+  const agora = new Date("2026-11-06T12:00:00.000Z");
+  const agoraEmSegundos = agora.getTime() / 1000;
+  const aluno = { id: "1", nome: "Joana" };
+  const credenciais = { cpf: "52998224725", senha: "senha1234" };
+
+  function loginAluno(corpo: unknown = credenciais, contentType = "application/json") {
+    return new Request("http://localhost:3001/api/sessao/aluno", {
+      method: "POST",
+      headers: { "Content-Type": contentType },
+      body: JSON.stringify(corpo),
+    });
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ now: agora });
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("chama o /auth/login-aluno da API só com cpf e senha", async () => {
+    const { criarSessaoAluno } = await carregar("https://api.exemplo.com");
+    fetchMock.mockResolvedValue(
+      Response.json({ accessToken: tokenComExp(agoraEmSegundos + 60), aluno }),
+    );
+
+    await criarSessaoAluno(loginAluno({ ...credenciais, extra: 1 }));
+
+    expect(fetchMock).toHaveBeenCalledWith("https://api.exemplo.com/auth/login-aluno", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credenciais),
+    });
+  });
+
+  it("grava o token no cookie httpOnly até o exp e não devolve o token", async () => {
+    const { criarSessaoAluno } = await carregar();
+    const token = tokenComExp(agoraEmSegundos + 60);
+    fetchMock.mockResolvedValue(Response.json({ accessToken: token, aluno }));
+
+    const res = await criarSessaoAluno(loginAluno());
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Set-Cookie")).toBe(
+      `token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=60`,
+    );
+    const corpo = await res.json();
+    expect(corpo).toEqual({ aluno });
+    expect(JSON.stringify(corpo)).not.toContain(token);
+  });
+
+  it.each([400, 401])(
+    "responde 401 com mensagem genérica quando a API dá %i",
+    async (status) => {
+      const { criarSessaoAluno, MENSAGEM_CREDENCIAL_ALUNO_INVALIDA } = await carregar();
+      fetchMock.mockResolvedValue(Response.json({ message: "detalhe" }, { status }));
+
+      const res = await criarSessaoAluno(loginAluno());
+
+      expect(res.status).toBe(401);
+      expect(await res.json()).toEqual({
+        statusCode: 401,
+        message: MENSAGEM_CREDENCIAL_ALUNO_INVALIDA,
+        error: "Unauthorized",
+      });
+      expect(res.headers.has("Set-Cookie")).toBe(false);
+    },
+  );
+
+  it("devolve 502 quando a API dá erro interno", async () => {
+    const { criarSessaoAluno } = await carregar();
+    fetchMock.mockResolvedValue(new Response("erro", { status: 500 }));
+
+    const res = await criarSessaoAluno(loginAluno());
+
+    expect(res.status).toBe(502);
+  });
+
+  it("devolve 502 quando a API não responde", async () => {
+    const { criarSessaoAluno } = await carregar();
+    fetchMock.mockRejectedValue(new TypeError("fetch failed"));
+
+    const res = await criarSessaoAluno(loginAluno());
+
+    expect(res.status).toBe(502);
+  });
+
+  it("devolve 502 e não grava cookie quando a API responde sem accessToken", async () => {
+    const { criarSessaoAluno } = await carregar();
+    fetchMock.mockResolvedValue(Response.json({ aluno: { id: "1", nome: "Joana" } }));
+
+    const res = await criarSessaoAluno(loginAluno());
+
+    expect(res.status).toBe(502);
+    expect(res.headers.has("Set-Cookie")).toBe(false);
+  });
+
+  it("recusa com 415 o corpo que não é JSON, sem chamar a API", async () => {
+    const { criarSessaoAluno } = await carregar();
+
+    const res = await criarSessaoAluno(loginAluno(credenciais, "text/plain"));
+
+    expect(res.status).toBe(415);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("encerrarSessao", () => {
   it("apaga o cookie do token e responde 204", async () => {
     const { encerrarSessao } = await carregar();
