@@ -12,4 +12,11 @@ export class DashboardController {
   resumo() {
     return this.dashboard.resumo();
   }
+
+  // Matriz 4.2: situação financeira é só ADMIN e RECEPCIONISTA.
+  @Get('inadimplentes')
+  @Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA)
+  inadimplentes() {
+    return this.dashboard.inadimplentes();
+  }
 }

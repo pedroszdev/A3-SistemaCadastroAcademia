@@ -221,7 +221,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] WEB-01 Base do front (layout e componentes) — o token fica num cookie httpOnly e o navegador chama a API pelo repasse `app/api/[...caminho]`; a URL da API passou a ser `API_URL`, lida só no servidor
 - [x] WEB-02 Autenticação no front — o login passa pelo handler `app/api/sessao` (POST grava o cookie httpOnly até o `exp` do token; DELETE é o logout); o `src/proxy.ts` (o `middleware.ts` do Next 16) manda quem não tem sessão válida para `/login` e quem já está logado para `/dashboard`
 - [x] WEB-03 Telas de funcionários — tudo em `/funcionarios`: lista paginada com filtro de cargo e situação, criar e editar num Dialog (login travado na edição, senha em branco mantém a atual) e desativar/reativar com confirmação. Quem não é ADMIN vê "Acesso restrito" e a tela nem chama a API
-- [ ] WEB-04 Tela do dashboard
+- [x] WEB-04 Tela do dashboard — cards com os 5 números do `GET /dashboard` para todos os cargos; a lista de inadimplentes (link para `/membros/<id>`) vem da rota nova `GET /dashboard/inadimplentes`, só ADMIN e RECEPCIONISTA, como a situação financeira na matriz 4.2. O link dá 404 até a WEB-G3
 - [ ] WEB-05 Login e portal do aluno
 - [ ] E2E-05 e2e de segurança (401/403) — 🟡 **parcial**: `test/seguranca.e2e-spec.ts` cobre a matriz 4.2 das rotas que existem (401, 403 e sucesso por rota e por papel, incluindo o ALUNO; token inválido e expirado; e a checagem de que toda rota declara `@Roles` ou `@Public`), no PR #35 da issue #28. A RN17 (aluno → 403 em toda rota de funcionário) está coberta; acesso revogado e `senhaHash` fora das respostas estão no `auth.e2e-spec.ts` da AUTH-04. Falta a RN16 (aluno A × aluno B → 404), que depende das rotas `/me` da TRE-05 e da HIS-05
 - [ ] QA-01 Issues do Sonar no meu código
@@ -1053,7 +1053,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### WEB-04 · Dashboard
-**Responsável:** Pedro · **Sprint:** 3 · **Depende de:** DASH-01
+**Responsável:** Pedro · **Sprint:** 3 · **Depende de:** DASH-01 · **Status:** ✅ concluída
 
 **O que fazer**
 - Cards com os indicadores do DASH-01 + lista dos membros inadimplentes com link para a ficha. Testes.
