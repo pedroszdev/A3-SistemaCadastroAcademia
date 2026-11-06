@@ -8,7 +8,9 @@ import {
 } from '@nestjs/common';
 import { FuncionariosService } from '../funcionarios/funcionarios.service';
 import { AuthService } from './auth.service';
+import { Cargo } from '../generated/prisma/enums';
 import { Public } from './decorators/public.decorator';
+import { Roles } from './decorators/roles.decorator';
 import { UsuarioAtual } from './decorators/usuario-atual.decorator';
 import { LoginDto } from './dto/login.dto';
 import type { UsuarioAutenticado } from './usuario-autenticado';
@@ -27,6 +29,7 @@ export class AuthController {
     return this.auth.login(dto);
   }
 
+  @Roles(...Object.values(Cargo))
   @Get('me')
   me(@UsuarioAtual() usuario: UsuarioAutenticado) {
     return this.funcionarios.findOne(usuario.id);
