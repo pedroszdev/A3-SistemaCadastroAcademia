@@ -1,8 +1,12 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, RequestMethod } from '@nestjs/common';
+import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { ConfigService } from '@nestjs/config';
+import { MetadataScanner, ModulesContainer } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { IS_PUBLIC_KEY } from '../src/auth/decorators/public.decorator';
+import { ROLES_KEY } from '../src/auth/decorators/roles.decorator';
 import { segredoJwt } from '../src/auth/segredo-jwt';
 import { hoje } from '../src/common/utils/date';
 import { Cargo } from '../src/generated/prisma/enums';
@@ -431,6 +435,90 @@ describe('Segurança: matriz de permissões (e2e)', () => {
         .get(rota)
         .set('Authorization', bearer(expirado))
         .expect(401);
+    });
+  });
+
+  describe('cobertura da matriz', () => {
+    const caminhos = (valor: unknown): string[] =>
+      valor === undefined
+        ? ['']
+        : (Array.isArray(valor) ? valor : [valor]).map(String);
+
+    const juntar = (...partes: string[]) =>
+      '/' +
+      partes
+        .map((p) => p.replace(/^\/+|\/+$/g, ''))
+        .filter(Boolean)
+        .join('/');
+
+    /** Todas as rotas registradas no AppModule, com os metadados de acesso. */
+    function rotasRegistradas() {
+      const scanner = new MetadataScanner();
+      const rotas: { chave: string; publica: boolean; temRoles: boolean }[] =
+        [];
+
+      for (const modulo of app.get(ModulesContainer).values()) {
+        // Lê o protótipo da classe, não a instância: controller request-scoped
+        // não tem instância aqui e não pode escapar da checagem.
+        for (const { metatype } of modulo.controllers.values()) {
+          if (typeof metatype !== 'function') {
+            continue;
+          }
+          const prototipo = metatype.prototype as Record<string, unknown>;
+          const bases = caminhos(Reflect.getMetadata(PATH_METADATA, metatype));
+
+          for (const nome of scanner.getAllMethodNames(prototipo)) {
+            const handler = prototipo[nome];
+            if (typeof handler !== 'function') {
+              continue;
+            }
+            const sufixos = Reflect.getMetadata(PATH_METADATA, handler) as
+              string | string[] | undefined;
+            if (sufixos === undefined) {
+              continue;
+            }
+            const metodo =
+              RequestMethod[
+                Reflect.getMetadata(METHOD_METADATA, handler) as RequestMethod
+              ];
+            // mesma precedência do getAllAndOverride: o método vale sobre a classe
+            const meta = (k: string): unknown =>
+              (Reflect.getMetadata(k, handler) as unknown) ??
+              (Reflect.getMetadata(k, metatype) as unknown);
+
+            // @Controller(['a', 'b']) e @Get(['x', 'y']) registram cada combinação
+            for (const base of bases) {
+              for (const sufixo of caminhos(sufixos)) {
+                rotas.push({
+                  chave: chave(metodo, juntar(base, sufixo)),
+                  publica: meta(IS_PUBLIC_KEY) === true,
+                  temRoles: meta(ROLES_KEY) !== undefined,
+                });
+              }
+            }
+          }
+        }
+      }
+      return rotas;
+    }
+
+    it('toda rota declara @Roles ou @Public', () => {
+      const semDeclaracao = rotasRegistradas()
+        .filter((r) => !r.publica && !r.temRoles)
+        .map((r) => r.chave);
+
+      expect(semDeclaracao).toEqual([]);
+    });
+
+    it('toda rota não pública está na MATRIZ, e a MATRIZ só tem rotas que existem', () => {
+      const registradas = rotasRegistradas();
+      const protegidas = registradas
+        .filter((r) => !r.publica)
+        .map((r) => r.chave)
+        .sort();
+      const naMatriz = MATRIZ.map((l) => chave(l.metodo, l.rota)).sort();
+
+      expect(protegidas).toEqual(naMatriz);
     });
   });
 });
