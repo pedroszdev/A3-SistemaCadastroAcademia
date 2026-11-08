@@ -4,11 +4,16 @@ import { PagamentosModule } from '../pagamentos/pagamentos.module';
 import { HistoricoController } from './historico.controller';
 import { HistoricoService } from './historico.service';
 import { MembrosAtividadesController } from './membros-atividades.controller';
+import { MinhasAtividadesController } from './minhas-atividades.controller';
 
-// Exporta o HistoricoService para o Histórico do aluno, a ficha do membro e o dashboard.
+// Exporta o HistoricoService para a ficha do membro e o dashboard.
 @Module({
   imports: [MembrosModule, PagamentosModule],
-  controllers: [HistoricoController, MembrosAtividadesController],
+  controllers: [
+    HistoricoController,
+    MembrosAtividadesController,
+    MinhasAtividadesController,
+  ],
   providers: [HistoricoService],
   exports: [HistoricoService],
 })
