@@ -104,6 +104,21 @@ describe("FormLogin", () => {
     expect(screen.getByLabelText("CPF")).toHaveValue("529.982.247-25");
   });
 
+  it("aceita o CPF colado com espaço antes, sem perder o último dígito", async () => {
+    vi.mocked(entrarAluno).mockResolvedValue();
+    render(<FormLogin />);
+    const usuario = userEvent.setup();
+
+    await usuario.click(screen.getByRole("tab", { name: "Aluno" }));
+    await usuario.click(screen.getByLabelText("CPF"));
+    await usuario.paste(" 529.982.247-25");
+    await usuario.type(screen.getByLabelText("Senha"), "senha1234");
+    await usuario.click(screen.getByRole("button", { name: "Entrar" }));
+
+    expect(screen.getByLabelText("CPF")).toHaveValue("529.982.247-25");
+    expect(entrarAluno).toHaveBeenCalledWith({ cpf: "52998224725", senha: "senha1234" });
+  });
+
   it("envia o CPF só com dígitos para a rota do aluno e vai para o portal", async () => {
     vi.mocked(entrarAluno).mockResolvedValue();
     render(<FormLogin />);

@@ -89,7 +89,6 @@ export function FormLogin() {
             inputMode="numeric"
             autoComplete="username"
             placeholder="000.000.000-00"
-            maxLength={14}
             value={cpf}
             onChange={(e) => setCpf(mascaraCpf(e.target.value))}
             required
