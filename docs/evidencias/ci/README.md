@@ -37,7 +37,7 @@ Capturados em 06/11/2026. Para refazer, em cada linha da tabela: abra a URL loga
 
 | Print | Onde | Execução do CI | O que mostra |
 | --- | --- | --- | --- |
-| [01-pr-check-verde.png](01-pr-check-verde.png) | [PR #41](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/41), capturado enquanto está aberto (PR mergeado não mostra a caixa de merge) | [42258834933](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42258834933) | Caixa de merge com `Lint, build e testes` verde e marcado como Required |
+| [01-pr-check-verde.png](01-pr-check-verde.png) | Qualquer PR aberto para a `main` com o CI verde (PR mergeado não mostra a caixa de merge). O print original é do [PR #41](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/41), capturado enquanto estava aberto | [42258834933](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42258834933) | Caixa de merge com `Lint, build e testes` verde e marcado como Required |
 | [02-aba-actions.png](02-aba-actions.png) | [Aba Actions, workflow CI](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/workflows/ci.yml) | - | Histórico de execuções em PRs e na `main` |
 | [03-execucao-teste-quebrado.png](03-execucao-teste-quebrado.png) | [PR #35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) | [42148445130](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42148445130) | Job vermelho no passo `Testes e2e da API` |
 
