@@ -151,21 +151,20 @@ describe('Seed (e2e)', () => {
       return resposta.body as { situacao: string; maiorAtrasoDias: number };
     };
 
-    // O atraso é contado na hora da requisição: refaz o seed se o dia virar.
-    const [bruno, carla] = await noMesmoDia(async () => {
+    // O atraso é contado na hora da requisição: refaz o seed se o dia virar. Os
+    // expect ficam dentro do cenário, porque o noMesmoDia só repete quando ele falha.
+    await noMesmoDia(async () => {
       await seed(prisma);
       const token = await tokenAdmin();
-      return [
-        await situacao(token, CPF_BRUNO),
-        await situacao(token, CPF_CARLA),
-      ];
+      expect(await situacao(token, CPF_BRUNO)).toMatchObject({
+        situacao: 'INADIMPLENTE',
+        maiorAtrasoDias: 15,
+      });
+      expect(await situacao(token, CPF_CARLA)).toMatchObject({
+        situacao: 'EM_DIA',
+        maiorAtrasoDias: 5,
+      });
     });
-
-    expect(bruno).toMatchObject({
-      situacao: 'INADIMPLENTE',
-      maiorAtrasoDias: 15,
-    });
-    expect(carla).toMatchObject({ situacao: 'EM_DIA', maiorAtrasoDias: 5 });
   });
 
   it('atividades respeitam data, tempo, treino do próprio membro (RN10) e a inadimplência do Bruno', async () => {
@@ -205,17 +204,16 @@ describe('Seed (e2e)', () => {
   });
 
   it('GET /dashboard devolve os números da demonstração', async () => {
-    const resposta = await noMesmoDia(async () => {
+    // O dashboard conta "hoje" e "mês" na hora da requisição: refaz o seed se o dia virar.
+    await noMesmoDia(async () => {
       await seed(prisma);
-      return dashboard();
-    });
-
-    expect(resposta).toEqual({
-      membrosAtivos: 8,
-      membrosInadimplentes: 1,
-      pagamentosAtrasados: 2,
-      receitaMes: 369.9,
-      atividadesHoje: 3,
+      expect(await dashboard()).toEqual({
+        membrosAtivos: 8,
+        membrosInadimplentes: 1,
+        pagamentosAtrasados: 2,
+        receitaMes: 369.9,
+        atividadesHoje: 3,
+      });
     });
   });
 
