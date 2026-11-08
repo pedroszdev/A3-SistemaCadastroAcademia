@@ -43,6 +43,15 @@ describe("proxy", () => {
     expect(res.headers.get("x-middleware-next")).toBe("1");
   });
 
+  it("manda o aluno para o portal", () => {
+    const token = jwt({ tipo: "ALUNO", exp: AGORA.getTime() / 1000 + 60 });
+
+    const res = proxy(requisicao("/dashboard", token));
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("http://localhost:3001/aluno");
+  });
+
   it("apaga o cookie do token expirado", () => {
     const token = jwt({
       tipo: "FUNCIONARIO",

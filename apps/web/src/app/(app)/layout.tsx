@@ -6,7 +6,7 @@ import { MenuLateral } from "@/components/layout/menu-lateral";
 import { ToastProvider } from "@/components/ui/toast";
 import { BotaoSair } from "@/features/auth/botao-sair";
 import { UsuarioProvider } from "@/features/auth/usuario";
-import { ROTA_LOGIN, sessaoDaArea } from "@/lib/protecao-rotas";
+import { ROTA_LOGIN, destinoForaDaArea, sessaoDaArea } from "@/lib/protecao-rotas";
 import { COOKIE_TOKEN } from "@/lib/sessao";
 
 // Toda tela autenticada depende do usuário, então o conteúdo inteiro espera a
@@ -18,6 +18,8 @@ async function AreaAutenticada({ children }: { children: ReactNode }) {
   await connection();
   const sessao = sessaoDaArea(token);
   if (!sessao) redirect(ROTA_LOGIN);
+  const destino = destinoForaDaArea("FUNCIONARIO", sessao.usuario);
+  if (destino) redirect(destino);
   const { usuario, cargo } = sessao;
 
   return (
