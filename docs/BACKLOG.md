@@ -244,7 +244,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] MEM-05 Testes de membros
 - [ ] MEM-06 Resumo/ficha do membro (API)
 - [ ] MEM-07 Liberar e redefinir o acesso do aluno
-- [ ] TRE-01 DTOs de treinos
+- [x] TRE-01 DTOs de treinos
 - [ ] TRE-02 Service de treinos
 - [ ] TRE-03 Controller de treinos
 - [ ] TRE-04 Testes de treinos
