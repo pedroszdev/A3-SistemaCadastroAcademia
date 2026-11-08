@@ -528,6 +528,22 @@ describe('PagamentosService', () => {
 
       await expect(service.listarInadimplentes()).resolves.toEqual([]);
     });
+
+    it('ignora o membro que pagou entre a busca dos membros e a dos pagamentos', async () => {
+      const OUTRO_MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789fed';
+      prisma.membro.findMany.mockResolvedValue([
+        { id: MEMBRO_ID, nome: 'João Pereira', pagamentos: [] },
+        {
+          id: OUTRO_MEMBRO_ID,
+          nome: 'Maria Souza',
+          pagamentos: [{ dataVencimento: new Date('2026-09-25') }],
+        },
+      ]);
+
+      await expect(service.listarInadimplentes()).resolves.toEqual([
+        { id: OUTRO_MEMBRO_ID, nome: 'Maria Souza', maiorAtrasoDias: 15 },
+      ]);
+    });
   });
 
   describe('situacaoMembro', () => {

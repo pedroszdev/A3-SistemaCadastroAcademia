@@ -244,14 +244,19 @@ export class PagamentosService {
       },
       orderBy: [{ nome: 'asc' }, { id: 'asc' }],
     });
-    return membros.map((membro) => ({
-      id: membro.id,
-      nome: membro.nome,
-      maiorAtrasoDias: diasEntre(
-        membro.pagamentos[0].dataVencimento,
-        referencia,
-      ),
-    }));
+    // São duas consultas separadas: quem pagou entre elas vem sem pagamentos e já não é inadimplente.
+    return membros.flatMap((membro) => {
+      const [maisAntigo] = membro.pagamentos;
+      return maisAntigo
+        ? [
+            {
+              id: membro.id,
+              nome: membro.nome,
+              maiorAtrasoDias: diasEntre(maisAntigo.dataVencimento, referencia),
+            },
+          ]
+        : [];
+    });
   }
 
   // RN08: a troca condicional não casou; descobre se foi 404 ou 409.
