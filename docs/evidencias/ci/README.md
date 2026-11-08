@@ -14,8 +14,10 @@ O workflow é [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml), d
 | 2. `pnpm lint` | `Lint` |
 | 3. `pnpm build` | `Build` |
 | 4. Testes unitários com cobertura | `Testes unitários da API (cobertura)`, `Testes unitários do web (cobertura)` |
-| 5. e2e com service `postgres:17-alpine`, `prisma migrate deploy` e `test:e2e` | `Aplicar migrations`, `Testes e2e da API` |
-| 6. Scan do SonarCloud com os dois `lcov.info` | `Verificar SONAR_TOKEN`, `Análise do SonarCloud`, `Publicar relatórios de cobertura` |
+| 5. e2e com service `postgres:17-alpine`, `DATABASE_URL` apontando para ele, `prisma migrate deploy` e `test:e2e` | `Configurar DATABASE_URL`, `Aplicar migrations`, `Testes e2e da API` |
+| 6. Scan do SonarCloud com os dois `lcov.info` | `Verificar SONAR_TOKEN`, `Análise do SonarCloud` |
+
+O scan acha os dois `lcov.info` pelo `sonar.javascript.lcov.reportPaths` do [`sonar-project.properties`](../../../sonar-project.properties). O último passo, `Publicar relatórios de cobertura`, não faz parte do scan: só guarda as pastas de cobertura como artefato da execução.
 
 O badge do CI está no topo do [README](../../../README.md). O detalhe do quality gate do Sonar está em [quality-gate](../quality-gate/README.md).
 
