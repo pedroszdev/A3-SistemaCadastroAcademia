@@ -94,6 +94,43 @@ describe("FormLogin", () => {
     expect(screen.queryByLabelText("Login")).toBeNull();
   });
 
+  it("deixa só a aba selecionada na ordem do Tab", () => {
+    render(<FormLogin />);
+
+    expect(screen.getByRole("tab", { name: "Funcionário" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("tab", { name: "Aluno" })).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("troca de aba pelas setas, Home e End, levando o foco junto", async () => {
+    render(<FormLogin />);
+    const usuario = userEvent.setup();
+    const funcionario = screen.getByRole("tab", { name: "Funcionário" });
+    const aluno = screen.getByRole("tab", { name: "Aluno" });
+
+    await usuario.tab();
+    expect(funcionario).toHaveFocus();
+
+    await usuario.keyboard("{ArrowRight}");
+    expect(aluno).toHaveFocus();
+    expect(aluno).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByLabelText("CPF")).toBeInTheDocument();
+
+    await usuario.keyboard("{ArrowRight}");
+    expect(funcionario).toHaveFocus();
+    expect(funcionario).toHaveAttribute("aria-selected", "true");
+
+    await usuario.keyboard("{ArrowLeft}");
+    expect(aluno).toHaveFocus();
+
+    await usuario.keyboard("{Home}");
+    expect(funcionario).toHaveFocus();
+
+    await usuario.keyboard("{End}");
+    expect(aluno).toHaveFocus();
+    expect(aluno).toHaveAttribute("tabindex", "0");
+    expect(funcionario).toHaveAttribute("tabindex", "-1");
+  });
+
   it("aplica a máscara de CPF enquanto digita", async () => {
     render(<FormLogin />);
     const usuario = userEvent.setup();

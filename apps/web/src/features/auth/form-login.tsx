@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apenasDigitos, mascaraCpf } from "@/lib/format";
@@ -14,6 +14,22 @@ const ABAS: readonly { aba: Aba; id: string; rotulo: string }[] = [
   { aba: "ALUNO", id: "aba-aluno", rotulo: "Aluno" },
 ];
 
+// Teclas do padrão de abas do WAI-ARIA: setas circulam, Home e End vão às pontas.
+function indiceDaTecla(tecla: string, atual: number): number | null {
+  switch (tecla) {
+    case "ArrowRight":
+      return (atual + 1) % ABAS.length;
+    case "ArrowLeft":
+      return (atual - 1 + ABAS.length) % ABAS.length;
+    case "Home":
+      return 0;
+    case "End":
+      return ABAS.length - 1;
+    default:
+      return null;
+  }
+}
+
 export function FormLogin() {
   const [aba, setAba] = useState<Aba>("FUNCIONARIO");
   const [cpf, setCpf] = useState("");
@@ -24,6 +40,18 @@ export function FormLogin() {
     setAba(nova);
     setCpf("");
     setErro(null);
+  }
+
+  function aoTeclarNaAba(evento: KeyboardEvent<HTMLButtonElement>) {
+    const indice = indiceDaTecla(
+      evento.key,
+      ABAS.findIndex((item) => item.aba === aba),
+    );
+    if (indice === null) return;
+    evento.preventDefault();
+    const nova = ABAS[indice];
+    if (nova.aba !== aba) trocarAba(nova.aba);
+    document.getElementById(nova.id)?.focus();
   }
 
   async function aoEnviar(evento: FormEvent<HTMLFormElement>) {
@@ -62,8 +90,10 @@ export function FormLogin() {
             id={item.id}
             aria-selected={aba === item.aba}
             aria-controls="painel-login"
+            tabIndex={aba === item.aba ? 0 : -1}
             disabled={enviando}
             onClick={() => trocarAba(item.aba)}
+            onKeyDown={aoTeclarNaAba}
             className={`rounded px-3 py-2 text-sm font-medium ${
               aba === item.aba
                 ? "bg-zinc-900 text-white"
