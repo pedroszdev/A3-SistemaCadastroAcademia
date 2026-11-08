@@ -328,6 +328,11 @@ function idDe(ids: Map<string, string>, chave: string): string {
 }
 
 export async function seed(prisma: PrismaClient): Promise<void> {
+  // A trava fica aqui, e não só no main(): quem importar o seed() também passa por ela.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('O seed não pode rodar em produção');
+  }
+
   const invalido = MEMBROS.find(({ cpf }) => !isCpfValido(cpf));
   if (invalido) {
     throw new Error(`CPF inválido no seed: ${invalido.nome}`);
@@ -420,10 +425,6 @@ export async function seed(prisma: PrismaClient): Promise<void> {
 
 async function main() {
   config();
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('O seed não pode rodar em produção');
-  }
-
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error('DATABASE_URL não definida');

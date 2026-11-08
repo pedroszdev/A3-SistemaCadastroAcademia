@@ -92,6 +92,30 @@ describe('Seed (e2e)', () => {
     expect(ids.sort()).toEqual([...idsPrimeiraExecucao].sort());
   });
 
+  it('recusa rodar em produção, sem tocar no banco', async () => {
+    const bruno = await idDoMembro(CPF_BRUNO);
+    await prisma.pagamento.updateMany({
+      where: { membroId: bruno, dataPagamento: null },
+      data: { dataPagamento: hoje(), status: StatusPagamento.PAGO },
+    });
+
+    const nodeEnvOriginal = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      await expect(seed(prisma)).rejects.toThrow(
+        'O seed não pode rodar em produção',
+      );
+    } finally {
+      process.env.NODE_ENV = nodeEnvOriginal;
+    }
+
+    expect(
+      await prisma.pagamento.count({
+        where: { membroId: bruno, dataPagamento: null },
+      }),
+    ).toBe(0);
+  });
+
   it('os 10 CPFs são válidos (RN01)', async () => {
     const membros = await prisma.membro.findMany();
     expect(membros.every(({ cpf }) => isCpfValido(cpf))).toBe(true);
