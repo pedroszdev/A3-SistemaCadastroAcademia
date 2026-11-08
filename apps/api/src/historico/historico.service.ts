@@ -13,6 +13,7 @@ import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import {
   QueryAtividadeDto,
   QueryAtividadeMembroDto,
+  QueryMinhasAtividadesDto,
 } from './dto/query-atividade.dto';
 
 export const ATIVIDADE_SELECT = {
@@ -27,6 +28,17 @@ export const ATIVIDADE_SELECT = {
   funcionario: { select: { id: true, nome: true } },
   treino: { select: { id: true, tipo: true } },
 } as const;
+
+// HIS-05: o aluno vê do funcionário só o nome; o membro é ele mesmo.
+export const ATIVIDADE_DO_ALUNO_SELECT = {
+  id: true,
+  treinoId: true,
+  atividade: true,
+  data: true,
+  tempoExecucao: true,
+  funcionario: { select: { nome: true } },
+  treino: { select: { id: true, tipo: true } },
+} as const satisfies Prisma.HistoricoAtividadeSelect;
 
 @Injectable()
 export class HistoricoService {
@@ -74,11 +86,31 @@ export class HistoricoService {
     return this.findAll({ ...query, membroId });
   }
 
-  // RN16: com membroId (o do token, na rota do aluno), a atividade de outro membro dá 404.
-  async findOne(id: string, membroId?: string) {
+  findAllDoAluno(membroId: string, query: QueryMinhasAtividadesDto) {
+    // RN16: membroId vem do token; o filtro fica no where.
+    const where: Prisma.HistoricoAtividadeWhereInput = {
+      membroId,
+      data: { gte: query.dataDe, lte: query.dataAte },
+    };
+    return this.paginar(where, query, ATIVIDADE_DO_ALUNO_SELECT);
+  }
+
+  async findOne(id: string) {
+    const atividade = await this.prisma.historicoAtividade.findUnique({
+      where: { id },
+      select: ATIVIDADE_SELECT,
+    });
+    if (!atividade) {
+      throw new NotFoundException('Atividade não encontrada');
+    }
+    return atividade;
+  }
+
+  async findOneDoAluno(id: string, membroId: string) {
+    // RN16: a atividade de outro membro dá 404, como se não existisse.
     const atividade = await this.prisma.historicoAtividade.findUnique({
       where: { id, membroId },
-      select: ATIVIDADE_SELECT,
+      select: ATIVIDADE_DO_ALUNO_SELECT,
     });
     if (!atividade) {
       throw new NotFoundException('Atividade não encontrada');
