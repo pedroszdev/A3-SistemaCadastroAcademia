@@ -49,6 +49,7 @@ interface Massa {
   membroInativoId: string;
   pagamentoId: string;
   atividadeId: string;
+  atividadeDoAlunoId: string;
   funcionarioId: string;
   funcionarioInativoId: string;
 }
@@ -232,6 +233,22 @@ const MATRIZ: Linha[] = [
     sucesso: 201,
   },
 
+  // Histórico do aluno: só o ALUNO, sempre os próprios dados (RN16)
+  { metodo: 'get', rota: '/me/atividades', permitidos: [ALUNO], sucesso: 200 },
+  {
+    metodo: 'get',
+    rota: '/me/atividades/resumo',
+    permitidos: [ALUNO],
+    sucesso: 200,
+  },
+  {
+    metodo: 'get',
+    rota: '/me/atividades/:id',
+    id: (m) => m.atividadeDoAlunoId,
+    permitidos: [ALUNO],
+    sucesso: 200,
+  },
+
   // Dashboard: todos os funcionários
   { metodo: 'get', rota: '/dashboard', permitidos: TODOS, sucesso: 200 },
   {
@@ -298,6 +315,9 @@ describe('Segurança: matriz de permissões (e2e)', () => {
     const membroInativo = await criarMembro(prisma, { ativo: false });
     const pagamento = await criarPagamento(prisma, membro.id);
     const atividade = await criarAtividade(prisma, { membroId: membro.id });
+    const atividadeDoAluno = await criarAtividade(prisma, {
+      membroId: alunoId,
+    });
     const funcionario = await criarFuncionario(prisma, {
       cargo: RECEPCIONISTA,
     });
@@ -310,6 +330,7 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       membroInativoId: membroInativo.id,
       pagamentoId: pagamento.id,
       atividadeId: atividade.id,
+      atividadeDoAlunoId: atividadeDoAluno.id,
       funcionarioId: funcionario.id,
       funcionarioInativoId: funcionarioInativo.id,
     };
@@ -399,7 +420,8 @@ describe('Segurança: matriz de permissões (e2e)', () => {
         403,
       );
 
-      expect(await prisma.historicoAtividade.count()).toBe(1);
+      // a atividade da massa e a do aluno
+      expect(await prisma.historicoAtividade.count()).toBe(2);
     });
 
     it('só ADMIN gerencia funcionários', async () => {
@@ -419,13 +441,14 @@ describe('Segurança: matriz de permissões (e2e)', () => {
 
     it('ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)', async () => {
       const rotas = MATRIZ.filter((l) => !l.permitidos.includes(ALUNO));
-      expect(rotas).toHaveLength(MATRIZ.length - 1);
+      // fora do ALUNO ficam só as rotas dele: /auth/me e as 3 de /me/atividades
+      expect(rotas).toHaveLength(MATRIZ.length - 4);
 
       for (const l of rotas) {
         await chamar(l, tokens[ALUNO]).expect(403);
       }
       expect(await prisma.pagamento.count()).toBe(1);
-      expect(await prisma.historicoAtividade.count()).toBe(1);
+      expect(await prisma.historicoAtividade.count()).toBe(2);
       // a massa (2) e o próprio aluno; nenhum membro criado
       expect(await prisma.membro.count()).toBe(3);
     });
