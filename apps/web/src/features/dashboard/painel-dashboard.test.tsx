@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UsuarioProvider } from "@/features/auth/usuario";
 import type { UsuarioDoToken } from "@/lib/sessao";
@@ -88,18 +88,40 @@ describe("PainelDashboard", () => {
     expect(screen.queryByText("Membros inadimplentes")).toBeNull();
   });
 
-  it("ignora a resposta que chega depois de desmontar", async () => {
-    let resolver: (r: typeof resumo) => void = () => {};
-    vi.mocked(buscarResumo).mockReturnValue(
-      new Promise((ok) => {
-        resolver = ok;
-      }),
+  it("descarta a resposta antiga quando o usuário muda antes dela chegar", async () => {
+    let resolverPrimeira: (r: typeof resumo) => void = () => {};
+    let resolverSegunda: (r: typeof resumo) => void = () => {};
+    vi.mocked(buscarResumo)
+      .mockReturnValueOnce(
+        new Promise((ok) => {
+          resolverPrimeira = ok;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((ok) => {
+          resolverSegunda = ok;
+        }),
+      );
+    vi.mocked(buscarInadimplentes).mockResolvedValue([
+      { id: "m1", nome: "Maria Souza", maiorAtrasoDias: 15 },
+    ]);
+
+    const { rerender } = render(
+      <UsuarioProvider usuario={{ tipo: "FUNCIONARIO", cargo: "ADMIN" }}>
+        <PainelDashboard />
+      </UsuarioProvider>,
+    );
+    rerender(
+      <UsuarioProvider usuario={{ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" }}>
+        <PainelDashboard />
+      </UsuarioProvider>,
     );
 
-    const { unmount } = renderizar({ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" });
-    unmount();
-    resolver(resumo);
+    await act(async () => resolverSegunda(resumo));
+    await act(async () => resolverPrimeira({ ...resumo, membrosAtivos: 99 }));
 
-    expect(screen.queryByText("Membros ativos")).toBeNull();
+    expect(screen.getByText("Membros ativos").nextElementSibling?.textContent).toBe("12");
+    expect(screen.queryByText("99")).toBeNull();
+    expect(screen.queryByText("Membros inadimplentes")).toBeNull();
   });
 });
