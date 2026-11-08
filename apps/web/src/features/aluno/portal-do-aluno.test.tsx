@@ -75,6 +75,18 @@ describe("PortalDoAluno", () => {
     expect(screen.getByText("conteúdo da página")).toBeInTheDocument();
   });
 
+  it("leva de volta para a página inicial do portal pelo cabeçalho", async () => {
+    cookie.valor = jwt({ tipo: "ALUNO", exp: daquiUmaHora() });
+    vi.mocked(buscarPerfilDoAluno).mockResolvedValue({ nome: "Joana Souza", semAcesso: false });
+
+    await renderizarPortal();
+
+    expect(screen.getByRole("link", { name: "Academia · Portal do aluno" })).toHaveAttribute(
+      "href",
+      "/aluno",
+    );
+  });
+
   it("mostra \"Aluno\" no cabeçalho quando o nome não veio", async () => {
     cookie.valor = jwt({ tipo: "ALUNO", exp: daquiUmaHora() });
     vi.mocked(buscarPerfilDoAluno).mockResolvedValue({ nome: null, semAcesso: false });

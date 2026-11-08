@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
@@ -6,7 +7,12 @@ import { MenuAluno } from "@/components/layout/menu-aluno";
 import { BotaoSair } from "@/features/auth/botao-sair";
 import { SessaoEncerrada } from "@/features/auth/sessao-encerrada";
 import { UsuarioProvider } from "@/features/auth/usuario";
-import { ROTA_LOGIN, destinoForaDaArea, sessaoDaArea } from "@/lib/protecao-rotas";
+import {
+  ROTA_ALUNO,
+  ROTA_LOGIN,
+  destinoForaDaArea,
+  sessaoDaArea,
+} from "@/lib/protecao-rotas";
 import { COOKIE_TOKEN } from "@/lib/sessao";
 import { buscarPerfilDoAluno } from "./perfil";
 
@@ -29,7 +35,9 @@ export async function PortalDoAluno({ children }: { children: ReactNode }) {
         <header className="border-b border-zinc-200">
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 pt-3">
             <div className="min-w-0">
-              <p className="text-xs text-zinc-600">Academia · Portal do aluno</p>
+              <Link href={ROTA_ALUNO} className="text-xs text-zinc-600 hover:text-zinc-900">
+                Academia · Portal do aluno
+              </Link>
               <p className="truncate text-base font-semibold text-zinc-900">
                 {nome ?? "Aluno"}
               </p>
