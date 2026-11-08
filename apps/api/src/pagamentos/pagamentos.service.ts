@@ -77,6 +77,23 @@ function filtroStatus(
   }
 }
 
+// RN09: mesmo limite do situacaoMembro (vencimento < hoje − 10 ⇔ atraso > 10 dias),
+// mas só entre os ativos: o dashboard mostra quem a recepção ainda precisa cobrar.
+function filtroInadimplente(referencia: Date): Prisma.MembroWhereInput {
+  const limite = new Date(referencia);
+  limite.setUTCDate(limite.getUTCDate() - DIAS_TOLERANCIA);
+  return {
+    ativo: true,
+    pagamentos: { some: filtroStatus('ATRASADO', limite) },
+  };
+}
+
+export interface MembroInadimplente {
+  id: string;
+  nome: string;
+  maiorAtrasoDias: number;
+}
+
 @Injectable()
 export class PagamentosService {
   constructor(private readonly prisma: PrismaService) {}
@@ -205,16 +222,40 @@ export class PagamentosService {
     return _sum.valor?.toNumber() ?? 0;
   }
 
-  // RN09: mesmo limite do situacaoMembro (vencimento < hoje − 10 ⇔ atraso > 10 dias),
-  // mas só entre os ativos: o dashboard mostra quem a recepção ainda precisa cobrar.
+  // RN09: ver filtroInadimplente.
   async contarInadimplentes(): Promise<number> {
-    const limite = hoje();
-    limite.setUTCDate(limite.getUTCDate() - DIAS_TOLERANCIA);
-    return this.prisma.membro.count({
-      where: {
-        ativo: true,
-        pagamentos: { some: filtroStatus('ATRASADO', limite) },
+    return this.prisma.membro.count({ where: filtroInadimplente(hoje()) });
+  }
+
+  // Mesmo critério do contarInadimplentes, maior atraso como no situacaoMembro.
+  async listarInadimplentes(): Promise<MembroInadimplente[]> {
+    const referencia = hoje();
+    const membros = await this.prisma.membro.findMany({
+      where: filtroInadimplente(referencia),
+      select: {
+        id: true,
+        nome: true,
+        pagamentos: {
+          where: filtroStatus('ATRASADO', referencia),
+          orderBy: { dataVencimento: 'asc' },
+          take: 1,
+          select: { dataVencimento: true },
+        },
       },
+      orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+    });
+    // São duas consultas separadas: quem pagou entre elas vem sem pagamentos e já não é inadimplente.
+    return membros.flatMap((membro) => {
+      const [maisAntigo] = membro.pagamentos;
+      return maisAntigo
+        ? [
+            {
+              id: membro.id,
+              nome: membro.nome,
+              maiorAtrasoDias: diasEntre(maisAntigo.dataVencimento, referencia),
+            },
+          ]
+        : [];
     });
   }
 

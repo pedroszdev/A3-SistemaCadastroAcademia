@@ -37,7 +37,7 @@ describe('PagamentosService', () => {
       updateMany: jest.Mock;
       aggregate: jest.Mock;
     };
-    membro: { findUnique: jest.Mock; count: jest.Mock };
+    membro: { findUnique: jest.Mock; count: jest.Mock; findMany: jest.Mock };
   };
   let service: PagamentosService;
 
@@ -53,7 +53,11 @@ describe('PagamentosService', () => {
         updateMany: jest.fn(),
         aggregate: jest.fn(),
       },
-      membro: { findUnique: jest.fn(), count: jest.fn() },
+      membro: {
+        findUnique: jest.fn(),
+        count: jest.fn(),
+        findMany: jest.fn(),
+      },
     };
     service = new PagamentosService(prisma as unknown as PrismaService);
   });
@@ -473,6 +477,72 @@ describe('PagamentosService', () => {
       prisma.membro.count.mockResolvedValue(0);
 
       await expect(service.contarInadimplentes()).resolves.toBe(0);
+    });
+  });
+
+  describe('listarInadimplentes', () => {
+    it('lista os ativos com atraso maior que a tolerância e o maior atraso de cada um', async () => {
+      prisma.membro.findMany.mockResolvedValue([
+        {
+          id: MEMBRO_ID,
+          nome: 'João Pereira',
+          pagamentos: [{ dataVencimento: new Date('2026-09-25') }],
+        },
+      ]);
+
+      await expect(service.listarInadimplentes()).resolves.toEqual([
+        { id: MEMBRO_ID, nome: 'João Pereira', maiorAtrasoDias: 15 },
+      ]);
+      expect(prisma.membro.findMany).toHaveBeenCalledWith({
+        where: {
+          ativo: true,
+          pagamentos: {
+            some: {
+              status: { not: StatusPagamento.CANCELADO },
+              dataPagamento: null,
+              // hoje = 2026-10-10, menos 10 dias
+              dataVencimento: { lt: new Date('2026-09-30') },
+            },
+          },
+        },
+        select: {
+          id: true,
+          nome: true,
+          pagamentos: {
+            where: {
+              status: { not: StatusPagamento.CANCELADO },
+              dataPagamento: null,
+              dataVencimento: { lt: new Date('2026-10-10') },
+            },
+            orderBy: { dataVencimento: 'asc' },
+            take: 1,
+            select: { dataVencimento: true },
+          },
+        },
+        orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+      });
+    });
+
+    it('sem inadimplentes devolve lista vazia', async () => {
+      prisma.membro.findMany.mockResolvedValue([]);
+
+      await expect(service.listarInadimplentes()).resolves.toEqual([]);
+    });
+
+    it('ignora o membro que pagou entre a busca dos membros e a dos pagamentos', async () => {
+      const OUTRO_MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789fed';
+      prisma.membro.findMany.mockResolvedValue([
+        { id: MEMBRO_ID, nome: 'João Pereira', pagamentos: [] },
+        {
+          id: OUTRO_MEMBRO_ID,
+          nome: 'Maria Souza',
+          pagamentos: [{ dataVencimento: new Date('2026-09-25') }],
+        },
+      ]);
+
+      await expect(service.listarInadimplentes()).resolves.toEqual([
+        { id: OUTRO_MEMBRO_ID, nome: 'Maria Souza', maiorAtrasoDias: 15 },
+      ]);
     });
   });
 

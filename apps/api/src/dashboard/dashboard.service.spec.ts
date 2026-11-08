@@ -8,6 +8,7 @@ describe('DashboardService', () => {
   let pagamentos: {
     findAll: jest.Mock;
     contarInadimplentes: jest.Mock;
+    listarInadimplentes: jest.Mock;
     receitaDoPeriodo: jest.Mock;
   };
   let historico: { findAll: jest.Mock };
@@ -20,6 +21,7 @@ describe('DashboardService', () => {
     pagamentos = {
       findAll: jest.fn().mockResolvedValue({ total: 4 }),
       contarInadimplentes: jest.fn().mockResolvedValue(2),
+      listarInadimplentes: jest.fn(),
       receitaDoPeriodo: jest.fn().mockResolvedValue(1234.5),
     };
     historico = { findAll: jest.fn().mockResolvedValue({ total: 9 }) };
@@ -81,5 +83,13 @@ describe('DashboardService', () => {
     pagamentos.contarInadimplentes.mockRejectedValue(new Error('falha'));
 
     await expect(service.resumo()).rejects.toThrow('falha');
+  });
+
+  it('inadimplentes delega ao PagamentosService', async () => {
+    const lista = [{ id: 'm1', nome: 'João Pereira', maiorAtrasoDias: 15 }];
+    pagamentos.listarInadimplentes.mockResolvedValue(lista);
+
+    await expect(service.inadimplentes()).resolves.toBe(lista);
+    expect(pagamentos.listarInadimplentes).toHaveBeenCalledTimes(1);
   });
 });
