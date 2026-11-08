@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { paginacaoPrisma, paginate } from '../common/utils/paginate';
 import type { Prisma } from '../generated/prisma/client';
 import { MembrosService } from '../membros/membros.service';
@@ -59,24 +60,13 @@ export class HistoricoService {
     });
   }
 
-  async findAll(query: QueryAtividadeDto) {
+  findAll(query: QueryAtividadeDto) {
     const where: Prisma.HistoricoAtividadeWhereInput = {
       membroId: query.membroId,
       funcionarioId: query.funcionarioId,
       data: { gte: query.dataDe, lte: query.dataAte },
     };
-    const [data, total] = await Promise.all([
-      this.prisma.historicoAtividade.findMany({
-        where,
-        select: ATIVIDADE_SELECT,
-        // id (UUIDv7) desempata datas iguais, com a registrada por último primeiro,
-        // e a paginação não repete nem pula
-        orderBy: [{ data: 'desc' }, { id: 'desc' }],
-        ...paginacaoPrisma(query),
-      }),
-      this.prisma.historicoAtividade.count({ where }),
-    ]);
-    return paginate(data, total, query);
+    return this.paginar(where, query, ATIVIDADE_SELECT);
   }
 
   async findAllDoMembro(membroId: string, query: QueryAtividadeMembroDto) {
@@ -110,6 +100,25 @@ export class HistoricoService {
       totalAtividades: _count._all,
       totalMinutos: _sum.tempoExecucao ?? 0,
     };
+  }
+
+  private async paginar<S extends Prisma.HistoricoAtividadeSelect>(
+    where: Prisma.HistoricoAtividadeWhereInput,
+    query: PaginationQueryDto,
+    select: S,
+  ) {
+    const [data, total] = await Promise.all([
+      this.prisma.historicoAtividade.findMany({
+        where,
+        select,
+        // id (UUIDv7) desempata datas iguais, com a registrada por último primeiro,
+        // e a paginação não repete nem pula
+        orderBy: [{ data: 'desc' }, { id: 'desc' }],
+        ...paginacaoPrisma(query),
+      }),
+      this.prisma.historicoAtividade.count({ where }),
+    ]);
+    return paginate(data, total, query);
   }
 
   // RN10: o treino informado precisa ser do próprio membro.
