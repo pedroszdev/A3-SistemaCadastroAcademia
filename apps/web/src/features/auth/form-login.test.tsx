@@ -131,6 +131,18 @@ describe("FormLogin", () => {
     expect(funcionario).toHaveAttribute("tabindex", "-1");
   });
 
+  it("ignora as outras teclas nas abas", async () => {
+    render(<FormLogin />);
+    const usuario = userEvent.setup();
+
+    await usuario.tab();
+    await usuario.keyboard("{ArrowDown}");
+
+    const funcionario = screen.getByRole("tab", { name: "Funcionário" });
+    expect(funcionario).toHaveFocus();
+    expect(funcionario).toHaveAttribute("aria-selected", "true");
+  });
+
   it("aplica a máscara de CPF enquanto digita", async () => {
     render(<FormLogin />);
     const usuario = userEvent.setup();
