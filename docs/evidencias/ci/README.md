@@ -25,6 +25,8 @@ O badge do CI está no topo do [README](../../../README.md). O detalhe do qualit
 
 O ruleset `26615335` da `main` exige o check `Lint, build e testes`. Se qualquer passo ficar vermelho (teste, e2e, lint, build ou gate do Sonar), o check fica vermelho e o merge fica bloqueado.
 
+O print [`01-prova-gate-reprovado.png`](../quality-gate/01-prova-gate-reprovado.png), do PR #34 (aberto só para provar o bloqueio), mostra a caixa de merge com `Lint, build e testes` vermelho e marcado como Required, e o botão de merge desabilitado com "Merging is blocked". O rodapé cita a aprovação pendente porque o ruleset também exige 1 aprovação. O print [03](03-execucao-teste-quebrado.png) da seção 3 mostra a execução vermelha por um teste quebrado.
+
 Para conferir o que está ativo hoje:
 
 ```bash
