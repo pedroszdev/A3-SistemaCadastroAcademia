@@ -132,7 +132,8 @@ Esta seção é a fonte da verdade para back, front e testes. Se uma regra mudar
 | Histórico — listar/ver (todos) | ✅ | ✅ | ✅ | ❌ |
 | Histórico — ver **o próprio** (`/me/atividades`) | — | — | — | ✅ |
 | Histórico — registrar | ✅ | ❌ | ✅ | ❌ |
-| Dashboard | ✅ | ✅ | ✅ | ❌ |
+| Dashboard — indicadores | ✅ | ✅ | ✅ | ❌ |
+| Dashboard — membros inadimplentes | ✅ | ✅ | ❌ | ❌ |
 | Meus dados (`/auth/me`) | ✅ | ✅ | ✅ | ✅ |
 
 **Como a matriz é garantida** (issue #28)
