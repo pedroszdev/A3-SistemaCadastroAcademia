@@ -1,6 +1,6 @@
+import { API_URL } from "./api-url";
 import { COOKIE_TOKEN, COOKIE_TOKEN_APAGADO, lerCookie } from "./sessao";
 
-const API_URL = process.env.API_URL ?? "http://localhost:3000";
 const METODOS_SEM_CORPO = ["GET", "HEAD"];
 // Lista fechada: set-cookie, content-encoding, content-length e afins da API ficam de fora de propósito.
 const HEADERS_DA_RESPOSTA = [

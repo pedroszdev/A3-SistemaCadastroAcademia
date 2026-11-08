@@ -1,4 +1,5 @@
-const API_URL = process.env.API_URL ?? "http://localhost:3000";
+import { API_URL } from "@/lib/api-url";
+
 const TEMPO_LIMITE_MS = 5_000;
 
 export type PerfilDoAluno = { nome: string | null; semAcesso: boolean };

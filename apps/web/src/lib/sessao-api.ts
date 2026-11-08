@@ -1,6 +1,5 @@
+import { API_URL } from "./api-url";
 import { COOKIE_TOKEN_APAGADO, cookieDoToken, segundosAteExpirar } from "./sessao";
-
-const API_URL = process.env.API_URL ?? "http://localhost:3000";
 
 export const MENSAGEM_CREDENCIAL_INVALIDA = "Login ou senha inválidos";
 
