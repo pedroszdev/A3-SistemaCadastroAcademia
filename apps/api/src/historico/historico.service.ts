@@ -95,27 +95,13 @@ export class HistoricoService {
     return this.paginar(where, query, ATIVIDADE_DO_ALUNO_SELECT);
   }
 
-  async findOne(id: string) {
-    const atividade = await this.prisma.historicoAtividade.findUnique({
-      where: { id },
-      select: ATIVIDADE_SELECT,
-    });
-    if (!atividade) {
-      throw new NotFoundException('Atividade não encontrada');
-    }
-    return atividade;
+  findOne(id: string) {
+    return this.buscarAtividade({ id }, ATIVIDADE_SELECT);
   }
 
-  async findOneDoAluno(id: string, membroId: string) {
+  findOneDoAluno(id: string, membroId: string) {
     // RN16: a atividade de outro membro dá 404, como se não existisse.
-    const atividade = await this.prisma.historicoAtividade.findUnique({
-      where: { id, membroId },
-      select: ATIVIDADE_DO_ALUNO_SELECT,
-    });
-    if (!atividade) {
-      throw new NotFoundException('Atividade não encontrada');
-    }
-    return atividade;
+    return this.buscarAtividade({ id, membroId }, ATIVIDADE_DO_ALUNO_SELECT);
   }
 
   async resumoMembro(
@@ -132,6 +118,20 @@ export class HistoricoService {
       totalAtividades: _count._all,
       totalMinutos: _sum.tempoExecucao ?? 0,
     };
+  }
+
+  private async buscarAtividade<S extends Prisma.HistoricoAtividadeSelect>(
+    where: Prisma.HistoricoAtividadeWhereUniqueInput,
+    select: S,
+  ) {
+    const atividade = await this.prisma.historicoAtividade.findUnique({
+      where,
+      select,
+    });
+    if (!atividade) {
+      throw new NotFoundException('Atividade não encontrada');
+    }
+    return atividade;
   }
 
   private async paginar<S extends Prisma.HistoricoAtividadeSelect>(
