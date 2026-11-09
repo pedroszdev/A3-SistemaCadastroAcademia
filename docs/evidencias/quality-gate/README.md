@@ -41,10 +41,14 @@ O bloqueio fica em dois lugares:
    Para conferir se o ruleset ativo continua igual ao arquivo (sem saída = iguais):
 
    ```bash
-   diff <(jq -S '{name, target, enforcement, bypass_actors, conditions, rules}' .github/rulesets/main.json) \
+   diff <(jq -S '{name, target, enforcement, conditions, rules}' .github/rulesets/main.json) \
         <(gh api repos/pedroszdev/A3-SistemaCadastroAcademia/rulesets/26615335 \
-            | jq -S '{name, target, enforcement, bypass_actors, conditions, rules}')
+            | jq -S '{name, target, enforcement, conditions, rules}')
    ```
+
+   O `bypass_actors` fica fora da comparação porque a API só mostra esse campo para admin. Para os demais, ele vem `null`, e o `diff` acusaria uma diferença que não existe. Para quem não é admin, o campo `current_user_can_bypass: "never"` da mesma resposta confirma que ninguém ignora as regras.
+
+   **Achado de 09/11/2026.** O commit `91b31cb` (05/11) ligou `dismiss_stale_reviews_on_push`, `require_last_push_approval` e `strict_required_status_checks_policy` no arquivo, mas o `PUT` não foi aplicado. Até 09/11, os três continuaram `false` no ruleset ativo, e o `diff` acima mostrava a diferença. O `PUT` foi aplicado em 09/11/2026 às 10:45 (`updated_at` do ruleset). Desde então, o `diff` não mostra nenhuma diferença.
 
    O ruleset aplica estas regras:
    - sem bypass (`bypass_actors` vazio);
@@ -65,7 +69,7 @@ O bloqueio fica em dois lugares:
    | --- | --- |
    | Ruleset | "Sem merge até o CI rodar" (id `26615335`), `enforcement: active` |
    | Criado por | Pedro (admin do repositório), substituindo a proteção desativada; atualizado com `PUT` a partir do arquivo versionado |
-   | Data | 05/11/2026, 10:10 (horário de Brasília; `created_at` do ruleset) |
+   | Data | 05/11/2026, 10:10 (horário de Brasília; `created_at` do ruleset); `PUT` do arquivo versionado em 09/11/2026, 10:45 (`updated_at`) |
    | Bypass | `bypass_actors: []`: ninguém pode ignorar as regras, nem admin |
    | `.protected` | `true` |
    | Regras ativas (`rules/branches/main`) | `deletion`, `non_fast_forward`, `pull_request` (1 aprovação, `dismiss_stale_reviews_on_push` e `require_last_push_approval` ligados, `allowed_merge_methods: ["merge", "rebase"]`), `required_status_checks` (`Lint, build e testes`, `integration_id` 15368, `strict_required_status_checks_policy: true`) |
@@ -117,27 +121,31 @@ O quality gate usado é o **Sonar way**, o padrão do SonarCloud. Ele vale para 
 | `**/*.config.*` | Sonar (`coverage.exclusions`) | Configuração de ferramenta. Hoje já fica fora de `sonar.sources`, e a regra protege contra um config criado dentro de `src` |
 | `src/**/*.test.{ts,tsx}` | Vitest | Os próprios testes do web |
 
-As listas do Sonar e das ferramentas de teste coincidem no que cada ferramenta enxerga. O Jest roda com `rootDir: src` e o Vitest com `include: src/**`, então nenhuma das duas mede arquivos de configuração. A cobertura de 100% exibida pelo Sonar é, portanto, a mesma do `text-summary` impresso no CI.
+As listas do Sonar e das ferramentas de teste coincidem no que cada ferramenta enxerga. O Jest roda com `rootDir: src` e o Vitest com `include: src/**`, então nenhuma das duas mede arquivos de configuração. A cobertura exibida pelo Sonar mede, portanto, os mesmos arquivos do `text-summary` impresso no CI.
 
 ## 4. O que as métricas medem
 
-A cobertura e o gate valem **somente para o que está na `main`**. Funcionalidades planejadas não entram no cálculo: os 100% atuais não dizem nada sobre treinos, dashboard ou telas que ainda não existem.
+A cobertura e o gate valem **somente para o que está na `main`**. Funcionalidades planejadas não entram no cálculo: os 99,4% de 09/11 não dizem nada sobre o CRUD de treinos, a ficha do membro ou as telas que ainda não existem.
+
+Estado em 09/11/2026, na `main` `f921ce2`:
 
 Testes HTTP (`*.http.spec.ts`) sobem o controller com os guards e o `ValidationPipe` reais e o service mockado. Testes e2e sobem a aplicação inteira com o banco `academia_test`.
 
 | Módulo (`apps/api/src`) | Rotas | Requisitos | Testes unitários / HTTP | e2e (`apps/api/test`) | Estado |
 | --- | --- | --- | --- | --- | --- |
-| `auth` | `POST /auth/login`, `GET /auth/me`, guards JWT e de cargo | seção 4.1 e matriz 4.2 | 8 specs, incluindo `auth.http.spec.ts` e `roles.guard.spec.ts` | `auth.e2e-spec.ts` | Na `main` |
+| `auth` | `POST /auth/login`, `POST /auth/login-aluno`, `GET /auth/me`, guards JWT e de cargo | seção 4.1 e matriz 4.2 | 9 specs, incluindo `auth.http.spec.ts` e `roles.guard.spec.ts` | `auth.e2e-spec.ts`, `seguranca.e2e-spec.ts` (matriz 4.2 por rota e papel, PR #35) | Na `main` |
 | `funcionarios` | CRUD, desativar e reativar, só ADMIN | seção 4.2 | 5 specs | `funcionarios.e2e-spec.ts` | Na `main` |
-| `membros` | CRUD, desativar e reativar | RF20 a RF24 | 6 specs, incluindo `membros.http.spec.ts` | `membros.e2e-spec.ts` | Na `main` (os `@Roles` de membros ficam para a issue #28) |
-| `pagamentos` | lançar, listar, consultar, pagar, cancelar e `GET /membros/:id/situacao` | RF40 a RF45 | 8 specs, incluindo `pagamentos.http.spec.ts` e `pagamento-status.spec.ts` | — (o E2E-03 de inadimplência está no PR #26) | Na `main` |
-| `historico` | `POST/GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | RF50 a RF52 | 6 specs, incluindo `historico.http.spec.ts` | `historico.e2e-spec.ts` | Na `main` |
+| `membros` | CRUD, desativar e reativar, com `@Roles` por rota | RF20 a RF24 | 6 specs, incluindo `membros.http.spec.ts` | `membros.e2e-spec.ts`, `seguranca.e2e-spec.ts` | Na `main` |
+| `pagamentos` | lançar, listar, consultar, pagar, cancelar e `GET /membros/:id/situacao` | RF40 a RF45 | 8 specs, incluindo `pagamentos.http.spec.ts` e `pagamento-status.spec.ts` | `inadimplencia.e2e-spec.ts` (E2E-03, PR #26) | Na `main` |
+| `historico` | `POST/GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` e, para o aluno, `GET /me/atividades`, `/me/atividades/resumo` e `/me/atividades/:id` (PR #46) | RF50 a RF53 | 8 specs, incluindo `historico.http.spec.ts` e `minhas-atividades.http.spec.ts` | `historico.e2e-spec.ts`, `seguranca.e2e-spec.ts` | Na `main` |
+| `dashboard` | `GET /dashboard`, `GET /dashboard/inadimplentes` (PR #33) | seção 4.7 | 2 specs | `dashboard.e2e-spec.ts`, `seed.e2e-spec.ts` (números conferidos com o seed, PR #43) | Na `main` |
+| `treinos` | só os DTOs e a lista de tipos (TRE-01, PR #45). Ainda não existem rotas | RF30 a RF34 (validação de entrada) | 3 specs dos DTOs, que rodam no CI mas não entram na cobertura (`**/dto/**`, seção 3) | — | **Parcial**: DTOs na `main`. Service, controller e rotas estão **planejados** e fora da métrica |
 | `common`, `prisma` | utilitários, validadores (CPF, datas), filtro de erros do Prisma, paginação | RN01, RN02 e validações | 15 specs | `utils.e2e-spec.ts` | Na `main` |
-| web `src/lib`, `src/app/page.tsx` | cliente da API e página inicial | — | `api.test.ts`, `page.test.tsx` | — | Na `main` |
-| Treinos | — | RF30 a RF35 | — | — | **Planejado**, fora da métrica |
-| Dashboard | — | seção 4.7 | — | — | **Planejado**, fora da métrica |
-| Portal do aluno, ficha do membro | — | RF25, RF26, RF35, RF53 | — | — | **Planejado**, fora da métrica |
-| Telas do web (login, membros, pagamentos, atividades) | — | — | — | — | **Planejado**, fora da métrica |
+| web: base, sessão e repasse da API | layout, componentes de UI, `proxy.ts`, handlers `app/api/sessao` e `app/api/[...caminho]` (PR #37) | — | 21 arquivos de teste em `components/`, `lib/`, `app/api/` e `proxy.test.ts` | — | Na `main` |
+| web: telas | `/login` (funcionário e aluno), `/funcionarios` (PR #39), `/dashboard` (PR #40), `/aluno` (início do portal, PR #41) | WEB-02 a WEB-05 | 20 arquivos de teste em `app/` (incluindo a página inicial) e `features/` | — | Na `main` |
+| Treinos do aluno | `/me/treinos` (TRE-05) | RF35 | — | — | **Planejado**, fora da métrica |
+| Ficha do membro e acesso do aluno | — | RF25, RF26 | — | — | **Planejado**, fora da métrica |
+| Telas do web (membros, treinos, pagamentos, atividades e as páginas *Meus treinos* e *Meu histórico* do portal) | — | — | — | — | **Planejado**, fora da métrica |
 | Fluxo principal (E2E-02) | — | CA01 a CA08 | — | `fluxo-principal.e2e-spec.ts` | **Planejado** (issue #29) |
 
 ## 5. Registros
@@ -150,11 +158,13 @@ Cada linha liga um commit à sua execução do CI, à análise do SonarCloud e a
 | 04/11/2026 | `d823ab2` | [41853300624](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/41853300624) | `9159046e` | OK | 100% | 502 / 0 | 0 / 0 / — / — | — | 538 unitários API, 2 arquivos web, 32 e2e |
 | 04/11/2026 | `b70b666` | [41933291714](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/41933291714) | `f259a521` | OK | 100% | 520 / 0 | 0 / 0 / 0 / 1 | 0,0% | 550 unitários API (50 suítes), 2 arquivos web, 50 e2e (6 suítes) |
 | 06/11/2026 | `4a3c095` (merge do PR #31, gate exigido no CI) | [42142822581](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42142822581) | `f24e20bf` | OK (`QUALITY GATE STATUS: PASSED` no log) | 100% | 520 / 0 | 0 / 0 / 0 / 1 | 0,0% | 550 unitários API (50 suítes), 2 arquivos web, 60 e2e (7 suítes) |
+| 09/11/2026 | `f921ce2` (merge do PR #46; inclui dashboard, telas do web, portal do aluno, seed e DTOs de treinos) | [42621050893](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42621050893) | `83a79da4` | OK (`QUALITY GATE STATUS: PASSED` no log) | 99,4% (código novo: 99,3%) | 1157 / 1 | 0 / 0 / 0 / 1 | 0,0% | 678 unitários API (58 suítes), 330 testes web (41 arquivos), 237 e2e (10 suítes) |
 
 **Origem dos números:**
 
 - **Linha `d823ab2`:** são os números citados pelo professor na issue #30.
 - **Linha `b70b666`:** a API pública do SonarCloud (`api/qualitygates/project_status`, `api/measures/component` e `api/project_analyses/search` com `project=pedroszdev_A3-SistemaCadastroAcademia`) e o log da execução do CI. O Sonar conta linhas a cobrir com critério próprio, por isso os 520 dele não batem exatamente com as 499 linhas da API mais as 8 do web do `text-summary` do Jest e do Vitest. Nos dois casos, nenhuma linha fica sem cobertura.
+- **Linha `f921ce2`:** a mesma API pública do SonarCloud, consultada em 09/11/2026 (análise `83a79da4`, `revision` igual ao commit do CI), e o log da execução 42621050893. A única linha sem cobertura está em `apps/web/src/features/funcionarios/tela-funcionarios.tsx` (`api/measures/component_tree` com `metricKeys=uncovered_lines`). A cobertura continua acima da meta de 80% e do mínimo de 75% da A3. A cobertura deixou de ser 100% com a entrada das telas do web, e o registro mostra o valor real em vez de repetir o de 06/11.
 
 **Como acrescentar uma linha após cada merge relevante:**
 
