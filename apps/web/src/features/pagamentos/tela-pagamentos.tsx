@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useUsuario } from "@/features/auth/usuario";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -21,9 +21,14 @@ import {
   registrarPagamento,
   type StatusPagamento,
 } from "./api";
+import { FormPagamento } from "./form-pagamento";
 import { BadgeStatusPagamento, OPCOES_STATUS_PAGAMENTO } from "./status-pagamento";
 
 type Confirmacao = { acao: "pagar" | "cancelar"; pagamento: Pagamento };
+
+// A chave muda a cada abertura: um save que termina depois de o Dialog ter sido
+// fechado e reaberto não fecha o formulário novo.
+type EstadoForm = { aberto: boolean; chave: number };
 
 export function TelaPagamentos() {
   const usuario = useUsuario();
@@ -49,6 +54,8 @@ function GestaoPagamentos() {
   const [confirmar, setConfirmar] = useState<Confirmacao | null>(null);
   const [dataPagamento, setDataPagamento] = useState("");
   const [processando, setProcessando] = useState(false);
+  const [form, setForm] = useState<EstadoForm>({ aberto: false, chave: 0 });
+  const proximaChave = useRef(0);
 
   useEffect(() => {
     let cancelado = false;
@@ -78,6 +85,22 @@ function GestaoPagamentos() {
 
   function recarregar() {
     setVersao((v) => v + 1);
+  }
+
+  function abrirForm() {
+    proximaChave.current += 1;
+    setForm({ aberto: true, chave: proximaChave.current });
+  }
+
+  function fecharForm() {
+    setForm((atual) => ({ ...atual, aberto: false }));
+  }
+
+  function aoSalvar() {
+    const { chave } = form;
+    mostrar("Pagamento lançado.");
+    setForm((atual) => (atual.chave === chave ? { ...atual, aberto: false } : atual));
+    recarregar();
   }
 
   function abrirConfirmacao(acao: Confirmacao["acao"], pagamento: Pagamento) {
@@ -175,6 +198,9 @@ function GestaoPagamentos() {
           min={filtro.vencimentoDe}
           onChange={(e) => setFiltro({ ...filtro, vencimentoAte: e.target.value || undefined, page: 1 })}
         />
+        <Button className="ml-auto" onClick={abrirForm}>
+          Novo pagamento
+        </Button>
       </div>
 
       {erroLista && (
@@ -241,6 +267,10 @@ function GestaoPagamentos() {
             )}
           </div>
         )}
+      </Dialog>
+
+      <Dialog aberto={form.aberto} titulo="Novo pagamento" onFechar={fecharForm}>
+        <FormPagamento key={form.chave} onSalvo={aoSalvar} onCancelar={fecharForm} />
       </Dialog>
     </div>
   );
