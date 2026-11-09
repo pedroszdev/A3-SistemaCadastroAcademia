@@ -453,6 +453,25 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       expect(await prisma.membro.count()).toBe(3);
     });
 
+    it('ALUNO não vê a atividade de outro membro: 404 no /:id e fora da lista e do resumo (RN16)', async () => {
+      const comoAluno = (url: string) =>
+        request(app.getHttpServer())
+          .get(url)
+          .set('Authorization', bearer(tokens[ALUNO]));
+
+      await comoAluno(`/me/atividades/${massa.atividadeId}`).expect(404);
+
+      const lista = await comoAluno('/me/atividades').expect(200);
+      const corpo = lista.body as { data: { id: string }[]; total: number };
+      expect(corpo.data.map((a) => a.id)).toEqual([massa.atividadeDoAlunoId]);
+      expect(corpo.total).toBe(1);
+
+      const resumo = await comoAluno('/me/atividades/resumo').expect(200);
+      expect((resumo.body as { totalAtividades: number }).totalAtividades).toBe(
+        1,
+      );
+    });
+
     it('corpo inválido com cargo sem permissão → 403, não 400', async () => {
       await request(app.getHttpServer())
         .post('/pagamentos')
