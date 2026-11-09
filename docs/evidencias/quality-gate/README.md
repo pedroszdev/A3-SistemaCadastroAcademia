@@ -158,11 +158,13 @@ Cada linha liga um commit à sua execução do CI, à análise do SonarCloud e a
 | 04/11/2026 | `d823ab2` | [41853300624](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/41853300624) | `9159046e` | OK | 100% | 502 / 0 | 0 / 0 / — / — | — | 538 unitários API, 2 arquivos web, 32 e2e |
 | 04/11/2026 | `b70b666` | [41933291714](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/41933291714) | `f259a521` | OK | 100% | 520 / 0 | 0 / 0 / 0 / 1 | 0,0% | 550 unitários API (50 suítes), 2 arquivos web, 50 e2e (6 suítes) |
 | 06/11/2026 | `4a3c095` (merge do PR #31, gate exigido no CI) | [42142822581](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42142822581) | `f24e20bf` | OK (`QUALITY GATE STATUS: PASSED` no log) | 100% | 520 / 0 | 0 / 0 / 0 / 1 | 0,0% | 550 unitários API (50 suítes), 2 arquivos web, 60 e2e (7 suítes) |
+| 09/11/2026 | `f921ce2` (merge do PR #46; inclui dashboard, telas do web, portal do aluno, seed e DTOs de treinos) | [42621050893](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/actions/runs/42621050893) | `83a79da4` | OK (`QUALITY GATE STATUS: PASSED` no log) | 99,4% (código novo: 99,3%) | 1157 / 1 | 0 / 0 / 0 / 1 | 0,0% | 678 unitários API (58 suítes), 330 testes web (41 arquivos), 237 e2e (10 suítes) |
 
 **Origem dos números:**
 
 - **Linha `d823ab2`:** são os números citados pelo professor na issue #30.
 - **Linha `b70b666`:** a API pública do SonarCloud (`api/qualitygates/project_status`, `api/measures/component` e `api/project_analyses/search` com `project=pedroszdev_A3-SistemaCadastroAcademia`) e o log da execução do CI. O Sonar conta linhas a cobrir com critério próprio, por isso os 520 dele não batem exatamente com as 499 linhas da API mais as 8 do web do `text-summary` do Jest e do Vitest. Nos dois casos, nenhuma linha fica sem cobertura.
+- **Linha `f921ce2`:** a mesma API pública do SonarCloud, consultada em 09/11/2026 (análise `83a79da4`, `revision` igual ao commit do CI), e o log da execução 42621050893. A única linha sem cobertura está em `apps/web/src/features/funcionarios/tela-funcionarios.tsx` (`api/measures/component_tree` com `metricKeys=uncovered_lines`). A cobertura continua acima da meta de 80% e do mínimo de 75% da A3. A cobertura deixou de ser 100% com a entrada das telas do web, e o registro mostra o valor real em vez de repetir o de 06/11.
 
 **Como acrescentar uma linha após cada merge relevante:**
 
