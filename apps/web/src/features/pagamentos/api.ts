@@ -3,6 +3,7 @@ import { CARGOS_FINANCEIRO } from "@/lib/menu";
 import type { UsuarioDoToken } from "@/lib/sessao";
 
 export const TAMANHO_PAGINA = 20;
+export const TAMANHO_BUSCA_MEMBROS = 10;
 
 export type StatusPagamento = "PENDENTE" | "PAGO" | "ATRASADO" | "CANCELADO";
 
@@ -41,6 +42,34 @@ export function listarPagamentos(filtro: FiltroPagamentos) {
   params.set("page", String(filtro.page));
   params.set("pageSize", String(TAMANHO_PAGINA));
   return api<PaginaPagamentos>(`/pagamentos?${params}`);
+}
+
+export type DadosCriarPagamento = {
+  membroId: string;
+  valor: number;
+  dataVencimento: string;
+};
+
+export function criarPagamento(dados: DadosCriarPagamento) {
+  return api<Pagamento>("/pagamentos", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
+}
+
+export type MembroBusca = { id: string; nome: string; cpf: string };
+
+// RN04: só membro ativo recebe novo pagamento, então a busca lista só os ativos.
+// A API ainda responde 422 se o membro for desativado depois da busca.
+export async function buscarMembrosAtivos(busca: string): Promise<MembroBusca[]> {
+  const params = new URLSearchParams({
+    busca: busca.trim(),
+    ativo: "true",
+    page: "1",
+    pageSize: String(TAMANHO_BUSCA_MEMBROS),
+  });
+  const pagina = await api<{ data: MembroBusca[] }>(`/membros?${params}`);
+  return pagina.data.map(({ id, nome, cpf }) => ({ id, nome, cpf }));
 }
 
 export function registrarPagamento(id: string, dataPagamento?: string) {

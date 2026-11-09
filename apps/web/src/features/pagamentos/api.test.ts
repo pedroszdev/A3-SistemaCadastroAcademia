@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  buscarMembrosAtivos,
   cancelarPagamento,
+  criarPagamento,
   estaEmAberto,
   listarPagamentos,
   type Pagamento,
@@ -87,6 +89,43 @@ describe("api de pagamentos", () => {
     expect(url).toBe("/api/pagamentos/id%201/cancelar");
     expect(init?.method).toBe("PATCH");
     expect(init?.body).toBeUndefined();
+  });
+
+  it("cria com POST e o body em JSON", async () => {
+    const dados = { membroId: "m1", valor: 150.5, dataVencimento: "2026-11-20" };
+
+    await criarPagamento(dados);
+
+    const { url, init } = ultimaChamada();
+    expect(url).toBe("/api/pagamentos");
+    expect(init?.method).toBe("POST");
+    expect(init?.body).toBe(JSON.stringify(dados));
+  });
+
+  it("busca só membros ativos, com o termo aparado, e devolve id, nome e cpf", async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json({
+        data: [
+          {
+            id: "m1",
+            nome: "Ana Souza",
+            cpf: "12345678909",
+            telefone: "11999990000",
+            endereco: "Rua Fictícia, 1",
+            ativo: true,
+            dataCadastro: "2026-01-10T00:00:00.000Z",
+          },
+        ],
+        total: 1,
+        page: 1,
+        pageSize: 10,
+      }),
+    );
+
+    const membros = await buscarMembrosAtivos("  Ana ");
+
+    expect(ultimaChamada().url).toBe("/api/membros?busca=Ana&ativo=true&page=1&pageSize=10");
+    expect(membros).toEqual([{ id: "m1", nome: "Ana Souza", cpf: "12345678909" }]);
   });
 });
 
