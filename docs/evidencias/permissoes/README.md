@@ -42,7 +42,7 @@ Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/
 | Situação financeira (RF45) | `GET /membros/:id/situacao` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`) | ✅ após o merge |
 | Histórico — listar/ver (todos) | `GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`) | ✅ após o merge |
 | Histórico — registrar | `POST /atividades` | ✅ | ❌ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`) | ✅ após o merge |
-| Histórico — o próprio (`/me/atividades`) | ainda não existe | — | — | — | ✅ | HIS-05 (Yohan) | ⏳ |
+| Histórico — o próprio (`/me/atividades`) | `GET /me/atividades`, `GET /me/atividades/resumo`, `GET /me/atividades/:id` | ❌ | ❌ | ❌ | ✅ | PR [#46](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/46) (HIS-05) | 🔄 |
 | Dashboard — indicadores | `GET /dashboard` | ✅ | ✅ | ✅ | ❌ | PR [#33](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/33) (DASH-01), merge `6565f38`; linha na `MATRIZ` no PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) | ✅ |
 | Dashboard — membros inadimplentes | `GET /dashboard/inadimplentes` | ✅ | ✅ | ❌ | ❌ | PR [#40](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/40) (WEB-04), linha na `MATRIZ` no mesmo PR | 🔄 |
 | Meus dados | `GET /auth/me` | ✅ | ✅ | ✅ | ✅ | PR [#32](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/32), merge `e9240a7`; `@Roles` testado no PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) | ✅ |
@@ -57,7 +57,7 @@ O login do aluno (AUTH-04) entrou na `main` com o PR #32 (`e9240a7`). O `RolesGu
 | RECEPCIONISTA não registra atividades | `contrato da issue #28 › RECEPCIONISTA não registra atividade: 403 e nada gravado` |
 | Somente ADMIN gerencia funcionários | `contrato da issue #28 › só ADMIN gerencia funcionários` (6 rotas × RECEPCIONISTA e INSTRUTOR → 403; nada criado) |
 | ALUNO é somente leitura (RN17) | `contrato da issue #28 › ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)` |
-| 401 sem autenticação | `sem token → 401` (as 24 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
+| 401 sem autenticação | `sem token → 401` (as 27 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
 
 ## 3. Como reproduzir
 
