@@ -6,7 +6,11 @@ import { MembrosService } from '../membros/membros.service';
 import { PagamentosService } from '../pagamentos/pagamentos.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
-import { ATIVIDADE_SELECT, HistoricoService } from './historico.service';
+import {
+  ATIVIDADE_DO_ALUNO_SELECT,
+  ATIVIDADE_SELECT,
+  HistoricoService,
+} from './historico.service';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 const MEMBRO_ID = '0199f0a2-7b3c-7d4e-8f00-123456789def';
@@ -25,6 +29,17 @@ const atividade = (extra: Record<string, unknown> = {}) => ({
   tempoExecucao: 45,
   membro: { id: MEMBRO_ID, nome: 'João Pereira' },
   funcionario: { id: FUNCIONARIO_ID, nome: 'Marina Souza' },
+  treino: null,
+  ...extra,
+});
+
+const atividadeDoAluno = (extra: Record<string, unknown> = {}) => ({
+  id: ID,
+  treinoId: null,
+  atividade: 'Supino reto',
+  data: new Date('2026-10-15'),
+  tempoExecucao: 45,
+  funcionario: { nome: 'Marina Souza' },
   treino: null,
   ...extra,
 });
@@ -384,16 +399,103 @@ describe('HistoricoService', () => {
         new NotFoundException('Atividade não encontrada'),
       );
     });
+  });
 
-    it('com membroId, filtra no where e lança 404 para atividade de outro membro (RN16)', async () => {
+  describe('findAllDoAluno', () => {
+    const base = { page: 2, pageSize: 10 };
+
+    beforeEach(() => {
+      prisma.historicoAtividade.findMany.mockResolvedValue([]);
+      prisma.historicoAtividade.count.mockResolvedValue(0);
+    });
+
+    it('lista só as atividades do membro do token, com o select do aluno, e devolve a página (RN16)', async () => {
+      const dataDe = new Date('2026-10-01');
+      const dataAte = new Date('2026-10-31');
+      const itens = [atividadeDoAluno()];
+      prisma.historicoAtividade.findMany.mockResolvedValue(itens);
+      prisma.historicoAtividade.count.mockResolvedValue(11);
+
+      const resultado = await service.findAllDoAluno(MEMBRO_ID, {
+        ...base,
+        dataDe,
+        dataAte,
+      });
+
+      const where = {
+        membroId: MEMBRO_ID,
+        data: { gte: dataDe, lte: dataAte },
+      };
+      expect(prisma.historicoAtividade.findMany).toHaveBeenCalledWith({
+        where,
+        select: ATIVIDADE_DO_ALUNO_SELECT,
+        orderBy: [{ data: 'desc' }, { id: 'desc' }],
+        skip: 10,
+        take: 10,
+      });
+      expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
+      expect(resultado).toEqual({
+        data: itens,
+        total: 11,
+        page: 2,
+        pageSize: 10,
+      });
+    });
+
+    it('sem período deixa a data aberta, mas mantém o membro no where', async () => {
+      await service.findAllDoAluno(MEMBRO_ID, base);
+
+      const where = {
+        membroId: MEMBRO_ID,
+        data: { gte: undefined, lte: undefined },
+      };
+      expect(primeiroArg(prisma.historicoAtividade.findMany)).toMatchObject({
+        where,
+      });
+      expect(prisma.historicoAtividade.count).toHaveBeenCalledWith({ where });
+    });
+
+    it('não consulta o membro: o token já provou que ele existe e está ativo', async () => {
+      await service.findAllDoAluno(MEMBRO_ID, base);
+
+      expect(membros.findOne).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findOneDoAluno', () => {
+    it('devolve a atividade do membro com o select do aluno', async () => {
+      const encontrada = atividadeDoAluno();
+      prisma.historicoAtividade.findUnique.mockResolvedValue(encontrada);
+
+      const resultado = await service.findOneDoAluno(ID, MEMBRO_ID);
+
+      expect(prisma.historicoAtividade.findUnique).toHaveBeenCalledWith({
+        where: { id: ID, membroId: MEMBRO_ID },
+        select: ATIVIDADE_DO_ALUNO_SELECT,
+      });
+      expect(resultado).toBe(encontrada);
+    });
+
+    it('lança 404 para atividade de outro membro ou inexistente, filtrando no where (RN16)', async () => {
       prisma.historicoAtividade.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(ID, OUTRO_MEMBRO_ID)).rejects.toThrow(
+      await expect(service.findOneDoAluno(ID, OUTRO_MEMBRO_ID)).rejects.toThrow(
         new NotFoundException('Atividade não encontrada'),
       );
       expect(prisma.historicoAtividade.findUnique).toHaveBeenCalledWith({
         where: { id: ID, membroId: OUTRO_MEMBRO_ID },
-        select: ATIVIDADE_SELECT,
+        select: ATIVIDADE_DO_ALUNO_SELECT,
+      });
+    });
+  });
+
+  describe('ATIVIDADE_DO_ALUNO_SELECT', () => {
+    it('expõe do funcionário só o nome e não traz membro nem ids de funcionário', () => {
+      expect(ATIVIDADE_DO_ALUNO_SELECT).not.toHaveProperty('funcionarioId');
+      expect(ATIVIDADE_DO_ALUNO_SELECT).not.toHaveProperty('membroId');
+      expect(ATIVIDADE_DO_ALUNO_SELECT).not.toHaveProperty('membro');
+      expect(ATIVIDADE_DO_ALUNO_SELECT.funcionario).toEqual({
+        select: { nome: true },
       });
     });
   });
