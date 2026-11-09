@@ -1,0 +1,137 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/api";
+import { buscarMembrosAtivos, criarPagamento, type MembroBusca, type Pagamento } from "./api";
+import { FormPagamento } from "./form-pagamento";
+
+vi.mock("./api", () => ({ criarPagamento: vi.fn(), buscarMembrosAtivos: vi.fn() }));
+
+const fulano: MembroBusca = { id: "m1", nome: "Fulano Silva", cpf: "12345678909" };
+
+const criado: Pagamento = {
+  id: "p1",
+  membroId: "m1",
+  valor: 150.5,
+  dataVencimento: "2026-11-20T00:00:00.000Z",
+  dataPagamento: null,
+  status: "PENDENTE",
+  diasEmAtraso: 0,
+  membro: { id: "m1", nome: "Fulano Silva" },
+};
+
+async function escolherMembro(usuario: ReturnType<typeof userEvent.setup>) {
+  await usuario.type(screen.getByLabelText("Membro"), "Ful");
+  await usuario.click(await screen.findByRole("button", { name: /Fulano Silva/ }));
+}
+
+async function preencher(usuario: ReturnType<typeof userEvent.setup>, centavos = "15050") {
+  await escolherMembro(usuario);
+  await usuario.type(screen.getByLabelText("Valor"), centavos);
+  fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
+}
+
+describe("FormPagamento", () => {
+  const onSalvo = vi.fn();
+  const onCancelar = vi.fn();
+
+  beforeEach(() => {
+    vi.mocked(criarPagamento).mockReset();
+    vi.mocked(buscarMembrosAtivos).mockReset();
+    vi.mocked(buscarMembrosAtivos).mockResolvedValue([fulano]);
+    onSalvo.mockReset();
+    onCancelar.mockReset();
+  });
+
+  it("lança o pagamento com o valor numérico e a data, e chama onSalvo", async () => {
+    vi.mocked(criarPagamento).mockResolvedValue(criado);
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await preencher(usuario);
+    expect(screen.getByText("Fulano Silva · 123.456.789-09")).toBeInTheDocument();
+    expect(screen.getByLabelText("Valor")).toHaveDisplayValue(/^R\$\s150,50$/);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(criarPagamento).toHaveBeenCalledWith({
+      membroId: "m1",
+      valor: 150.5,
+      dataVencimento: "2026-11-20",
+    });
+    expect(onSalvo).toHaveBeenCalled();
+  });
+
+  it("mostra os erros de validação sem chamar a API", async () => {
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
+    expect(screen.getByText("valor deve ser no mínimo 0,01")).toBeInTheDocument();
+    expect(screen.getByText("Informe o vencimento")).toBeInTheDocument();
+    expect(criarPagamento).not.toHaveBeenCalled();
+    expect(onSalvo).not.toHaveBeenCalled();
+  });
+
+  it("recusa valor acima de 10.000", async () => {
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await preencher(usuario, "1000001");
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByText("valor deve ser no máximo 10.000")).toBeInTheDocument();
+    expect(criarPagamento).not.toHaveBeenCalled();
+  });
+
+  it("mantém o membro e volta à busca em Trocar", async () => {
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await escolherMembro(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+
+    expect(screen.getByLabelText("Membro")).toBeInTheDocument();
+    expect(screen.queryByText("Fulano Silva · 123.456.789-09")).toBeNull();
+  });
+
+  it("mostra o erro da API em role=alert, mantém os valores e reabilita o botão", async () => {
+    vi.mocked(criarPagamento).mockRejectedValue(
+      new ApiError(422, "Membro inativo não pode receber novo pagamento"),
+    );
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Membro inativo não pode receber novo pagamento",
+    );
+    expect(onSalvo).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByText("Fulano Silva · 123.456.789-09")).toBeInTheDocument();
+    expect(screen.getByLabelText("Vencimento")).toHaveValue("2026-11-20");
+  });
+
+  it("desabilita o botão enquanto envia", async () => {
+    vi.mocked(criarPagamento).mockReturnValue(new Promise(() => {}));
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
+  });
+
+  it("chama onCancelar sem chamar a API", async () => {
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(onCancelar).toHaveBeenCalled();
+    expect(criarPagamento).not.toHaveBeenCalled();
+  });
+});
