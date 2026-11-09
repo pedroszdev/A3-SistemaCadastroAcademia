@@ -2,20 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { useUsuario } from "@/features/auth/usuario";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { type Coluna, Table } from "@/components/ui/table";
+import { useToast } from "@/components/ui/toast";
 import { formatarData, formatarMoeda } from "@/lib/format";
 import {
+  cancelarPagamento,
+  estaEmAberto,
   type FiltroPagamentos,
   listarPagamentos,
   type Pagamento,
   type PaginaPagamentos,
   podeGerirPagamentos,
+  registrarPagamento,
   type StatusPagamento,
 } from "./api";
 import { BadgeStatusPagamento, OPCOES_STATUS_PAGAMENTO } from "./status-pagamento";
+
+type Confirmacao = { acao: "pagar" | "cancelar"; pagamento: Pagamento };
 
 export function TelaPagamentos() {
   const usuario = useUsuario();
@@ -33,16 +41,21 @@ export function TelaPagamentos() {
 }
 
 function GestaoPagamentos() {
+  const { mostrar } = useToast();
   const [filtro, setFiltro] = useState<FiltroPagamentos>({ page: 1 });
+  const [versao, setVersao] = useState(0);
   const [pagina, setPagina] = useState<PaginaPagamentos | null>(null);
   const [erroLista, setErroLista] = useState<string | null>(null);
+  const [confirmar, setConfirmar] = useState<Confirmacao | null>(null);
+  const [dataPagamento, setDataPagamento] = useState("");
+  const [processando, setProcessando] = useState(false);
 
   useEffect(() => {
     let cancelado = false;
     listarPagamentos(filtro)
       .then((resultado) => {
         if (cancelado) return;
-        // A página ficou vazia (ex.: registros mudaram entre uma página e outra):
+        // A página ficou vazia (ex.: deu baixa no último da página com o filtro Pendente):
         // volta para a última página que ainda tem registros.
         const ultimaPagina = Math.max(1, Math.ceil(resultado.total / resultado.pageSize));
         if (resultado.data.length === 0 && filtro.page > ultimaPagina) {
@@ -61,7 +74,39 @@ function GestaoPagamentos() {
     return () => {
       cancelado = true;
     };
-  }, [filtro]);
+  }, [filtro, versao]);
+
+  function recarregar() {
+    setVersao((v) => v + 1);
+  }
+
+  function abrirConfirmacao(acao: Confirmacao["acao"], pagamento: Pagamento) {
+    setDataPagamento("");
+    setConfirmar({ acao, pagamento });
+  }
+
+  async function aoConfirmar() {
+    if (!confirmar) return;
+    const alvo = confirmar;
+    setProcessando(true);
+    try {
+      if (alvo.acao === "pagar") {
+        await registrarPagamento(alvo.pagamento.id, dataPagamento || undefined);
+      } else {
+        await cancelarPagamento(alvo.pagamento.id);
+      }
+      mostrar(alvo.acao === "pagar" ? "Pagamento registrado." : "Pagamento cancelado.");
+      recarregar();
+    } catch (e) {
+      mostrar((e as Error).message, "erro");
+      // A linha pode ter mudado de estado (ex.: já paga por outra pessoa).
+      recarregar();
+    } finally {
+      setProcessando(false);
+      // Só fecha se a confirmação aberta ainda é a deste pedido.
+      setConfirmar((atual) => (atual === alvo ? null : atual));
+    }
+  }
 
   const colunas: Coluna<Pagamento>[] = [
     { chave: "membro", titulo: "Membro", celula: (p) => p.membro.nome },
@@ -73,7 +118,32 @@ function GestaoPagamentos() {
       celula: (p) => (p.dataPagamento ? formatarData(p.dataPagamento) : "—"),
     },
     { chave: "status", titulo: "Status", celula: (p) => <BadgeStatusPagamento pagamento={p} /> },
+    {
+      chave: "acoes",
+      titulo: "Ações",
+      celula: (p) =>
+        estaEmAberto(p) ? (
+          <div className="flex gap-2">
+            <Button
+              aria-label={`Registrar pagamento de ${p.membro.nome}`}
+              onClick={() => abrirConfirmacao("pagar", p)}
+            >
+              Registrar pagamento
+            </Button>
+            <Button
+              variante="perigo"
+              aria-label={`Cancelar pagamento de ${p.membro.nome}`}
+              onClick={() => abrirConfirmacao("cancelar", p)}
+            >
+              Cancelar
+            </Button>
+          </div>
+        ) : null,
+    },
   ];
+
+  const pagando = confirmar?.acao === "pagar";
+  const alvoDaConfirmacao = confirmar?.pagamento;
 
   return (
     <div className="flex flex-col gap-4">
@@ -131,6 +201,47 @@ function GestaoPagamentos() {
           />
         )
       )}
+
+      <Dialog
+        aberto={confirmar !== null}
+        titulo={pagando ? "Registrar pagamento" : "Cancelar pagamento"}
+        onFechar={() => setConfirmar(null)}
+        acoes={
+          <>
+            <Button variante="secundario" onClick={() => setConfirmar(null)}>
+              Voltar
+            </Button>
+            <Button
+              variante={pagando ? "primario" : "perigo"}
+              disabled={processando}
+              onClick={aoConfirmar}
+            >
+              Confirmar
+            </Button>
+          </>
+        }
+      >
+        {alvoDaConfirmacao && (
+          <div className="flex flex-col gap-3">
+            <p>
+              {pagando ? "Confirmar o pagamento de" : "Cancelar o pagamento de"}{" "}
+              {formatarMoeda(alvoDaConfirmacao.valor)} de {alvoDaConfirmacao.membro.nome}, com
+              vencimento em {formatarData(alvoDaConfirmacao.dataVencimento)}?
+            </p>
+            {pagando && (
+              <>
+                <Input
+                  rotulo="Data do pagamento"
+                  type="date"
+                  value={dataPagamento}
+                  onChange={(e) => setDataPagamento(e.target.value)}
+                />
+                <p className="text-sm text-zinc-600">Em branco, vale a data de hoje.</p>
+              </>
+            )}
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 }

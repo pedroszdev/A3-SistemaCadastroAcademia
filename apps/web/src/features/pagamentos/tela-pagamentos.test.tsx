@@ -5,12 +5,20 @@ import { ToastProvider } from "@/components/ui/toast";
 import { UsuarioProvider } from "@/features/auth/usuario";
 import { ApiError } from "@/lib/api";
 import type { UsuarioDoToken } from "@/lib/sessao";
-import { listarPagamentos, type Pagamento, type PaginaPagamentos } from "./api";
+import {
+  cancelarPagamento,
+  listarPagamentos,
+  type Pagamento,
+  type PaginaPagamentos,
+  registrarPagamento,
+} from "./api";
 import { TelaPagamentos } from "./tela-pagamentos";
 
 vi.mock("./api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./api")>()),
   listarPagamentos: vi.fn(),
+  registrarPagamento: vi.fn(),
+  cancelarPagamento: vi.fn(),
 }));
 
 function pagamento(
@@ -66,6 +74,8 @@ function linhaDe(nome: string): HTMLElement {
 describe("TelaPagamentos", () => {
   beforeEach(() => {
     vi.mocked(listarPagamentos).mockReset();
+    vi.mocked(registrarPagamento).mockReset();
+    vi.mocked(cancelarPagamento).mockReset();
     vi.mocked(listarPagamentos).mockResolvedValue(pagina([fulano, beltrana, ciclano, deltrano]));
   });
 
@@ -73,7 +83,7 @@ describe("TelaPagamentos", () => {
     renderizar();
 
     expect(await screen.findByText("Fulano Silva")).toBeInTheDocument();
-    for (const titulo of ["Membro", "Valor", "Vencimento", "Pagamento", "Status"]) {
+    for (const titulo of ["Membro", "Valor", "Vencimento", "Pagamento", "Status", "Ações"]) {
       expect(screen.getByRole("columnheader", { name: titulo })).toBeInTheDocument();
     }
     expect(listarPagamentos).toHaveBeenCalledWith({ page: 1 });
@@ -93,6 +103,18 @@ describe("TelaPagamentos", () => {
     expect(pago.getByText("Pago")).toBeInTheDocument();
 
     expect(within(linhaDe("Deltrano Reis")).getByText("Cancelado")).toBeInTheDocument();
+  });
+
+  it("oferece as ações só nas linhas pendentes e atrasadas", async () => {
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    expect(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancelar pagamento de Fulano Silva" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Registrar pagamento de Beltrana Souza" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancelar pagamento de Beltrana Souza" })).toBeInTheDocument();
+    expect(within(linhaDe("Ciclano Lima")).queryByRole("button")).toBeNull();
+    expect(within(linhaDe("Deltrano Reis")).queryByRole("button")).toBeNull();
   });
 
   it("filtra por status voltando para a página 1 e limpa o filtro", async () => {
@@ -173,7 +195,7 @@ describe("TelaPagamentos", () => {
   });
 
   it("volta para a última página com registros quando a atual fica vazia", async () => {
-    // A página 2 esvaziou e sobraram 20 registros.
+    // A página 2 esvaziou (ex.: deu baixa no último pendente dela) e sobraram 20 registros.
     vi.mocked(listarPagamentos).mockImplementation(async ({ page }) =>
       page === 2 ? pagina([], { page: 2, total: 20 }) : pagina([fulano], { total: 40 }),
     );
@@ -185,6 +207,141 @@ describe("TelaPagamentos", () => {
     expect(await screen.findByText("Fulano Silva")).toBeInTheDocument();
     expect(listarPagamentos).toHaveBeenLastCalledWith({ page: 1 });
     expect(screen.queryByText("Nenhum pagamento encontrado")).toBeNull();
+  });
+
+  it("registra o pagamento sem data, avisa e recarrega a lista", async () => {
+    vi.mocked(registrarPagamento).mockResolvedValue({ ...fulano, status: "PAGO" });
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" }));
+    const dialogo = screen.getByRole("dialog", { name: "Registrar pagamento" });
+    expect(
+      within(dialogo).getByText(
+        /Confirmar o pagamento de R\$\s150,00 de Fulano Silva, com vencimento em 01\/11\/2026\?/,
+      ),
+    ).toBeInTheDocument();
+    expect(within(dialogo).getByLabelText("Data do pagamento")).toHaveValue("");
+    expect(within(dialogo).getByText("Em branco, vale a data de hoje.")).toBeInTheDocument();
+    await usuario.click(within(dialogo).getByRole("button", { name: "Confirmar" }));
+
+    expect(registrarPagamento).toHaveBeenCalledWith("p1", undefined);
+    expect(await screen.findByText("Pagamento registrado.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(listarPagamentos).toHaveBeenCalledTimes(2);
+  });
+
+  it("registra o pagamento com a data informada", async () => {
+    vi.mocked(registrarPagamento).mockResolvedValue({ ...fulano, status: "PAGO" });
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" }));
+    fireEvent.change(screen.getByLabelText("Data do pagamento"), { target: { value: "2026-11-05" } });
+    await usuario.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    expect(registrarPagamento).toHaveBeenCalledWith("p1", "2026-11-05");
+    expect(await screen.findByText("Pagamento registrado.")).toBeInTheDocument();
+  });
+
+  it("limpa a data do pagamento a cada vez que a confirmação abre", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" }));
+    fireEvent.change(screen.getByLabelText("Data do pagamento"), { target: { value: "2026-11-05" } });
+    await usuario.click(screen.getByRole("button", { name: "Voltar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Beltrana Souza" }));
+
+    expect(screen.getByLabelText("Data do pagamento")).toHaveValue("");
+  });
+
+  it("cancela o pagamento depois de confirmar, avisa e recarrega", async () => {
+    vi.mocked(cancelarPagamento).mockResolvedValue({ ...beltrana, status: "CANCELADO" });
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Beltrana Souza");
+
+    await usuario.click(screen.getByRole("button", { name: "Cancelar pagamento de Beltrana Souza" }));
+    const dialogo = screen.getByRole("dialog", { name: "Cancelar pagamento" });
+    expect(
+      within(dialogo).getByText(
+        /Cancelar o pagamento de R\$\s89,90 de Beltrana Souza, com vencimento em 20\/10\/2026\?/,
+      ),
+    ).toBeInTheDocument();
+    expect(within(dialogo).queryByLabelText("Data do pagamento")).toBeNull();
+    await usuario.click(within(dialogo).getByRole("button", { name: "Confirmar" }));
+
+    expect(cancelarPagamento).toHaveBeenCalledWith("p2");
+    expect(await screen.findByText("Pagamento cancelado.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(listarPagamentos).toHaveBeenCalledTimes(2);
+  });
+
+  it("fecha a confirmação em Voltar sem chamar a API", async () => {
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar pagamento de Fulano Silva" }));
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Voltar" }));
+
+    expect(cancelarPagamento).not.toHaveBeenCalled();
+    expect(registrarPagamento).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("mostra o erro 409 da baixa num toast, fecha a confirmação e recarrega", async () => {
+    vi.mocked(registrarPagamento).mockRejectedValue(new ApiError(409, "Pagamento já foi pago"));
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" }));
+    await usuario.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    expect(await screen.findByText("Pagamento já foi pago")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(listarPagamentos).toHaveBeenCalledTimes(2);
+  });
+
+  it("mostra o erro 409 do cancelamento num toast", async () => {
+    vi.mocked(cancelarPagamento).mockRejectedValue(
+      new ApiError(409, "Pagamento já pago não pode ser cancelado"),
+    );
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Cancelar pagamento de Fulano Silva" }));
+    await usuario.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    expect(await screen.findByText("Pagamento já pago não pode ser cancelado")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(listarPagamentos).toHaveBeenCalledTimes(2);
+  });
+
+  it("um pedido que termina tarde não fecha outra confirmação", async () => {
+    let terminar: (p: Pagamento) => void = () => {};
+    vi.mocked(cancelarPagamento).mockReturnValue(
+      new Promise<Pagamento>((resolve) => {
+        terminar = resolve;
+      }),
+    );
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Cancelar pagamento de Fulano Silva" }));
+    await usuario.click(screen.getByRole("button", { name: "Confirmar" }));
+    await usuario.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Voltar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Beltrana Souza" }));
+    terminar({ ...fulano, status: "CANCELADO" });
+
+    expect(await screen.findByText("Pagamento cancelado.")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Registrar pagamento" })).toBeInTheDocument();
   });
 
   it("mostra Acesso restrito e não chama a API para o instrutor", () => {
