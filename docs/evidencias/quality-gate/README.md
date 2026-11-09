@@ -41,10 +41,14 @@ O bloqueio fica em dois lugares:
    Para conferir se o ruleset ativo continua igual ao arquivo (sem saída = iguais):
 
    ```bash
-   diff <(jq -S '{name, target, enforcement, bypass_actors, conditions, rules}' .github/rulesets/main.json) \
+   diff <(jq -S '{name, target, enforcement, conditions, rules}' .github/rulesets/main.json) \
         <(gh api repos/pedroszdev/A3-SistemaCadastroAcademia/rulesets/26615335 \
-            | jq -S '{name, target, enforcement, bypass_actors, conditions, rules}')
+            | jq -S '{name, target, enforcement, conditions, rules}')
    ```
+
+   O `bypass_actors` fica fora da comparação porque a API só mostra esse campo para admin. Para os demais, ele vem `null`, e o `diff` acusaria uma diferença que não existe. Para quem não é admin, o campo `current_user_can_bypass: "never"` da mesma resposta confirma que ninguém ignora as regras.
+
+   **Achado de 09/11/2026.** O commit `91b31cb` (05/11) ligou `dismiss_stale_reviews_on_push`, `require_last_push_approval` e `strict_required_status_checks_policy` no arquivo, mas o `PUT` não foi aplicado. Até 09/11, os três continuaram `false` no ruleset ativo, e o `diff` acima mostrava a diferença. O `PUT` foi aplicado em 09/11/2026 às 10:45 (`updated_at` do ruleset). Desde então, o `diff` não mostra nenhuma diferença.
 
    O ruleset aplica estas regras:
    - sem bypass (`bypass_actors` vazio);
@@ -65,7 +69,7 @@ O bloqueio fica em dois lugares:
    | --- | --- |
    | Ruleset | "Sem merge até o CI rodar" (id `26615335`), `enforcement: active` |
    | Criado por | Pedro (admin do repositório), substituindo a proteção desativada; atualizado com `PUT` a partir do arquivo versionado |
-   | Data | 05/11/2026, 10:10 (horário de Brasília; `created_at` do ruleset) |
+   | Data | 05/11/2026, 10:10 (horário de Brasília; `created_at` do ruleset); `PUT` do arquivo versionado em 09/11/2026, 10:45 (`updated_at`) |
    | Bypass | `bypass_actors: []`: ninguém pode ignorar as regras, nem admin |
    | `.protected` | `true` |
    | Regras ativas (`rules/branches/main`) | `deletion`, `non_fast_forward`, `pull_request` (1 aprovação, `dismiss_stale_reviews_on_push` e `require_last_push_approval` ligados, `allowed_merge_methods: ["merge", "rebase"]`), `required_status_checks` (`Lint, build e testes`, `integration_id` 15368, `strict_required_status_checks_policy: true`) |
