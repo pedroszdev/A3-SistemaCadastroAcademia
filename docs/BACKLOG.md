@@ -282,7 +282,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] WEB-Y3 Tela de histórico
 - [ ] WEB-Y4 Componentes para a ficha do membro
 - [ ] WEB-Y5 Testes do front (pagamentos/histórico)
-- [ ] WEB-Y6 Portal do aluno: Meu histórico
+- [x] WEB-Y6 Portal do aluno: Meu histórico — `/aluno/historico` com os cards de atividades e minutos do período e o filtro rápido 7 dias, 30 dias (padrão) ou mês atual, com o "hoje" no fuso de São Paulo, como na API. Abaixo vem a lista das atividades (data, atividade, tempo, treino vinculado), da mais recente para a mais antiga, com "Carregar mais" de 20 em 20 e o estado vazio "Nenhuma atividade no período". Consome `GET /me/atividades` e `GET /me/atividades/resumo` (HIS-05) pelo repasse `/api`
 - [x] E2E-01 Utilitários de e2e (banco limpo, login)
 - [ ] E2E-02 e2e do fluxo principal
 - [x] E2E-03 e2e da regra de inadimplência
