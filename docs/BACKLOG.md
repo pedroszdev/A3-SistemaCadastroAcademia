@@ -277,7 +277,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] HIS-03 Controller de histórico — `@Roles` (registrar: ADMIN, INSTRUTOR; consultar: ADMIN, RECEPCIONISTA, INSTRUTOR) commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
 - [x] HIS-04 Testes de histórico
 - [x] HIS-05 Histórico do aluno (`/me/atividades`) — `GET /me/atividades` (período e paginação), `GET /me/atividades/resumo` e `GET /me/atividades/:id`, só para o ALUNO. O `membroId` vem do token e fica no `where`, então a atividade de outro membro dá 404 (RN16). Do funcionário, a resposta traz só o nome. As 3 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
-- [ ] WEB-Y1 Tela de pagamentos
+- [x] WEB-Y1 Tela de pagamentos — `/pagamentos`, só para ADMIN e RECEPCIONISTA (o INSTRUTOR vê "Acesso restrito" e a tela nem chama a API). Lista paginada do `GET /pagamentos` com filtro de status e de período de vencimento, colunas membro, valor, vencimento, data do pagamento e status, e o `StatusBadge` com os dias de atraso ("Atrasado · 12 dias"). Nas linhas pendentes e atrasadas, "Registrar pagamento" (data opcional; em branco vale hoje) e "Cancelar", cada um com confirmação; o 409 da API aparece num toast e a lista recarrega
 - [ ] WEB-Y2 Formulário de pagamento
 - [ ] WEB-Y3 Tela de histórico
 - [ ] WEB-Y4 Componentes para a ficha do membro
