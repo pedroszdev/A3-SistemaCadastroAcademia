@@ -16,10 +16,12 @@ function esperar(ms: number) {
 
 function adiada() {
   let resolver: (membros: MembroBusca[]) => void = () => {};
-  const promessa = new Promise<MembroBusca[]>((resolve) => {
+  let rejeitar: (erro: Error) => void = () => {};
+  const promessa = new Promise<MembroBusca[]>((resolve, reject) => {
     resolver = resolve;
+    rejeitar = reject;
   });
-  return { promessa, resolver };
+  return { promessa, resolver, rejeitar };
 }
 
 describe("BuscaMembro", () => {
@@ -149,6 +151,27 @@ describe("BuscaMembro", () => {
 
     expect(screen.getByRole("button", { name: /Fulana Souza/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Fulano Silva/ })).toBeNull();
+  });
+
+  it("um erro atrasado de um termo antigo não aparece depois da busca nova", async () => {
+    const antiga = adiada();
+    const nova = adiada();
+    vi.mocked(buscarMembros)
+      .mockReturnValueOnce(antiga.promessa)
+      .mockReturnValueOnce(nova.promessa);
+    const usuario = userEvent.setup();
+    render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
+
+    await usuario.type(screen.getByLabelText("Membro"), "Fu");
+    await waitFor(() => expect(buscarMembros).toHaveBeenCalledTimes(1));
+    await usuario.type(screen.getByLabelText("Membro"), "l");
+    await waitFor(() => expect(buscarMembros).toHaveBeenCalledTimes(2));
+
+    await act(async () => nova.resolver([fulana]));
+    await act(async () => antiga.rejeitar(new ApiError(500, "Falha na busca antiga")));
+
+    expect(screen.queryByText("Falha na busca antiga")).toBeNull();
+    expect(screen.getByRole("button", { name: /Fulana Souza/ })).toBeInTheDocument();
   });
 
   it("mostra o membro escolhido e volta à busca em Trocar", async () => {
