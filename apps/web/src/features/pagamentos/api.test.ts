@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  buscarMembros,
   buscarMembrosAtivos,
   cancelarPagamento,
   criarPagamento,
@@ -126,6 +127,22 @@ describe("api de pagamentos", () => {
 
     expect(ultimaChamada().url).toBe("/api/membros?busca=Ana&ativo=true&page=1&pageSize=10");
     expect(membros).toEqual([{ id: "m1", nome: "Ana Souza", cpf: "12345678909" }]);
+  });
+
+  it("busca membros sem o filtro de ativos quando incluirInativos é verdadeiro", async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json({
+        data: [{ id: "m2", nome: "Beto Lima", cpf: "98765432100", ativo: false }],
+        total: 1,
+        page: 1,
+        pageSize: 10,
+      }),
+    );
+
+    const membros = await buscarMembros(" Beto ", { incluirInativos: true });
+
+    expect(ultimaChamada().url).toBe("/api/membros?busca=Beto&page=1&pageSize=10");
+    expect(membros).toEqual([{ id: "m2", nome: "Beto Lima", cpf: "98765432100" }]);
   });
 });
 

@@ -59,17 +59,22 @@ export function criarPagamento(dados: DadosCriarPagamento) {
 
 export type MembroBusca = { id: string; nome: string; cpf: string };
 
-// RN04: só membro ativo recebe novo pagamento, então a busca lista só os ativos.
-// A API ainda responde 422 se o membro for desativado depois da busca.
-export async function buscarMembrosAtivos(busca: string): Promise<MembroBusca[]> {
-  const params = new URLSearchParams({
-    busca: busca.trim(),
-    ativo: "true",
-    page: "1",
-    pageSize: String(TAMANHO_BUSCA_MEMBROS),
-  });
+export async function buscarMembros(
+  busca: string,
+  opcoes: { incluirInativos?: boolean } = {},
+): Promise<MembroBusca[]> {
+  const params = new URLSearchParams({ busca: busca.trim() });
+  if (!opcoes.incluirInativos) params.set("ativo", "true");
+  params.set("page", "1");
+  params.set("pageSize", String(TAMANHO_BUSCA_MEMBROS));
   const pagina = await api<{ data: MembroBusca[] }>(`/membros?${params}`);
   return pagina.data.map(({ id, nome, cpf }) => ({ id, nome, cpf }));
+}
+
+// RN04: só membro ativo recebe novo pagamento, então a busca lista só os ativos.
+// A API ainda responde 422 se o membro for desativado depois da busca.
+export function buscarMembrosAtivos(busca: string): Promise<MembroBusca[]> {
+  return buscarMembros(busca);
 }
 
 export function registrarPagamento(id: string, dataPagamento?: string) {
