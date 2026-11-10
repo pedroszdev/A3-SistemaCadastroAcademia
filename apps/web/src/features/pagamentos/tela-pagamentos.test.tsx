@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
@@ -252,6 +252,27 @@ describe("TelaPagamentos", () => {
     expect(await screen.findByText("Pagamento registrado.")).toBeInTheDocument();
   });
 
+  it("depois de pagar, a lista recarregada mostra a linha como Pago e sem ações", async () => {
+    const fulanoPago = { ...fulano, status: "PAGO" as const, dataPagamento: "2026-11-10T00:00:00.000Z" };
+    vi.mocked(registrarPagamento).mockResolvedValue(fulanoPago);
+    vi.mocked(listarPagamentos)
+      .mockResolvedValueOnce(pagina([fulano, beltrana]))
+      .mockResolvedValueOnce(pagina([fulanoPago, beltrana]));
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" }));
+    await usuario.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirmar" }));
+
+    expect(registrarPagamento).toHaveBeenCalledWith("p1", undefined);
+    await waitFor(() => expect(within(linhaDe("Fulano Silva")).getByText("Pago")).toBeInTheDocument());
+    const linha = within(linhaDe("Fulano Silva"));
+    expect(linha.queryByRole("button", { name: /Registrar pagamento/ })).toBeNull();
+    expect(linha.queryByRole("button", { name: /Cancelar/ })).toBeNull();
+    expect(linha.getByText("10/11/2026")).toBeInTheDocument();
+  });
+
   it("limpa a data do pagamento a cada vez que a confirmação abre", async () => {
     const usuario = userEvent.setup();
     renderizar();
@@ -297,6 +318,20 @@ describe("TelaPagamentos", () => {
     expect(cancelarPagamento).not.toHaveBeenCalled();
     expect(registrarPagamento).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("fecha a confirmação com Escape sem chamar a API", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await usuario.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(registrarPagamento).not.toHaveBeenCalled();
+    expect(cancelarPagamento).not.toHaveBeenCalled();
   });
 
   it("mostra o erro 409 da baixa num toast, fecha a confirmação e recarrega", async () => {
