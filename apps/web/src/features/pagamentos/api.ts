@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import { CARGOS_FINANCEIRO } from "@/lib/menu";
 import type { UsuarioDoToken } from "@/lib/sessao";
+import type { Pagina } from "@/lib/use-lista-paginada";
 
 export const TAMANHO_PAGINA = 20;
 export const TAMANHO_BUSCA_MEMBROS = 10;
@@ -18,12 +19,7 @@ export type Pagamento = {
   membro: { id: string; nome: string };
 };
 
-export type PaginaPagamentos = {
-  data: Pagamento[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+export type PaginaPagamentos = Pagina<Pagamento>;
 
 export type FiltroPagamentos = {
   status?: StatusPagamento;
