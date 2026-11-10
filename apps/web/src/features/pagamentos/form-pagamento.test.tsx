@@ -2,10 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api";
-import { buscarMembrosAtivos, criarPagamento, type MembroBusca, type Pagamento } from "./api";
+import { buscarMembros, criarPagamento, type MembroBusca, type Pagamento } from "./api";
 import { FormPagamento } from "./form-pagamento";
 
-vi.mock("./api", () => ({ criarPagamento: vi.fn(), buscarMembrosAtivos: vi.fn() }));
+vi.mock("./api", () => ({ criarPagamento: vi.fn(), buscarMembros: vi.fn() }));
 
 const fulano: MembroBusca = { id: "m1", nome: "Fulano Silva", cpf: "12345678909" };
 
@@ -37,8 +37,8 @@ describe("FormPagamento", () => {
 
   beforeEach(() => {
     vi.mocked(criarPagamento).mockReset();
-    vi.mocked(buscarMembrosAtivos).mockReset();
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue([fulano]);
+    vi.mocked(buscarMembros).mockReset();
+    vi.mocked(buscarMembros).mockResolvedValue([fulano]);
     onSalvo.mockReset();
     onCancelar.mockReset();
   });

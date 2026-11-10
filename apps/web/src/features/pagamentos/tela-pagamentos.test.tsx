@@ -6,7 +6,7 @@ import { UsuarioProvider } from "@/features/auth/usuario";
 import { ApiError } from "@/lib/api";
 import type { UsuarioDoToken } from "@/lib/sessao";
 import {
-  buscarMembrosAtivos,
+  buscarMembros,
   cancelarPagamento,
   criarPagamento,
   listarPagamentos,
@@ -22,7 +22,7 @@ vi.mock("./api", async (importOriginal) => ({
   registrarPagamento: vi.fn(),
   cancelarPagamento: vi.fn(),
   criarPagamento: vi.fn(),
-  buscarMembrosAtivos: vi.fn(),
+  buscarMembros: vi.fn(),
 }));
 
 function pagamento(
@@ -81,7 +81,7 @@ describe("TelaPagamentos", () => {
     vi.mocked(registrarPagamento).mockReset();
     vi.mocked(cancelarPagamento).mockReset();
     vi.mocked(criarPagamento).mockReset();
-    vi.mocked(buscarMembrosAtivos).mockReset();
+    vi.mocked(buscarMembros).mockReset();
     vi.mocked(listarPagamentos).mockResolvedValue(pagina([fulano, beltrana, ciclano, deltrano]));
   });
 
@@ -367,7 +367,7 @@ describe("TelaPagamentos", () => {
   });
 
   it("lança o pagamento, avisa, fecha o formulário e recarrega a lista", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue([
+    vi.mocked(buscarMembros).mockResolvedValue([
       { id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" },
     ]);
     vi.mocked(criarPagamento).mockResolvedValue({ ...fulano, id: "p9" });
@@ -394,7 +394,7 @@ describe("TelaPagamentos", () => {
   });
 
   it("um lançamento que termina tarde não fecha o formulário reaberto", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue([
+    vi.mocked(buscarMembros).mockResolvedValue([
       { id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" },
     ]);
     let terminar: (p: Pagamento) => void = () => {};

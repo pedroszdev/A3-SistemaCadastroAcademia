@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mascaraCpf } from "@/lib/format";
-import { buscarMembrosAtivos, type MembroBusca } from "./api";
+import { buscarMembros, type MembroBusca } from "./api";
 
 export const ESPERA_BUSCA_MS = 300;
 export const MINIMO_BUSCA = 2;
@@ -13,11 +13,19 @@ type BuscaMembroProps = {
   selecionado: MembroBusca | null;
   onSelecionar: (membro: MembroBusca | null) => void;
   erro?: string;
+  incluirInativos?: boolean;
+  rotulo?: string;
 };
 
 type Resultado = { termo: string; membros: MembroBusca[] };
 
-export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProps) {
+export function BuscaMembro({
+  selecionado,
+  onSelecionar,
+  erro,
+  incluirInativos = false,
+  rotulo = "Membro",
+}: BuscaMembroProps) {
   const [texto, setTexto] = useState("");
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [erroBusca, setErroBusca] = useState<string | null>(null);
@@ -28,7 +36,7 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
 
     let cancelado = false;
     const timer = setTimeout(() => {
-      buscarMembrosAtivos(termo)
+      buscarMembros(termo, { incluirInativos })
         .then((membros) => {
           if (cancelado) return;
           setResultado({ termo, membros });
@@ -42,12 +50,12 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
       cancelado = true;
       clearTimeout(timer);
     };
-  }, [texto]);
+  }, [texto, incluirInativos]);
 
   if (selecionado) {
     return (
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-zinc-800">Membro</span>
+        <span className="text-sm font-medium text-zinc-800">{rotulo}</span>
         <div className="flex items-center justify-between gap-2 rounded border border-zinc-300 px-3 py-2">
           <p className="text-sm">
             {selecionado.nome} · {mascaraCpf(selecionado.cpf)}
@@ -73,7 +81,7 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
   return (
     <div className="flex flex-col gap-2">
       <Input
-        rotulo="Membro"
+        rotulo={rotulo}
         placeholder="Nome ou CPF"
         autoComplete="off"
         value={texto}
@@ -86,7 +94,9 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
         </p>
       )}
       {membros && membros.length === 0 && (
-        <p className="text-sm text-zinc-600">Nenhum membro ativo encontrado</p>
+        <p className="text-sm text-zinc-600">
+          {incluirInativos ? "Nenhum membro encontrado" : "Nenhum membro ativo encontrado"}
+        </p>
       )}
       {membros && membros.length > 0 && (
         <ul aria-label="Membros encontrados" className="flex flex-col gap-1">
