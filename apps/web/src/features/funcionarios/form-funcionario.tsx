@@ -1,8 +1,8 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RodapeFormulario } from "@/components/ui/rodape-formulario";
 import { Select } from "@/components/ui/select";
 import type { Cargo } from "@/lib/sessao";
 import { atualizarFuncionario, criarFuncionario, type Funcionario } from "./api";
@@ -13,9 +13,16 @@ type FormFuncionarioProps = {
   funcionario?: Funcionario;
   onSalvo: () => void;
   onCancelar: () => void;
+  // Avisa quem abriu o formulário para não deixar fechá-lo durante o envio.
+  onEnviando?: (enviando: boolean) => void;
 };
 
-export function FormFuncionario({ funcionario, onSalvo, onCancelar }: FormFuncionarioProps) {
+export function FormFuncionario({
+  funcionario,
+  onSalvo,
+  onCancelar,
+  onEnviando,
+}: FormFuncionarioProps) {
   const modo = funcionario ? "editar" : "criar";
   const [erros, setErros] = useState<ErrosFuncionario>({});
   const [erroApi, setErroApi] = useState<string | null>(null);
@@ -37,6 +44,7 @@ export function FormFuncionario({ funcionario, onSalvo, onCancelar }: FormFuncio
     if (Object.keys(errosEncontrados).length > 0) return;
 
     setEnviando(true);
+    onEnviando?.(true);
     const nome = valores.nome.trim();
     const cargo = valores.cargo as Cargo;
     try {
@@ -53,6 +61,7 @@ export function FormFuncionario({ funcionario, onSalvo, onCancelar }: FormFuncio
     } catch (e) {
       setErroApi((e as Error).message);
       setEnviando(false);
+      onEnviando?.(false);
     }
   }
 
@@ -87,19 +96,7 @@ export function FormFuncionario({ funcionario, onSalvo, onCancelar }: FormFuncio
         autoComplete="new-password"
         erro={erros.senha}
       />
-      {erroApi && (
-        <p role="alert" className="text-sm text-red-600">
-          {erroApi}
-        </p>
-      )}
-      <div className="flex justify-end gap-2">
-        <Button variante="secundario" onClick={onCancelar}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={enviando}>
-          {enviando ? "Salvando…" : "Salvar"}
-        </Button>
-      </div>
+      <RodapeFormulario erro={erroApi} enviando={enviando} onCancelar={onCancelar} />
     </form>
   );
 }

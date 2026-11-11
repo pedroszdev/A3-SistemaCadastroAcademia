@@ -1,22 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useUsuario } from "@/features/auth/usuario";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { type Coluna, Table } from "@/components/ui/table";
+import { TabelaPaginada } from "@/components/ui/tabela-paginada";
+import type { Coluna } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import type { Cargo } from "@/lib/sessao";
 import { useFormDialog } from "@/lib/use-form-dialog";
+import { useListaPaginada } from "@/lib/use-lista-paginada";
 import {
   desativarFuncionario,
-  type FiltroFuncionarios,
   type Funcionario,
   listarFuncionarios,
-  type PaginaFuncionarios,
   reativarFuncionario,
 } from "./api";
 import { OPCOES_CARGO, ROTULO_CARGO } from "./cargos";
@@ -44,44 +44,13 @@ export function TelaFuncionarios() {
 
 function GestaoFuncionarios() {
   const { mostrar } = useToast();
-  const [filtro, setFiltro] = useState<FiltroFuncionarios>({ page: 1 });
-  const [versao, setVersao] = useState(0);
-  const [pagina, setPagina] = useState<PaginaFuncionarios | null>(null);
-  const [erroLista, setErroLista] = useState<string | null>(null);
+  const { filtro, setFiltro, pagina, erro, recarregar } = useListaPaginada(listarFuncionarios, {
+    page: 1,
+  });
   const dialogForm = useFormDialog<Funcionario>();
   const { form } = dialogForm;
   const [confirmar, setConfirmar] = useState<Funcionario | null>(null);
   const [processando, setProcessando] = useState(false);
-
-  useEffect(() => {
-    let cancelado = false;
-    listarFuncionarios(filtro)
-      .then((resultado) => {
-        if (cancelado) return;
-        // A página ficou vazia (ex.: desativou o último da página com o filtro Ativos):
-        // volta para a última página que ainda tem registros.
-        const ultimaPagina = Math.max(1, Math.ceil(resultado.total / resultado.pageSize));
-        if (resultado.data.length === 0 && filtro.page > ultimaPagina) {
-          setFiltro((atual) => ({ ...atual, page: ultimaPagina }));
-          return;
-        }
-        setPagina(resultado);
-        setErroLista(null);
-      })
-      .catch((e: Error) => {
-        if (cancelado) return;
-        // Sem a página antiga, a tabela não mostra linhas que não batem com o filtro.
-        setPagina(null);
-        setErroLista(e.message);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [filtro, versao]);
-
-  function recarregar() {
-    setVersao((v) => v + 1);
-  }
 
   function aoSalvar() {
     mostrar(form.dados ? "Funcionário atualizado." : "Funcionário cadastrado.");
@@ -176,30 +145,14 @@ function GestaoFuncionarios() {
         </Button>
       </div>
 
-      {erroLista && (
-        <p role="alert" className="text-sm text-red-600">
-          {erroLista}
-        </p>
-      )}
-
-      {!pagina && !erroLista ? (
-        <p className="text-sm text-zinc-600">Carregando…</p>
-      ) : (
-        pagina && (
-          <Table
-            colunas={colunas}
-            linhas={pagina.data}
-            chaveDaLinha={(f) => f.id}
-            paginacao={{
-              page: pagina.page,
-              pageSize: pagina.pageSize,
-              total: pagina.total,
-              onMudarPagina: (page) => setFiltro({ ...filtro, page }),
-            }}
-            vazio={<EmptyState titulo="Nenhum funcionário encontrado" />}
-          />
-        )
-      )}
+      <TabelaPaginada
+        pagina={pagina}
+        erro={erro}
+        colunas={colunas}
+        chaveDaLinha={(f) => f.id}
+        vazio={<EmptyState titulo="Nenhum funcionário encontrado" />}
+        onMudarPagina={(page) => setFiltro({ ...filtro, page })}
+      />
 
       <Dialog
         aberto={form.aberto}
@@ -211,6 +164,7 @@ function GestaoFuncionarios() {
           funcionario={form.dados}
           onSalvo={aoSalvar}
           onCancelar={dialogForm.fechar}
+          onEnviando={dialogForm.setOcupado}
         />
       </Dialog>
 
