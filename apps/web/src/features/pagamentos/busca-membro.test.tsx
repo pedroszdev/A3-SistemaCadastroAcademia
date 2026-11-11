@@ -81,6 +81,12 @@ describe("BuscaMembro", () => {
     expect(screen.queryByText("Membro")).toBeNull();
   });
 
+  it("desabilitado não deixa trocar o membro escolhido", async () => {
+    render(<BuscaMembro selecionado={fulano} onSelecionar={onSelecionar} desabilitado />);
+
+    expect(screen.getByRole("button", { name: "Trocar" })).toBeDisabled();
+  });
+
   it("lista os resultados com o CPF formatado e seleciona ao clicar", async () => {
     vi.mocked(buscarMembros).mockResolvedValue(achados(fulano, fulana));
     const usuario = userEvent.setup();

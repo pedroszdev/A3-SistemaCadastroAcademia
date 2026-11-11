@@ -57,7 +57,12 @@ export function FormPagamento({ onSalvo, onCancelar, onEnviando }: FormPagamento
   return (
     // noValidate: o `min` da data só limita o calendário; quem mostra o erro é validarPagamento.
     <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
-      <BuscaMembro selecionado={membro} onSelecionar={selecionarMembro} erro={erros.membro} />
+      <BuscaMembro
+        selecionado={membro}
+        onSelecionar={selecionarMembro}
+        erro={erros.membro}
+        desabilitado={enviando}
+      />
       <Input
         rotulo="Valor"
         inputMode="numeric"

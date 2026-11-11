@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UsuarioProvider } from "@/features/auth/usuario";
@@ -392,6 +392,27 @@ describe("FormAtividade", () => {
     await usuario.click(screen.getByRole("button", { name: "Salvar" }));
 
     expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
+  });
+
+  it("não deixa trocar o membro enquanto envia: o 422 de um não cai no outro", async () => {
+    let falhar: (e: Error) => void = () => {};
+    vi.mocked(registrarAtividade).mockReturnValue(
+      new Promise<Atividade>((_, reject) => {
+        falhar = reject;
+      }),
+    );
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    expect(screen.getByRole("button", { name: "Trocar" })).toBeDisabled();
+
+    await act(async () => falhar(new ApiError(422, "Membro com pagamento em atraso")));
+
+    expect(screen.getByText("Membro com pagamento em atraso")).toBeInTheDocument();
+    expect(screen.getByText(/Fulano Silva/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Trocar" })).toBeEnabled();
   });
 
   it("chama onCancelar sem chamar a API", async () => {

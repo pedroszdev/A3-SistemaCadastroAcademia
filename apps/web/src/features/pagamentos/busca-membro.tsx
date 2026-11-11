@@ -15,6 +15,8 @@ type BuscaMembroProps = {
   erro?: string;
   incluirInativos?: boolean;
   rotulo?: string;
+  // Durante o envio do formulário em volta, o membro escolhido não pode ser trocado.
+  desabilitado?: boolean;
 };
 
 type Resultado = { termo: string; membros: MembroBusca[]; total: number };
@@ -26,6 +28,7 @@ export function BuscaMembro({
   erro,
   incluirInativos = false,
   rotulo = "Membro",
+  desabilitado = false,
 }: BuscaMembroProps) {
   const [texto, setTexto] = useState("");
   const [resultado, setResultado] = useState<Resultado | null>(null);
@@ -62,7 +65,7 @@ export function BuscaMembro({
           <p className="text-sm">
             {selecionado.nome} · {mascaraCpf(selecionado.cpf)}
           </p>
-          <Button variante="secundario" onClick={() => onSelecionar(null)}>
+          <Button variante="secundario" onClick={() => onSelecionar(null)} disabled={desabilitado}>
             Trocar
           </Button>
         </div>

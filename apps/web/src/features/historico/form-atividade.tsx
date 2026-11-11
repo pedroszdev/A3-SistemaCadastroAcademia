@@ -124,7 +124,12 @@ export function FormAtividade({ onSalvo, onCancelar, onEnviando }: FormAtividade
     // noValidate: o max da data e os limites do tempo só ajudam no campo; quem barra e mostra
     // a mensagem igual à da API é o validarAtividade.
     <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
-      <BuscaMembro selecionado={membro} onSelecionar={aoSelecionarMembro} erro={erros.membro} />
+      <BuscaMembro
+        selecionado={membro}
+        onSelecionar={aoSelecionarMembro}
+        erro={erros.membro}
+        desabilitado={enviando}
+      />
       {bloqueado && <AvisoInadimplencia maiorAtrasoDias={situacao?.maiorAtrasoDias} />}
       <Select
         rotulo="Treino (opcional)"
