@@ -26,7 +26,7 @@ import { BadgeStatusPagamento, OPCOES_STATUS_PAGAMENTO } from "./status-pagament
 
 type Confirmacao = { acao: "pagar" | "cancelar"; pagamento: Pagamento };
 
-export function TelaPagamentos() {
+export function TelaPagamentos({ membroId }: { membroId?: string } = {}) {
   const usuario = useUsuario();
 
   if (!podeGerirPagamentos(usuario)) {
@@ -38,14 +38,15 @@ export function TelaPagamentos() {
     );
   }
 
-  return <GestaoPagamentos />;
+  return <GestaoPagamentos membroId={membroId} />;
 }
 
-function GestaoPagamentos() {
+function GestaoPagamentos({ membroId }: { membroId?: string }) {
   const { mostrar } = useToast();
-  const { filtro, setFiltro, pagina, erro, recarregar } = useListaPaginada(listarPagamentos, {
-    page: 1,
-  });
+  const { filtro, setFiltro, pagina, erro, recarregar } = useListaPaginada(
+    listarPagamentos,
+    membroId ? { page: 1, membroId } : { page: 1 },
+  );
   const [confirmar, setConfirmar] = useState<Confirmacao | null>(null);
   const [dataPagamento, setDataPagamento] = useState("");
   const [processando, setProcessando] = useState(false);
@@ -120,6 +121,8 @@ function GestaoPagamentos() {
     },
   ];
 
+  const colunasVisiveis = membroId ? colunas.filter((c) => c.chave !== "membro") : colunas;
+
   const pagando = confirmar?.acao === "pagar";
   const alvoDaConfirmacao = confirmar?.pagamento;
 
@@ -161,7 +164,7 @@ function GestaoPagamentos() {
       <TabelaPaginada
         pagina={pagina}
         erro={erro}
-        colunas={colunas}
+        colunas={colunasVisiveis}
         chaveDaLinha={(p) => p.id}
         vazio={<EmptyState titulo="Nenhum pagamento encontrado" />}
         onMudarPagina={(page) => setFiltro({ ...filtro, page })}
@@ -209,7 +212,12 @@ function GestaoPagamentos() {
       </Dialog>
 
       <Dialog aberto={form.aberto} titulo="Novo pagamento" onFechar={fecharForm}>
-        <FormPagamento key={form.chave} onSalvo={aoSalvar} onCancelar={fecharForm} />
+        <FormPagamento
+          key={form.chave}
+          membroId={membroId}
+          onSalvo={aoSalvar}
+          onCancelar={fecharForm}
+        />
       </Dialog>
     </div>
   );
