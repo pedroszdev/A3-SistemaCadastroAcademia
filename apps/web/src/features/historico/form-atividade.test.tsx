@@ -126,7 +126,7 @@ describe("FormAtividade", () => {
     expect(screen.getByLabelText("Data")).toHaveAttribute("max", hojeEmSaoPaulo());
   });
 
-  it("não registra com data futura (o max do campo barra o envio)", async () => {
+  it("mostra o erro de data futura sem chamar a API", async () => {
     const usuario = userEvent.setup();
     renderizar();
 
@@ -134,8 +134,51 @@ describe("FormAtividade", () => {
     fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2999-12-31" } });
     await usuario.click(screen.getByRole("button", { name: "Salvar" }));
 
+    expect(screen.getByText("data não pode ser uma data futura")).toBeInTheDocument();
     expect(registrarAtividade).not.toHaveBeenCalled();
     expect(onSalvo).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["700", "tempoExecucao deve ser no máximo 600 minutos"],
+    ["0", "tempoExecucao deve ser no mínimo 1 minuto"],
+    ["30.5", "tempoExecucao deve ser um número inteiro de minutos"],
+  ])("com tempo %s mostra a mensagem da API junto com os outros erros", async (tempo, mensagem) => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    fireEvent.change(screen.getByLabelText("Tempo (min)"), { target: { value: tempo } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByText(mensagem)).toBeInTheDocument();
+    expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("deixa digitar mais de 120 caracteres e mostra o erro de tamanho", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+    fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: "a".repeat(121) } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByLabelText("Atividade")).toHaveValue("a".repeat(121));
+    expect(screen.getByText("atividade deve ter entre 3 e 120 caracteres")).toBeInTheDocument();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("conta como a API: emoji vale 1 e os espaços das pontas não contam", async () => {
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar();
+    const atividade = "💪".repeat(120);
+
+    await preencher(usuario);
+    fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: `  ${atividade}  ` } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ atividade }));
   });
 
   it("deixa o treino desabilitado até escolher o membro", () => {

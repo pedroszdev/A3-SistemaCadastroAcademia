@@ -117,7 +117,9 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
   const bloqueado = situacao?.situacao === "INADIMPLENTE" || inadimplente422;
 
   return (
-    <form onSubmit={aoEnviar} className="flex flex-col gap-4">
+    // noValidate: o max da data e os limites do tempo só ajudam no campo; quem barra e mostra
+    // a mensagem igual à da API é o validarAtividade.
+    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
       <BuscaMembro selecionado={membro} onSelecionar={aoSelecionarMembro} erro={erros.membro} />
       {bloqueado && <AvisoInadimplencia maiorAtrasoDias={situacao?.maiorAtrasoDias} />}
       <Select
@@ -133,7 +135,6 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
       />
       <Input
         rotulo="Atividade"
-        maxLength={120}
         value={atividade}
         onChange={(e) => setAtividade(e.target.value)}
         erro={erros.atividade}
