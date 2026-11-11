@@ -5,17 +5,24 @@ import { Input } from "@/components/ui/input";
 import { RodapeFormulario } from "@/components/ui/rodape-formulario";
 import { criarPagamento, type MembroBusca } from "./api";
 import { BuscaMembro } from "./busca-membro";
-import { mascaraMoeda, valorDaMascara } from "./moeda";
-import { type ErrosPagamento, validarPagamento } from "./validacao";
+import { mascaraMoeda, mascaraMoedaColada, valorDaMascara } from "./moeda";
+import { type ErrosPagamento, validarPagamento, vencimentoMinimo } from "./validacao";
 
 type FormPagamentoProps = {
   // Na ficha do membro (WEB-Y4) o membro já vem fixo e a busca some.
   membroId?: string;
   onSalvo: () => void;
   onCancelar: () => void;
+  // Avisa quem abriu o formulário para não deixar fechá-lo durante o envio.
+  onEnviando?: (enviando: boolean) => void;
 };
 
-export function FormPagamento({ membroId: membroFixo, onSalvo, onCancelar }: FormPagamentoProps) {
+export function FormPagamento({
+  membroId: membroFixo,
+  onSalvo,
+  onCancelar,
+  onEnviando,
+}: FormPagamentoProps) {
   const [membro, setMembro] = useState<MembroBusca | null>(null);
   const [valorTexto, setValorTexto] = useState("");
   const [dataVencimento, setDataVencimento] = useState("");
@@ -36,19 +43,33 @@ export function FormPagamento({ membroId: membroFixo, onSalvo, onCancelar }: For
     if (Object.keys(errosEncontrados).length > 0 || !membroId) return;
 
     setEnviando(true);
+    onEnviando?.(true);
     try {
       await criarPagamento({ membroId, valor, dataVencimento });
       onSalvo();
     } catch (e) {
       setErroApi((e as Error).message);
       setEnviando(false);
+      onEnviando?.(false);
     }
   }
 
+  function selecionarMembro(novo: MembroBusca | null) {
+    setMembro(novo);
+    // O erro "Selecione o membro" já foi resolvido: não volta ao clicar em Trocar.
+    if (novo) setErros((atual) => ({ ...atual, membro: undefined }));
+  }
+
   return (
-    <form onSubmit={aoEnviar} className="flex flex-col gap-4">
+    // noValidate: o `min` da data só limita o calendário; quem mostra o erro é validarPagamento.
+    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
       {!membroFixo && (
-        <BuscaMembro selecionado={membro} onSelecionar={setMembro} erro={erros.membro} />
+        <BuscaMembro
+          selecionado={membro}
+          onSelecionar={selecionarMembro}
+          erro={erros.membro}
+          desabilitado={enviando}
+        />
       )}
       <Input
         rotulo="Valor"
@@ -56,11 +77,16 @@ export function FormPagamento({ membroId: membroFixo, onSalvo, onCancelar }: For
         placeholder="R$ 0,00"
         value={valorTexto}
         onChange={(e) => setValorTexto(mascaraMoeda(e.target.value))}
+        onPaste={(e) => {
+          e.preventDefault();
+          setValorTexto(mascaraMoedaColada(e.clipboardData.getData("text")));
+        }}
         erro={erros.valor}
       />
       <Input
         rotulo="Vencimento"
         type="date"
+        min={vencimentoMinimo()}
         value={dataVencimento}
         onChange={(e) => setDataVencimento(e.target.value)}
         erro={erros.dataVencimento}

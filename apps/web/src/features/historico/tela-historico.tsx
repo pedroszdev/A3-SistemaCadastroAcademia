@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,7 +13,8 @@ import { useUsuario } from "@/features/auth/usuario";
 import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
 import { formatarData } from "@/lib/format";
-import { useFormEmDialog, useListaPaginada } from "@/lib/use-lista-paginada";
+import { useFormDialog } from "@/lib/use-form-dialog";
+import { useListaPaginada } from "@/lib/use-lista-paginada";
 import {
   type Atividade,
   type FiltroAtividades,
@@ -26,6 +27,15 @@ import {
 import { FormAtividade } from "./form-atividade";
 
 type OpcaoFuncionario = { id: string; nome: string };
+
+type Periodo = { dataDe: string; dataAte: string };
+
+// Mesma mensagem da API (query-atividade.dto.ts).
+const MENSAGEM_PERIODO_INVERTIDO = "dataAte não pode ser anterior a dataDe";
+
+function estaInvertido({ dataDe, dataAte }: Periodo): boolean {
+  return dataDe !== "" && dataAte !== "" && dataDe > dataAte;
+}
 
 const COLUNA_MEMBRO: Coluna<Atividade> = {
   chave: "membro",
@@ -78,8 +88,8 @@ export function TelaHistorico({ membroId, membroInativo = false, onAlterado }: T
   // "" conta como sem membro, igual a undefined.
   const membroFixo = membroId || undefined;
 
-  // A key zera filtros, página e formulário ao trocar de membro. Os funcionários
-  // ficam aqui fora e não são buscados de novo.
+  // A key zera filtros, período, página e formulário ao trocar de membro. Os
+  // funcionários ficam aqui fora e não são buscados de novo.
   return (
     <ListaHistorico
       key={membroFixo}
@@ -108,22 +118,35 @@ function ListaHistorico({
   const usuario = useUsuario();
   const { mostrar } = useToast();
   // O membro fixo entra no carregamento, não no filtro: nenhum setFiltro consegue perdê-lo.
-  const carregar = useCallback(
-    (filtro: FiltroAtividades) =>
-      membroFixo ? listarAtividadesDoMembro(membroFixo, filtro) : listarAtividades(filtro),
-    [membroFixo],
+  const lista = useListaPaginada(
+    (f: FiltroAtividades) =>
+      membroFixo ? listarAtividadesDoMembro(membroFixo, f) : listarAtividades(f),
+    { page: 1 },
   );
-  const lista = useListaPaginada(carregar, { page: 1 });
   const { filtro, setFiltro } = lista;
-  const formulario = useFormEmDialog();
+  const formulario = useFormDialog();
   const [membroFiltro, setMembroFiltro] = useState<MembroBusca | null>(null);
+  // O período digitado só vira filtro quando é válido: invertido, a API responderia 400 e a
+  // tabela sumiria.
+  const [periodo, setPeriodo] = useState<Periodo>({ dataDe: "", dataAte: "" });
 
   function aoSalvar() {
-    const { chave } = formulario.form;
     mostrar("Atividade registrada.");
-    formulario.fecharSeAinda(chave);
+    formulario.concluir();
     lista.recarregar();
     onAlterado?.();
+  }
+
+  function aoMudarPeriodo(campo: keyof Periodo, valor: string) {
+    const novo = { ...periodo, [campo]: valor };
+    setPeriodo(novo);
+    if (estaInvertido(novo)) return;
+    setFiltro({
+      ...filtro,
+      dataDe: novo.dataDe || undefined,
+      dataAte: novo.dataAte || undefined,
+      page: 1,
+    });
   }
 
   function aoEscolherMembro(membro: MembroBusca | null) {
@@ -135,12 +158,7 @@ function ListaHistorico({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-4">
         {!membroFixo && (
-          <BuscaMembro
-            incluirInativos
-            rotulo="Membro"
-            selecionado={membroFiltro}
-            onSelecionar={aoEscolherMembro}
-          />
+          <BuscaMembro incluirInativos selecionado={membroFiltro} onSelecionar={aoEscolherMembro} />
         )}
         {funcionarios && (
           <Select
@@ -156,22 +174,23 @@ function ListaHistorico({
         <Input
           rotulo="Data de"
           type="date"
-          value={filtro.dataDe ?? ""}
-          max={filtro.dataAte}
-          onChange={(e) => setFiltro({ ...filtro, dataDe: e.target.value || undefined, page: 1 })}
+          value={periodo.dataDe}
+          max={periodo.dataAte || undefined}
+          onChange={(e) => aoMudarPeriodo("dataDe", e.target.value)}
         />
         <Input
           rotulo="Data até"
           type="date"
-          value={filtro.dataAte ?? ""}
-          min={filtro.dataDe}
-          onChange={(e) => setFiltro({ ...filtro, dataAte: e.target.value || undefined, page: 1 })}
+          value={periodo.dataAte}
+          min={periodo.dataDe || undefined}
+          onChange={(e) => aoMudarPeriodo("dataAte", e.target.value)}
+          erro={estaInvertido(periodo) ? MENSAGEM_PERIODO_INVERTIDO : undefined}
         />
         {podeRegistrarAtividade(usuario) &&
           (membroInativo ? (
             <p className="ml-auto text-sm text-zinc-600">Membro inativo não registra atividade.</p>
           ) : (
-            <Button className="ml-auto" onClick={formulario.abrir}>
+            <Button className="ml-auto" onClick={() => formulario.abrir()}>
               Registrar atividade
             </Button>
           ))}
@@ -196,6 +215,7 @@ function ListaHistorico({
           membroId={membroFixo}
           onSalvo={aoSalvar}
           onCancelar={formulario.fechar}
+          onEnviando={formulario.setOcupado}
         />
       </Dialog>
     </div>

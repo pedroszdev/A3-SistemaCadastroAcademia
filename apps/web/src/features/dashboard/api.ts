@@ -1,6 +1,4 @@
 import { api } from "@/lib/api";
-import { CARGOS_FINANCEIRO } from "@/lib/menu";
-import type { UsuarioDoToken } from "@/lib/sessao";
 
 export type ResumoDashboard = {
   membrosAtivos: number;
@@ -22,9 +20,4 @@ export function buscarResumo(): Promise<ResumoDashboard> {
 
 export function buscarInadimplentes(): Promise<MembroInadimplente[]> {
   return api<MembroInadimplente[]>("/dashboard/inadimplentes");
-}
-
-// Espelha a matriz 4.2 (situação financeira); quem barra de verdade é a API.
-export function podeVerInadimplentes(usuario: UsuarioDoToken): boolean {
-  return usuario.tipo === "FUNCIONARIO" && CARGOS_FINANCEIRO.includes(usuario.cargo);
 }

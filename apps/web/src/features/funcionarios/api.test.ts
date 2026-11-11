@@ -27,6 +27,12 @@ describe("api de funcionários", () => {
     expect(ultimaChamada().url).toBe("/api/funcionarios?page=1&pageSize=20");
   });
 
+  it("aceita outro pageSize", async () => {
+    await listarFuncionarios({ page: 3 }, 100);
+
+    expect(ultimaChamada().url).toBe("/api/funcionarios?page=3&pageSize=100");
+  });
+
   it("inclui cargo e ativo=false no filtro", async () => {
     await listarFuncionarios({ cargo: "INSTRUTOR", ativo: false, page: 2 });
 

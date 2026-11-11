@@ -13,54 +13,60 @@ type BuscaMembroProps = {
   selecionado: MembroBusca | null;
   onSelecionar: (membro: MembroBusca | null) => void;
   erro?: string;
+  // RN04: por padrão só os ativos, porque só membro ativo recebe pagamento ou atividade.
+  // A API ainda responde 422 se o membro for desativado depois da busca. O histórico, que
+  // só consulta, inclui os inativos.
   incluirInativos?: boolean;
-  rotulo?: string;
+  // Durante o envio do formulário em volta, o membro escolhido não pode ser trocado.
+  desabilitado?: boolean;
 };
 
-type Resultado = { termo: string; membros: MembroBusca[] };
+type Resultado = { termo: string; membros: MembroBusca[]; total: number };
+type ErroBusca = { termo: string; mensagem: string };
 
 export function BuscaMembro({
   selecionado,
   onSelecionar,
   erro,
   incluirInativos = false,
-  rotulo = "Membro",
+  desabilitado = false,
 }: BuscaMembroProps) {
   const [texto, setTexto] = useState("");
   const [resultado, setResultado] = useState<Resultado | null>(null);
-  const [erroBusca, setErroBusca] = useState<string | null>(null);
+  const [erroBusca, setErroBusca] = useState<ErroBusca | null>(null);
+  const termoAtual = texto.trim();
 
   useEffect(() => {
-    const termo = texto.trim();
+    const termo = termoAtual;
     if (termo.length < MINIMO_BUSCA) return;
 
     let cancelado = false;
     const timer = setTimeout(() => {
       buscarMembros(termo, { incluirInativos })
-        .then((membros) => {
+        .then(({ membros, total }) => {
           if (cancelado) return;
-          setResultado({ termo, membros });
+          setResultado({ termo, membros, total });
           setErroBusca(null);
         })
         .catch((e: Error) => {
-          if (!cancelado) setErroBusca(e.message);
+          if (!cancelado) setErroBusca({ termo, mensagem: e.message });
         });
     }, ESPERA_BUSCA_MS);
     return () => {
       cancelado = true;
       clearTimeout(timer);
     };
-  }, [texto, incluirInativos]);
+  }, [termoAtual, incluirInativos]);
 
   if (selecionado) {
     return (
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-zinc-800">{rotulo}</span>
+        <span className="text-sm font-medium text-zinc-800">Membro</span>
         <div className="flex items-center justify-between gap-2 rounded border border-zinc-300 px-3 py-2">
           <p className="text-sm">
             {selecionado.nome} · {mascaraCpf(selecionado.cpf)}
           </p>
-          <Button variante="secundario" onClick={() => onSelecionar(null)}>
+          <Button variante="secundario" onClick={() => onSelecionar(null)} disabled={desabilitado}>
             Trocar
           </Button>
         </div>
@@ -68,10 +74,11 @@ export function BuscaMembro({
     );
   }
 
-  const termoAtual = texto.trim();
   const buscando = termoAtual.length >= MINIMO_BUSCA;
-  // Uma resposta de outro termo (mais antigo) não aparece.
-  const membros = buscando && resultado?.termo === termoAtual ? resultado.membros : null;
+  // Uma resposta ou um erro de outro termo (mais antigo) não aparece.
+  const doTermo = buscando && resultado?.termo === termoAtual ? resultado : null;
+  const membros = doTermo?.membros ?? null;
+  const mensagemErro = buscando && erroBusca?.termo === termoAtual ? erroBusca.mensagem : null;
 
   function escolher(membro: MembroBusca) {
     setTexto("");
@@ -81,16 +88,20 @@ export function BuscaMembro({
   return (
     <div className="flex flex-col gap-2">
       <Input
-        rotulo={rotulo}
+        rotulo="Membro"
         placeholder="Nome ou CPF"
         autoComplete="off"
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
+        // O campo fica dentro do <form> do pagamento: Enter aqui não deve enviá-lo.
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
+        }}
         erro={erro}
       />
-      {buscando && erroBusca && (
+      {mensagemErro && (
         <p role="alert" className="text-sm text-red-600">
-          {erroBusca}
+          {mensagemErro}
         </p>
       )}
       {membros && membros.length === 0 && (
@@ -112,6 +123,11 @@ export function BuscaMembro({
             </li>
           ))}
         </ul>
+      )}
+      {doTermo && doTermo.total > doTermo.membros.length && (
+        <p className="text-sm text-zinc-600">
+          Mostrando {doTermo.membros.length} de {doTermo.total}. Refine a busca para ver os outros.
+        </p>
       )}
     </div>
   );

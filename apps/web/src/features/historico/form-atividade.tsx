@@ -9,11 +9,11 @@ import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
 import { ApiError } from "@/lib/api";
 import { formatarData } from "@/lib/format";
+import { temAcessoFinanceiro } from "@/lib/menu";
 import {
   consultarSituacao,
   listarTreinosDoMembro,
   MENSAGEM_INADIMPLENTE,
-  podeConsultarSituacao,
   registrarAtividade,
   type SituacaoFinanceira,
   type TreinoDoMembro,
@@ -26,6 +26,8 @@ type FormAtividadeProps = {
   membroId?: string;
   onSalvo: () => void;
   onCancelar: () => void;
+  // Avisa quem abriu o formulário para não deixar fechá-lo durante o envio.
+  onEnviando?: (enviando: boolean) => void;
 };
 
 function placeholderDoTreino(
@@ -37,12 +39,18 @@ function placeholderDoTreino(
   return treinos.length === 0 ? "Nenhum treino disponível" : "Sem treino";
 }
 
-export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: FormAtividadeProps) {
+export function FormAtividade({
+  membroId: membroFixo,
+  onSalvo,
+  onCancelar,
+  onEnviando,
+}: FormAtividadeProps) {
   const usuario = useUsuario();
-  const consultaSituacao = podeConsultarSituacao(usuario);
+  const consultaSituacao = temAcessoFinanceiro(usuario);
   const [hoje] = useState(() => hojeEmSaoPaulo());
   const [membro, setMembro] = useState<MembroBusca | null>(null);
   const [treinos, setTreinos] = useState<TreinoDoMembro[] | null>(null);
+  const [erroTreinos, setErroTreinos] = useState<string | null>(null);
   const [treinoId, setTreinoId] = useState("");
   const [atividade, setAtividade] = useState("");
   const [data, setData] = useState(hoje);
@@ -64,8 +72,10 @@ export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: For
       .then((lista) => {
         if (!cancelado) setTreinos(lista);
       })
-      .catch(() => {
-        if (!cancelado) setTreinos([]);
+      .catch((e: Error) => {
+        if (cancelado) return;
+        setTreinos([]);
+        setErroTreinos(`Não foi possível carregar os treinos: ${e.message}`);
       });
     if (consultaSituacao) {
       consultarSituacao(membroId)
@@ -85,6 +95,7 @@ export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: For
     setMembro(escolhido);
     setTreinoId("");
     setTreinos(null);
+    setErroTreinos(null);
     setSituacao(null);
     setInadimplente422(false);
     setErroApi(null);
@@ -105,6 +116,7 @@ export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: For
     if (Object.keys(errosEncontrados).length > 0 || !membroId) return;
 
     setEnviando(true);
+    onEnviando?.(true);
     try {
       await registrarAtividade({
         membroId,
@@ -121,13 +133,21 @@ export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: For
         setErroApi((e as Error).message);
       }
       setEnviando(false);
+      onEnviando?.(false);
     }
   }
 
   return (
-    <form onSubmit={aoEnviar} className="flex flex-col gap-4">
+    // noValidate: o max da data e os limites do tempo só ajudam no campo; quem barra e mostra
+    // a mensagem igual à da API é o validarAtividade.
+    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
       {!membroFixo && (
-        <BuscaMembro selecionado={membro} onSelecionar={aoSelecionarMembro} erro={erros.membro} />
+        <BuscaMembro
+          selecionado={membro}
+          onSelecionar={aoSelecionarMembro}
+          erro={erros.membro}
+          desabilitado={enviando}
+        />
       )}
       {bloqueado && <AvisoInadimplencia maiorAtrasoDias={situacao?.maiorAtrasoDias} />}
       <Select
@@ -140,10 +160,10 @@ export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: For
         value={treinoId}
         onChange={(e) => setTreinoId(e.target.value)}
         disabled={!membroId || !treinos?.length}
+        erro={erroTreinos ?? undefined}
       />
       <Input
         rotulo="Atividade"
-        maxLength={120}
         value={atividade}
         onChange={(e) => setAtividade(e.target.value)}
         erro={erros.atividade}

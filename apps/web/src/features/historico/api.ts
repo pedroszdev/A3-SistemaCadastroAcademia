@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { CARGOS_FINANCEIRO } from "@/lib/menu";
+import { listarFuncionarios } from "@/features/funcionarios/api";
+import { api, ApiError } from "@/lib/api";
 import type { UsuarioDoToken } from "@/lib/sessao";
 import type { Pagina } from "@/lib/use-lista-paginada";
 
@@ -74,12 +74,20 @@ export function registrarAtividade({ treinoId, ...dados }: DadosRegistrarAtivida
 
 export type TreinoDoMembro = { id: string; tipo: string; dataInicio: string };
 
-// Rota da TRE-03 (Gabriel): enquanto ela não existir a chamada falha e o formulário segue sem treino.
+// Rota da TRE-03 (Gabriel). Enquanto ela não existir, responde 404, que vale como "sem
+// treinos": o formulário segue sem treino. Qualquer outro erro sobe para quem chamou.
 export async function listarTreinosDoMembro(membroId: string): Promise<TreinoDoMembro[]> {
-  const pagina = await api<{ data: TreinoDoMembro[] }>(
-    `/membros/${encodeURIComponent(membroId)}/treinos?page=1&pageSize=100`,
-  );
-  return pagina.data;
+  let pagina: { data?: unknown };
+  try {
+    pagina = await api<{ data?: unknown }>(
+      `/membros/${encodeURIComponent(membroId)}/treinos?page=1&pageSize=100`,
+    );
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return [];
+    throw e;
+  }
+  if (!Array.isArray(pagina?.data)) throw new Error("Resposta inesperada da lista de treinos");
+  return pagina.data as TreinoDoMembro[];
 }
 
 export type SituacaoFinanceira = {
@@ -92,12 +100,21 @@ export function consultarSituacao(membroId: string) {
   return api<SituacaoFinanceira>(`/membros/${encodeURIComponent(membroId)}/situacao`);
 }
 
-// Não reaproveita listarFuncionarios (features/funcionarios/api.ts), que fixa pageSize=20.
+// Maior pageSize que a API aceita (PaginationQueryDto).
+const MAXIMO_POR_PAGINA = 100;
+
+// Junta todas as páginas: o filtro não pode esconder quem passa dos 100 primeiros.
 export async function listarFuncionariosParaFiltro(): Promise<{ id: string; nome: string }[]> {
-  const pagina = await api<{ data: { id: string; nome: string }[] }>(
-    "/funcionarios?page=1&pageSize=100",
+  const primeira = await listarFuncionarios({ page: 1 }, MAXIMO_POR_PAGINA);
+  const totalDePaginas = Math.ceil(primeira.total / MAXIMO_POR_PAGINA);
+  const outras = await Promise.all(
+    Array.from({ length: Math.max(0, totalDePaginas - 1) }, (_, i) =>
+      listarFuncionarios({ page: i + 2 }, MAXIMO_POR_PAGINA),
+    ),
   );
-  return pagina.data.map(({ id, nome }) => ({ id, nome }));
+  return [primeira, ...outras].flatMap((pagina) =>
+    pagina.data.map(({ id, nome }) => ({ id, nome })),
+  );
 }
 
 // Espelha a matriz 4.2; quem barra de verdade é a API.
@@ -109,8 +126,4 @@ export function podeRegistrarAtividade(usuario: UsuarioDoToken): boolean {
 
 export function podeFiltrarPorFuncionario(usuario: UsuarioDoToken): boolean {
   return usuario.tipo === "FUNCIONARIO" && usuario.cargo === "ADMIN";
-}
-
-export function podeConsultarSituacao(usuario: UsuarioDoToken): boolean {
-  return usuario.tipo === "FUNCIONARIO" && CARGOS_FINANCEIRO.includes(usuario.cargo);
 }

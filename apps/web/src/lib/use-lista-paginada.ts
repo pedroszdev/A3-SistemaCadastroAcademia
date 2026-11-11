@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 
 export type Pagina<T> = { data: T[]; total: number; page: number; pageSize: number };
 
-// `carregar` precisa ser estável (função de módulo ou useCallback): ela entra nas
-// dependências do efeito.
+// `carregar` pode ser uma função nova a cada render (ex.: inline, fixando um membroId):
+// ela não entra nas dependências, então a lista só recarrega quando o filtro muda ou
+// quando alguém chama recarregar().
 export function useListaPaginada<F extends { page: number }, T>(
   carregar: (filtro: F) => Promise<Pagina<T>>,
   filtroInicial: NoInfer<F>,
@@ -13,9 +14,11 @@ export function useListaPaginada<F extends { page: number }, T>(
   const [pagina, setPagina] = useState<Pagina<T> | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
+  const buscar = useEffectEvent((atual: F) => carregar(atual));
+
   useEffect(() => {
     let cancelado = false;
-    carregar(filtro)
+    buscar(filtro)
       .then((recebida) => {
         if (cancelado) return;
         // A página ficou vazia (ex.: deu baixa no último da página com o filtro Pendente):
@@ -37,35 +40,11 @@ export function useListaPaginada<F extends { page: number }, T>(
     return () => {
       cancelado = true;
     };
-  }, [carregar, filtro, versao]);
+  }, [filtro, versao]);
 
   function recarregar() {
     setVersao((v) => v + 1);
   }
 
   return { filtro, setFiltro, pagina, erro, recarregar };
-}
-
-// A chave muda a cada abertura: um save que termina depois de o Dialog ter sido
-// fechado e reaberto não fecha o formulário novo.
-type EstadoForm = { aberto: boolean; chave: number };
-
-export function useFormEmDialog() {
-  const [form, setForm] = useState<EstadoForm>({ aberto: false, chave: 0 });
-  const proximaChave = useRef(0);
-
-  function abrir() {
-    proximaChave.current += 1;
-    setForm({ aberto: true, chave: proximaChave.current });
-  }
-
-  function fechar() {
-    setForm((atual) => ({ ...atual, aberto: false }));
-  }
-
-  function fecharSeAinda(chave: number) {
-    setForm((atual) => (atual.chave === chave ? { ...atual, aberto: false } : atual));
-  }
-
-  return { form, abrir, fechar, fecharSeAinda };
 }
