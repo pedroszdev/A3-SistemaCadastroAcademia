@@ -169,6 +169,31 @@ describe("TelaHistorico", () => {
     expect(screen.queryByText("Esteira")).toBeNull();
   });
 
+  it("com o período invertido mostra o erro, não busca e mantém a tabela", async () => {
+    renderizar();
+    await screen.findByText("Esteira");
+
+    fireEvent.change(screen.getByLabelText("Data até"), { target: { value: "2026-11-01" } });
+    expect(listarAtividades).toHaveBeenLastCalledWith({ dataAte: "2026-11-01", page: 1 });
+    const chamadas = vi.mocked(listarAtividades).mock.calls.length;
+
+    fireEvent.change(screen.getByLabelText("Data de"), { target: { value: "2026-11-30" } });
+
+    expect(screen.getByText("dataAte não pode ser anterior a dataDe")).toBeInTheDocument();
+    expect(screen.getByLabelText("Data de")).toHaveValue("2026-11-30");
+    expect(listarAtividades).toHaveBeenCalledTimes(chamadas);
+    expect(screen.getByText("Esteira")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Data de"), { target: { value: "2026-10-01" } });
+
+    expect(screen.queryByText("dataAte não pode ser anterior a dataDe")).toBeNull();
+    expect(listarAtividades).toHaveBeenLastCalledWith({
+      dataDe: "2026-10-01",
+      dataAte: "2026-11-01",
+      page: 1,
+    });
+  });
+
   it("filtra por membro, incluindo inativos, e limpa o filtro em Trocar", async () => {
     const usuario = userEvent.setup();
     renderizar();

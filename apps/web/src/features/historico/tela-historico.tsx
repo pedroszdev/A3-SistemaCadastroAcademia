@@ -26,6 +26,15 @@ import { FormAtividade } from "./form-atividade";
 
 type OpcaoFuncionario = { id: string; nome: string };
 
+type Periodo = { dataDe: string; dataAte: string };
+
+// Mesma mensagem da API (query-atividade.dto.ts).
+const MENSAGEM_PERIODO_INVERTIDO = "dataAte não pode ser anterior a dataDe";
+
+function estaInvertido({ dataDe, dataAte }: Periodo): boolean {
+  return dataDe !== "" && dataAte !== "" && dataDe > dataAte;
+}
+
 const COLUNAS: Coluna<Atividade>[] = [
   { chave: "data", titulo: "Data", celula: (a) => formatarData(a.data) },
   { chave: "membro", titulo: "Membro", celula: (a) => a.membro.nome },
@@ -44,6 +53,9 @@ export function TelaHistorico() {
   const formulario = useFormDialog();
   const [membroFiltro, setMembroFiltro] = useState<MembroBusca | null>(null);
   const [funcionarios, setFuncionarios] = useState<OpcaoFuncionario[]>([]);
+  // O período digitado só vira filtro quando é válido: invertido, a API responderia 400 e a
+  // tabela sumiria.
+  const [periodo, setPeriodo] = useState<Periodo>({ dataDe: "", dataAte: "" });
 
   useEffect(() => {
     if (!filtraPorFuncionario) return;
@@ -65,6 +77,18 @@ export function TelaHistorico() {
     mostrar("Atividade registrada.");
     formulario.concluir();
     lista.recarregar();
+  }
+
+  function aoMudarPeriodo(campo: keyof Periodo, valor: string) {
+    const novo = { ...periodo, [campo]: valor };
+    setPeriodo(novo);
+    if (estaInvertido(novo)) return;
+    setFiltro({
+      ...filtro,
+      dataDe: novo.dataDe || undefined,
+      dataAte: novo.dataAte || undefined,
+      page: 1,
+    });
   }
 
   function aoEscolherMembro(membro: MembroBusca | null) {
@@ -95,16 +119,17 @@ export function TelaHistorico() {
         <Input
           rotulo="Data de"
           type="date"
-          value={filtro.dataDe ?? ""}
-          max={filtro.dataAte}
-          onChange={(e) => setFiltro({ ...filtro, dataDe: e.target.value || undefined, page: 1 })}
+          value={periodo.dataDe}
+          max={periodo.dataAte || undefined}
+          onChange={(e) => aoMudarPeriodo("dataDe", e.target.value)}
         />
         <Input
           rotulo="Data até"
           type="date"
-          value={filtro.dataAte ?? ""}
-          min={filtro.dataDe}
-          onChange={(e) => setFiltro({ ...filtro, dataAte: e.target.value || undefined, page: 1 })}
+          value={periodo.dataAte}
+          min={periodo.dataDe || undefined}
+          onChange={(e) => aoMudarPeriodo("dataAte", e.target.value)}
+          erro={estaInvertido(periodo) ? MENSAGEM_PERIODO_INVERTIDO : undefined}
         />
         {podeRegistrarAtividade(usuario) && (
           <Button className="ml-auto" onClick={() => formulario.abrir()}>
