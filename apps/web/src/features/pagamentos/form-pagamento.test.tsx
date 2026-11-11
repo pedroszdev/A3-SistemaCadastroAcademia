@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api";
 import { buscarMembrosAtivos, criarPagamento, type MembroBusca, type Pagamento } from "./api";
 import { FormPagamento } from "./form-pagamento";
@@ -36,11 +36,18 @@ describe("FormPagamento", () => {
   const onCancelar = vi.fn();
 
   beforeEach(() => {
+    // Só o relógio: os vencimentos fixos dos testes ficam dentro dos 90 dias aceitos.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-11T12:00:00.000Z"));
     vi.mocked(criarPagamento).mockReset();
     vi.mocked(buscarMembrosAtivos).mockReset();
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue([fulano]);
+    vi.mocked(buscarMembrosAtivos).mockResolvedValue({ membros: [fulano], total: 1 });
     onSalvo.mockReset();
     onCancelar.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("lança o pagamento com o valor numérico e a data, e chama onSalvo", async () => {
@@ -115,6 +122,49 @@ describe("FormPagamento", () => {
     expect(screen.getByLabelText("Vencimento")).toHaveValue("2026-11-20");
   });
 
+  it("recusa vencimento com mais de 90 dias no passado e limita o campo de data", async () => {
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await escolherMembro(usuario);
+    await usuario.type(screen.getByLabelText("Valor"), "15050");
+    fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-08-12" } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByLabelText("Vencimento")).toHaveAttribute("min", "2026-08-13");
+    expect(
+      screen.getByText("O vencimento não pode ter mais de 90 dias no passado"),
+    ).toBeInTheDocument();
+    expect(criarPagamento).not.toHaveBeenCalled();
+  });
+
+  it("não mostra de novo 'Selecione o membro' ao trocar o membro já escolhido", async () => {
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
+    await escolherMembro(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+
+    expect(screen.queryByText("Selecione o membro")).toBeNull();
+  });
+
+  it.each([
+    ["150", /^R\$\s150,00$/],
+    ["1.234,5", /^R\$\s1\.234,50$/],
+    ["R$ 89,90", /^R\$\s89,90$/],
+    ["150.5", /^R\$\s150,50$/],
+  ])("lê o valor colado %j com as casas decimais escritas", async (colado, esperado) => {
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await usuario.click(screen.getByLabelText("Valor"));
+    await usuario.paste(colado);
+
+    expect(screen.getByLabelText("Valor")).toHaveDisplayValue(esperado);
+  });
+
   it("desabilita o botão enquanto envia", async () => {
     vi.mocked(criarPagamento).mockReturnValue(new Promise(() => {}));
     const usuario = userEvent.setup();
@@ -124,6 +174,20 @@ describe("FormPagamento", () => {
     await usuario.click(screen.getByRole("button", { name: "Salvar" }));
 
     expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
+  });
+
+  it("avisa onEnviando ao começar e ao falhar o envio", async () => {
+    const onEnviando = vi.fn();
+    vi.mocked(criarPagamento).mockRejectedValue(new ApiError(422, "Membro inativo"));
+    const usuario = userEvent.setup();
+    render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} onEnviando={onEnviando} />);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await screen.findByRole("alert");
+
+    expect(onEnviando.mock.calls).toEqual([[true], [false]]);
   });
 
   it("chama onCancelar sem chamar a API", async () => {

@@ -59,17 +59,24 @@ export function criarPagamento(dados: DadosCriarPagamento) {
 
 export type MembroBusca = { id: string; nome: string; cpf: string };
 
+// `total` conta todos os que batem com a busca, não só os `membros` devolvidos.
+export type ResultadoBuscaMembros = { membros: MembroBusca[]; total: number };
+
 // RN04: só membro ativo recebe novo pagamento, então a busca lista só os ativos.
 // A API ainda responde 422 se o membro for desativado depois da busca.
-export async function buscarMembrosAtivos(busca: string): Promise<MembroBusca[]> {
+// O termo já chega sem espaços nas pontas (BuscaMembro).
+export async function buscarMembrosAtivos(busca: string): Promise<ResultadoBuscaMembros> {
   const params = new URLSearchParams({
-    busca: busca.trim(),
+    busca,
     ativo: "true",
     page: "1",
     pageSize: String(TAMANHO_BUSCA_MEMBROS),
   });
-  const pagina = await api<{ data: MembroBusca[] }>(`/membros?${params}`);
-  return pagina.data.map(({ id, nome, cpf }) => ({ id, nome, cpf }));
+  const pagina = await api<{ data: MembroBusca[]; total: number }>(`/membros?${params}`);
+  return {
+    membros: pagina.data.map(({ id, nome, cpf }) => ({ id, nome, cpf })),
+    total: pagina.total,
+  };
 }
 
 export function registrarPagamento(id: string, dataPagamento?: string) {

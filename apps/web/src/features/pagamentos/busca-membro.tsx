@@ -15,34 +15,36 @@ type BuscaMembroProps = {
   erro?: string;
 };
 
-type Resultado = { termo: string; membros: MembroBusca[] };
+type Resultado = { termo: string; membros: MembroBusca[]; total: number };
+type ErroBusca = { termo: string; mensagem: string };
 
 export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProps) {
   const [texto, setTexto] = useState("");
   const [resultado, setResultado] = useState<Resultado | null>(null);
-  const [erroBusca, setErroBusca] = useState<string | null>(null);
+  const [erroBusca, setErroBusca] = useState<ErroBusca | null>(null);
+  const termoAtual = texto.trim();
 
   useEffect(() => {
-    const termo = texto.trim();
+    const termo = termoAtual;
     if (termo.length < MINIMO_BUSCA) return;
 
     let cancelado = false;
     const timer = setTimeout(() => {
       buscarMembrosAtivos(termo)
-        .then((membros) => {
+        .then(({ membros, total }) => {
           if (cancelado) return;
-          setResultado({ termo, membros });
+          setResultado({ termo, membros, total });
           setErroBusca(null);
         })
         .catch((e: Error) => {
-          if (!cancelado) setErroBusca(e.message);
+          if (!cancelado) setErroBusca({ termo, mensagem: e.message });
         });
     }, ESPERA_BUSCA_MS);
     return () => {
       cancelado = true;
       clearTimeout(timer);
     };
-  }, [texto]);
+  }, [termoAtual]);
 
   if (selecionado) {
     return (
@@ -60,10 +62,11 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
     );
   }
 
-  const termoAtual = texto.trim();
   const buscando = termoAtual.length >= MINIMO_BUSCA;
-  // Uma resposta de outro termo (mais antigo) não aparece.
-  const membros = buscando && resultado?.termo === termoAtual ? resultado.membros : null;
+  // Uma resposta ou um erro de outro termo (mais antigo) não aparece.
+  const doTermo = buscando && resultado?.termo === termoAtual ? resultado : null;
+  const membros = doTermo?.membros ?? null;
+  const mensagemErro = buscando && erroBusca?.termo === termoAtual ? erroBusca.mensagem : null;
 
   function escolher(membro: MembroBusca) {
     setTexto("");
@@ -78,11 +81,15 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
         autoComplete="off"
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
+        // O campo fica dentro do <form> do pagamento: Enter aqui não deve enviá-lo.
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
+        }}
         erro={erro}
       />
-      {buscando && erroBusca && (
+      {mensagemErro && (
         <p role="alert" className="text-sm text-red-600">
-          {erroBusca}
+          {mensagemErro}
         </p>
       )}
       {membros && membros.length === 0 && (
@@ -102,6 +109,11 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
             </li>
           ))}
         </ul>
+      )}
+      {doTermo && doTermo.total > doTermo.membros.length && (
+        <p className="text-sm text-zinc-600">
+          Mostrando {doTermo.membros.length} de {doTermo.total}. Refine a busca para ver os outros.
+        </p>
       )}
     </div>
   );

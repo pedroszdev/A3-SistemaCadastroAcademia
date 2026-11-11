@@ -122,10 +122,13 @@ describe("api de pagamentos", () => {
       }),
     );
 
-    const membros = await buscarMembrosAtivos("  Ana ");
+    const resultado = await buscarMembrosAtivos("Ana");
 
     expect(ultimaChamada().url).toBe("/api/membros?busca=Ana&ativo=true&page=1&pageSize=10");
-    expect(membros).toEqual([{ id: "m1", nome: "Ana Souza", cpf: "12345678909" }]);
+    expect(resultado).toEqual({
+      membros: [{ id: "m1", nome: "Ana Souza", cpf: "12345678909" }],
+      total: 1,
+    });
   });
 });
 
