@@ -24,6 +24,8 @@ import { type ErrosAtividade, hojeEmSaoPaulo, validarAtividade } from "./validac
 type FormAtividadeProps = {
   onSalvo: () => void;
   onCancelar: () => void;
+  // Avisa quem abriu o formulário para não deixar fechá-lo durante o envio.
+  onEnviando?: (enviando: boolean) => void;
 };
 
 function placeholderDoTreino(membro: MembroBusca | null, treinos: TreinoDoMembro[] | null): string {
@@ -32,7 +34,7 @@ function placeholderDoTreino(membro: MembroBusca | null, treinos: TreinoDoMembro
   return treinos.length === 0 ? "Nenhum treino disponível" : "Sem treino";
 }
 
-export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
+export function FormAtividade({ onSalvo, onCancelar, onEnviando }: FormAtividadeProps) {
   const usuario = useUsuario();
   const consultaSituacao = podeConsultarSituacao(usuario);
   const [hoje] = useState(() => hojeEmSaoPaulo());
@@ -95,6 +97,7 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
     if (Object.keys(errosEncontrados).length > 0 || !membro) return;
 
     setEnviando(true);
+    onEnviando?.(true);
     try {
       await registrarAtividade({
         membroId: membro.id,
@@ -111,6 +114,7 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
         setErroApi((e as Error).message);
       }
       setEnviando(false);
+      onEnviando?.(false);
     }
   }
 

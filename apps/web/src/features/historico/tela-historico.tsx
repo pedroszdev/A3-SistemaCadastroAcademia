@@ -13,7 +13,8 @@ import { useUsuario } from "@/features/auth/usuario";
 import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
 import { formatarData } from "@/lib/format";
-import { useFormEmDialog, useListaPaginada } from "@/lib/use-lista-paginada";
+import { useFormDialog } from "@/lib/use-form-dialog";
+import { useListaPaginada } from "@/lib/use-lista-paginada";
 import {
   type Atividade,
   listarAtividades,
@@ -40,7 +41,7 @@ export function TelaHistorico() {
   const filtraPorFuncionario = podeFiltrarPorFuncionario(usuario);
   const lista = useListaPaginada(listarAtividades, { page: 1 });
   const { filtro, setFiltro } = lista;
-  const formulario = useFormEmDialog();
+  const formulario = useFormDialog();
   const [membroFiltro, setMembroFiltro] = useState<MembroBusca | null>(null);
   const [funcionarios, setFuncionarios] = useState<OpcaoFuncionario[]>([]);
 
@@ -61,9 +62,8 @@ export function TelaHistorico() {
   }, [filtraPorFuncionario]);
 
   function aoSalvar() {
-    const { chave } = formulario.form;
     mostrar("Atividade registrada.");
-    formulario.fecharSeAinda(chave);
+    formulario.concluir();
     lista.recarregar();
   }
 
@@ -107,7 +107,7 @@ export function TelaHistorico() {
           onChange={(e) => setFiltro({ ...filtro, dataAte: e.target.value || undefined, page: 1 })}
         />
         {podeRegistrarAtividade(usuario) && (
-          <Button className="ml-auto" onClick={formulario.abrir}>
+          <Button className="ml-auto" onClick={() => formulario.abrir()}>
             Registrar atividade
           </Button>
         )}
@@ -131,6 +131,7 @@ export function TelaHistorico() {
           key={formulario.form.chave}
           onSalvo={aoSalvar}
           onCancelar={formulario.fechar}
+          onEnviando={formulario.setOcupado}
         />
       </Dialog>
     </div>

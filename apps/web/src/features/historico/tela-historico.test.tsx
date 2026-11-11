@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
@@ -325,7 +325,7 @@ describe("TelaHistorico", () => {
     expect(listarAtividades).toHaveBeenCalledTimes(2);
   });
 
-  it("um registro que termina tarde não fecha o formulário reaberto", async () => {
+  it("não deixa fechar o formulário enquanto a atividade é enviada", async () => {
     vi.mocked(buscarMembros).mockResolvedValue({
       membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
       total: 1,
@@ -342,11 +342,33 @@ describe("TelaHistorico", () => {
 
     const dialogo = await abrirFormEPreencher(usuario);
     await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
-    await usuario.click(within(dialogo).getByRole("button", { name: "Cancelar" }));
-    await usuario.click(screen.getByRole("button", { name: "Registrar atividade" }));
-    terminar(atividade("a9"));
+
+    expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
+    await usuario.keyboard("{Escape}");
+    await usuario.click(screen.getByTestId("dialog-overlay"));
+    expect(screen.getByRole("dialog", { name: "Registrar atividade" })).toBeInTheDocument();
+
+    await act(async () => terminar(atividade("a9")));
 
     expect(await screen.findByText("Atividade registrada.")).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Registrar atividade" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("volta a deixar fechar o formulário quando o registro falha", async () => {
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
+    vi.mocked(registrarAtividade).mockRejectedValue(new ApiError(422, "Membro inativo"));
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+    await screen.findByText("Esteira");
+
+    const dialogo = await abrirFormEPreencher(usuario);
+    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialogo).findByRole("alert")).toHaveTextContent("Membro inativo");
+    await usuario.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

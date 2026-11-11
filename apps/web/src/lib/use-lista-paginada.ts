@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export type Pagina<T> = { data: T[]; total: number; page: number; pageSize: number };
 
@@ -43,28 +43,4 @@ export function useListaPaginada<F extends { page: number }, T>(
   }
 
   return { filtro, setFiltro, pagina, erro, recarregar };
-}
-
-// A chave muda a cada abertura: um save que termina depois de o Dialog ter sido
-// fechado e reaberto não fecha o formulário novo.
-type EstadoForm = { aberto: boolean; chave: number };
-
-export function useFormEmDialog() {
-  const [form, setForm] = useState<EstadoForm>({ aberto: false, chave: 0 });
-  const proximaChave = useRef(0);
-
-  function abrir() {
-    proximaChave.current += 1;
-    setForm({ aberto: true, chave: proximaChave.current });
-  }
-
-  function fechar() {
-    setForm((atual) => ({ ...atual, aberto: false }));
-  }
-
-  function fecharSeAinda(chave: number) {
-    setForm((atual) => (atual.chave === chave ? { ...atual, aberto: false } : atual));
-  }
-
-  return { form, abrir, fechar, fecharSeAinda };
 }
