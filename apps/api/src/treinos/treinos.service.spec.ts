@@ -287,6 +287,33 @@ describe('TreinosService', () => {
       expect(prisma.treino.update).toHaveBeenCalledTimes(1);
     });
 
+    it('dataInicio igual à já salva passa, mesmo no passado (RN05)', async () => {
+      prisma.treino.findUnique.mockResolvedValue(
+        treino({ dataInicio: new Date('2026-01-05T00:00:00.000Z') }),
+      );
+      prisma.treino.update.mockResolvedValue(treino());
+
+      await service.update(ID, {
+        duracao: 50,
+        dataInicio: new Date('2026-01-05T00:00:00.000Z'),
+      });
+
+      expect(prisma.treino.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('RN05: dataInicio trocada por outra no passado → 400, sem atualizar', async () => {
+      prisma.treino.findUnique.mockResolvedValue(
+        treino({ dataInicio: new Date('2026-01-05T00:00:00.000Z') }),
+      );
+
+      await expect(
+        service.update(ID, {
+          dataInicio: new Date('2026-01-06T00:00:00.000Z'),
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.treino.update).not.toHaveBeenCalled();
+    });
+
     it('dataInicio igual a hoje passa', async () => {
       prisma.treino.update.mockResolvedValue(treino());
 
