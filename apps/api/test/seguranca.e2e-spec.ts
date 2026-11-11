@@ -19,6 +19,7 @@ import {
   criarFuncionario,
   criarMembro,
   criarPagamento,
+  criarTreino,
   diaIso,
   diasAtras,
   gerarCpf,
@@ -41,13 +42,15 @@ const PAPEIS: Papel[] = [...CARGOS, ALUNO];
 const TODOS: Papel[] = [...CARGOS];
 const GESTAO = [ADMIN, RECEPCIONISTA];
 
-type Metodo = 'get' | 'post' | 'patch';
+type Metodo = 'get' | 'post' | 'patch' | 'delete';
 
 /** Ids da massa recriada antes de cada teste. */
 interface Massa {
   membroId: string;
   membroInativoId: string;
   pagamentoId: string;
+  treinoId: string;
+  treinoDoAlunoId: string;
   atividadeId: string;
   atividadeDoAlunoId: string;
   funcionarioId: string;
@@ -61,7 +64,7 @@ interface Linha {
   id?: (m: Massa) => string;
   corpo?: (m: Massa) => object;
   permitidos: Papel[];
-  sucesso: 200 | 201;
+  sucesso: 200 | 201 | 204;
 }
 
 /**
@@ -158,6 +161,51 @@ const MATRIZ: Linha[] = [
     sucesso: 200,
   },
 
+  // Treinos: todos consultam; ADMIN e INSTRUTOR criam, editam e excluem
+  { metodo: 'get', rota: '/treinos', permitidos: TODOS, sucesso: 200 },
+  {
+    metodo: 'get',
+    rota: '/treinos/:id',
+    id: (m) => m.treinoId,
+    permitidos: TODOS,
+    sucesso: 200,
+  },
+  {
+    metodo: 'get',
+    rota: '/membros/:id/treinos',
+    id: (m) => m.membroId,
+    permitidos: TODOS,
+    sucesso: 200,
+  },
+  {
+    metodo: 'post',
+    rota: '/treinos',
+    corpo: (m) => ({
+      membroId: m.membroId,
+      tipo: 'Musculação',
+      descricao: 'Treino de pernas',
+      duracao: 45,
+      dataInicio: diaIso(hoje()),
+    }),
+    permitidos: [ADMIN, INSTRUTOR],
+    sucesso: 201,
+  },
+  {
+    metodo: 'patch',
+    rota: '/treinos/:id',
+    id: (m) => m.treinoId,
+    corpo: () => ({ duracao: 50 }),
+    permitidos: [ADMIN, INSTRUTOR],
+    sucesso: 200,
+  },
+  {
+    metodo: 'delete',
+    rota: '/treinos/:id',
+    id: (m) => m.treinoId,
+    permitidos: [ADMIN, INSTRUTOR],
+    sucesso: 204,
+  },
+
   // Situação financeira: segue pagamentos
   {
     metodo: 'get',
@@ -249,6 +297,16 @@ const MATRIZ: Linha[] = [
     sucesso: 200,
   },
 
+  // Treinos do aluno: só o ALUNO, sempre os próprios dados (RN16)
+  { metodo: 'get', rota: '/me/treinos', permitidos: [ALUNO], sucesso: 200 },
+  {
+    metodo: 'get',
+    rota: '/me/treinos/:id',
+    id: (m) => m.treinoDoAlunoId,
+    permitidos: [ALUNO],
+    sucesso: 200,
+  },
+
   // Dashboard: todos os funcionários
   { metodo: 'get', rota: '/dashboard', permitidos: TODOS, sucesso: 200 },
   {
@@ -314,6 +372,8 @@ describe('Segurança: matriz de permissões (e2e)', () => {
     const membro = await criarMembro(prisma);
     const membroInativo = await criarMembro(prisma, { ativo: false });
     const pagamento = await criarPagamento(prisma, membro.id);
+    const treino = await criarTreino(prisma, membro.id);
+    const treinoDoAluno = await criarTreino(prisma, alunoId);
     const atividade = await criarAtividade(prisma, { membroId: membro.id });
     const atividadeDoAluno = await criarAtividade(prisma, {
       membroId: alunoId,
@@ -329,6 +389,8 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       membroId: membro.id,
       membroInativoId: membroInativo.id,
       pagamentoId: pagamento.id,
+      treinoId: treino.id,
+      treinoDoAlunoId: treinoDoAluno.id,
       atividadeId: atividade.id,
       atividadeDoAlunoId: atividadeDoAluno.id,
       funcionarioId: funcionario.id,
@@ -424,6 +486,15 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       expect(await prisma.historicoAtividade.count()).toBe(2);
     });
 
+    it('RECEPCIONISTA não cria treino: 403 e nada gravado', async () => {
+      await chamar(linha('post', '/treinos'), tokens[RECEPCIONISTA]).expect(
+        403,
+      );
+
+      // o treino da massa e o do aluno
+      expect(await prisma.treino.count()).toBe(2);
+    });
+
     it('só ADMIN gerencia funcionários', async () => {
       const rotas = MATRIZ.filter((l) => l.rota.startsWith('/funcionarios'));
       expect(rotas).toHaveLength(6);
@@ -441,14 +512,15 @@ describe('Segurança: matriz de permissões (e2e)', () => {
 
     it('ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)', async () => {
       const rotas = MATRIZ.filter((l) => !l.permitidos.includes(ALUNO));
-      // fora do ALUNO ficam só as rotas dele: /auth/me e as 3 de /me/atividades
-      expect(rotas).toHaveLength(MATRIZ.length - 4);
+      // fora do ALUNO ficam só as rotas dele: /auth/me, as 3 de /me/atividades e as 2 de /me/treinos
+      expect(rotas).toHaveLength(MATRIZ.length - 6);
 
       for (const l of rotas) {
         await chamar(l, tokens[ALUNO]).expect(403);
       }
       expect(await prisma.pagamento.count()).toBe(1);
       expect(await prisma.historicoAtividade.count()).toBe(2);
+      expect(await prisma.treino.count()).toBe(2);
       // a massa (2) e o próprio aluno; nenhum membro criado
       expect(await prisma.membro.count()).toBe(3);
     });
@@ -470,6 +542,20 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       expect((resumo.body as { totalAtividades: number }).totalAtividades).toBe(
         1,
       );
+    });
+
+    it('ALUNO não vê o treino de outro membro: 404 no /:id e fora da lista (RN16)', async () => {
+      const comoAluno = (url: string) =>
+        request(app.getHttpServer())
+          .get(url)
+          .set('Authorization', bearer(tokens[ALUNO]));
+
+      await comoAluno(`/me/treinos/${massa.treinoId}`).expect(404);
+
+      const lista = await comoAluno('/me/treinos').expect(200);
+      const corpo = lista.body as { data: { id: string }[]; total: number };
+      expect(corpo.data.map((t) => t.id)).toEqual([massa.treinoDoAlunoId]);
+      expect(corpo.total).toBe(1);
     });
 
     it('corpo inválido com cargo sem permissão → 403, não 400', async () => {
