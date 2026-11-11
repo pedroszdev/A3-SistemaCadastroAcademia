@@ -192,7 +192,7 @@ describe('TreinosService', () => {
       prisma.treino.findMany.mockResolvedValue([]);
       prisma.treino.count.mockResolvedValue(0);
 
-      await service.findAll({ page: 1, pageSize: 20 } as QueryTreinoDto);
+      await service.findAll({ page: 1, pageSize: 20 });
 
       const args = primeiroArg<{ where: object; skip: number; take: number }>(
         prisma.treino.findMany,
