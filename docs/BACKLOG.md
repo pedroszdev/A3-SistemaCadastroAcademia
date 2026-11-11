@@ -203,7 +203,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] ADM-02 E-mail ao professor (grupo de 3 + stack)
 - [x] ADM-03 Adicionar colaboradores no GitHub
 - [x] ADM-05 Canal e check-in semanal
-- [ ] ADM-06 Documento de escopo (coordenação + RNFs)
+- [x] ADM-06 Documento de escopo (coordenação + RNFs) — seções 1 a 6 preenchidas, RNFs com meta mensurável, rastreabilidade com status, cronograma e roteiro da demo (issue #29)
 - [x] INF-01 Proteção da main, templates e CONTRIBUTING
 - [x] INF-02 Jest da API com cobertura + e2e
 - [x] INF-03 Testes no front (Vitest)
