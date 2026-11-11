@@ -6,7 +6,7 @@ import { UsuarioProvider } from "@/features/auth/usuario";
 import { ApiError } from "@/lib/api";
 import type { UsuarioDoToken } from "@/lib/sessao";
 import {
-  buscarMembrosAtivos,
+  buscarMembros,
   cancelarPagamento,
   criarPagamento,
   listarPagamentos,
@@ -22,7 +22,7 @@ vi.mock("./api", async (importOriginal) => ({
   registrarPagamento: vi.fn(),
   cancelarPagamento: vi.fn(),
   criarPagamento: vi.fn(),
-  buscarMembrosAtivos: vi.fn(),
+  buscarMembros: vi.fn(),
 }));
 
 function pagamento(
@@ -81,7 +81,7 @@ describe("TelaPagamentos", () => {
     vi.mocked(registrarPagamento).mockReset();
     vi.mocked(cancelarPagamento).mockReset();
     vi.mocked(criarPagamento).mockReset();
-    vi.mocked(buscarMembrosAtivos).mockReset();
+    vi.mocked(buscarMembros).mockReset();
     vi.mocked(listarPagamentos).mockResolvedValue(pagina([fulano, beltrana, ciclano, deltrano]));
     // Só o relógio: os vencimentos fixos dos testes ficam dentro dos 90 dias aceitos.
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -374,7 +374,7 @@ describe("TelaPagamentos", () => {
   });
 
   it("lança o pagamento, avisa, fecha o formulário e recarrega a lista", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue({
+    vi.mocked(buscarMembros).mockResolvedValue({
       membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
       total: 1,
     });
@@ -402,7 +402,7 @@ describe("TelaPagamentos", () => {
   });
 
   it("não deixa fechar o formulário enquanto o lançamento é enviado", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue({
+    vi.mocked(buscarMembros).mockResolvedValue({
       membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
       total: 1,
     });
@@ -436,7 +436,7 @@ describe("TelaPagamentos", () => {
   });
 
   it("volta a deixar fechar o formulário quando o lançamento falha", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue({
+    vi.mocked(buscarMembros).mockResolvedValue({
       membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
       total: 1,
     });

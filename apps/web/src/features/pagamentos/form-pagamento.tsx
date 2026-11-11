@@ -1,8 +1,8 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RodapeFormulario } from "@/components/ui/rodape-formulario";
 import { criarPagamento, type MembroBusca } from "./api";
 import { BuscaMembro } from "./busca-membro";
 import { mascaraMoeda, mascaraMoedaColada, valorDaMascara } from "./moeda";
@@ -57,7 +57,12 @@ export function FormPagamento({ onSalvo, onCancelar, onEnviando }: FormPagamento
   return (
     // noValidate: o `min` da data só limita o calendário; quem mostra o erro é validarPagamento.
     <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
-      <BuscaMembro selecionado={membro} onSelecionar={selecionarMembro} erro={erros.membro} />
+      <BuscaMembro
+        selecionado={membro}
+        onSelecionar={selecionarMembro}
+        erro={erros.membro}
+        desabilitado={enviando}
+      />
       <Input
         rotulo="Valor"
         inputMode="numeric"
@@ -78,19 +83,7 @@ export function FormPagamento({ onSalvo, onCancelar, onEnviando }: FormPagamento
         onChange={(e) => setDataVencimento(e.target.value)}
         erro={erros.dataVencimento}
       />
-      {erroApi && (
-        <p role="alert" className="text-sm text-red-600">
-          {erroApi}
-        </p>
-      )}
-      <div className="flex justify-end gap-2">
-        <Button variante="secundario" onClick={onCancelar} disabled={enviando}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={enviando}>
-          {enviando ? "Salvando…" : "Salvar"}
-        </Button>
-      </div>
+      <RodapeFormulario erro={erroApi} enviando={enviando} onCancelar={onCancelar} />
     </form>
   );
 }

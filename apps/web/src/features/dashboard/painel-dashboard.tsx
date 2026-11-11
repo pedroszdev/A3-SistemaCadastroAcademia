@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useUsuario } from "@/features/auth/usuario";
+import { temAcessoFinanceiro } from "@/lib/menu";
 import {
   type MembroInadimplente,
   type ResumoDashboard,
   buscarInadimplentes,
   buscarResumo,
-  podeVerInadimplentes,
 } from "./api";
 import { CardsResumo } from "./cards-resumo";
 import { ListaInadimplentes } from "./lista-inadimplentes";
@@ -25,7 +25,7 @@ type Estado =
     };
 
 export function PainelDashboard() {
-  const verInadimplentes = podeVerInadimplentes(useUsuario());
+  const verInadimplentes = temAcessoFinanceiro(useUsuario());
   const [estado, setEstado] = useState<Estado>({ situacao: "carregando" });
 
   useEffect(() => {

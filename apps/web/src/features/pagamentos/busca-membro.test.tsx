@@ -2,10 +2,10 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api";
-import { buscarMembrosAtivos, type MembroBusca, type ResultadoBuscaMembros } from "./api";
+import { buscarMembros, type MembroBusca, type ResultadoBuscaMembros } from "./api";
 import { BuscaMembro, ESPERA_BUSCA_MS } from "./busca-membro";
 
-vi.mock("./api", () => ({ buscarMembrosAtivos: vi.fn() }));
+vi.mock("./api", () => ({ buscarMembros: vi.fn() }));
 
 const fulano: MembroBusca = { id: "m1", nome: "Fulano Silva", cpf: "12345678909" };
 const fulana: MembroBusca = { id: "m2", nome: "Fulana Souza", cpf: "98765432100" };
@@ -30,7 +30,7 @@ describe("BuscaMembro", () => {
   const onSelecionar = vi.fn();
 
   beforeEach(() => {
-    vi.mocked(buscarMembrosAtivos).mockReset();
+    vi.mocked(buscarMembros).mockReset();
     onSelecionar.mockReset();
   });
 
@@ -41,23 +41,41 @@ describe("BuscaMembro", () => {
     await usuario.type(screen.getByLabelText("Membro"), "F");
     await esperar(ESPERA_BUSCA_MS + 100);
 
-    expect(buscarMembrosAtivos).not.toHaveBeenCalled();
+    expect(buscarMembros).not.toHaveBeenCalled();
   });
 
   it("busca uma vez por pausa, com o termo completo", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue(achados(fulano));
+    vi.mocked(buscarMembros).mockResolvedValue(achados(fulano));
     const usuario = userEvent.setup();
     render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 
     await usuario.type(screen.getByLabelText("Membro"), "Ful");
 
     expect(await screen.findByRole("button", { name: /Fulano Silva/ })).toBeInTheDocument();
-    expect(buscarMembrosAtivos).toHaveBeenCalledTimes(1);
-    expect(buscarMembrosAtivos).toHaveBeenCalledWith("Ful");
+    expect(buscarMembros).toHaveBeenCalledTimes(1);
+    expect(buscarMembros).toHaveBeenCalledWith("Ful", { incluirInativos: false });
+  });
+
+  it("inclui os inativos na busca e usa a mensagem sem 'ativo' quando incluirInativos", async () => {
+    vi.mocked(buscarMembros).mockResolvedValue(achados());
+    const usuario = userEvent.setup();
+    render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} incluirInativos />);
+
+    await usuario.type(screen.getByLabelText("Membro"), "Zz");
+
+    expect(await screen.findByText("Nenhum membro encontrado")).toBeInTheDocument();
+    expect(buscarMembros).toHaveBeenCalledWith("Zz", { incluirInativos: true });
+    expect(screen.queryByText("Nenhum membro ativo encontrado")).toBeNull();
+  });
+
+  it("desabilitado não deixa trocar o membro escolhido", async () => {
+    render(<BuscaMembro selecionado={fulano} onSelecionar={onSelecionar} desabilitado />);
+
+    expect(screen.getByRole("button", { name: "Trocar" })).toBeDisabled();
   });
 
   it("lista os resultados com o CPF formatado e seleciona ao clicar", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue(achados(fulano, fulana));
+    vi.mocked(buscarMembros).mockResolvedValue(achados(fulano, fulana));
     const usuario = userEvent.setup();
     render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 
@@ -74,7 +92,7 @@ describe("BuscaMembro", () => {
   });
 
   it("esconde a lista antiga assim que o texto muda", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue(achados(fulano));
+    vi.mocked(buscarMembros).mockResolvedValue(achados(fulano));
     const usuario = userEvent.setup();
     render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 
@@ -86,7 +104,7 @@ describe("BuscaMembro", () => {
   });
 
   it("avisa quando nenhum membro ativo é encontrado", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue(achados());
+    vi.mocked(buscarMembros).mockResolvedValue(achados());
     const usuario = userEvent.setup();
     render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 
@@ -96,7 +114,7 @@ describe("BuscaMembro", () => {
   });
 
   it("mostra a mensagem da API quando a busca falha e a esconde ao limpar o campo", async () => {
-    vi.mocked(buscarMembrosAtivos).mockRejectedValue(new ApiError(500, "Falha ao buscar membros"));
+    vi.mocked(buscarMembros).mockRejectedValue(new ApiError(500, "Falha ao buscar membros"));
     const usuario = userEvent.setup();
     render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 
@@ -112,16 +130,16 @@ describe("BuscaMembro", () => {
   it("uma resposta atrasada de um termo antigo não sobrescreve a mais nova", async () => {
     const antiga = adiada();
     const nova = adiada();
-    vi.mocked(buscarMembrosAtivos)
+    vi.mocked(buscarMembros)
       .mockReturnValueOnce(antiga.promessa)
       .mockReturnValueOnce(nova.promessa);
     const usuario = userEvent.setup();
     render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 
     await usuario.type(screen.getByLabelText("Membro"), "Fu");
-    await waitFor(() => expect(buscarMembrosAtivos).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(buscarMembros).toHaveBeenCalledTimes(1));
     await usuario.type(screen.getByLabelText("Membro"), "l");
-    await waitFor(() => expect(buscarMembrosAtivos).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(buscarMembros).toHaveBeenCalledTimes(2));
 
     await act(async () => nova.resolver(achados(fulana)));
     await act(async () => antiga.resolver(achados(fulano)));
@@ -131,7 +149,7 @@ describe("BuscaMembro", () => {
   });
 
   it("um erro de busca de outro termo não aparece no termo atual", async () => {
-    vi.mocked(buscarMembrosAtivos)
+    vi.mocked(buscarMembros)
       .mockRejectedValueOnce(new ApiError(500, "Falha ao buscar membros"))
       .mockReturnValueOnce(new Promise(() => {}));
     const usuario = userEvent.setup();
@@ -160,7 +178,7 @@ describe("BuscaMembro", () => {
   });
 
   it("avisa quando há mais membros do que os listados", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue({ membros: [fulano, fulana], total: 40 });
+    vi.mocked(buscarMembros).mockResolvedValue({ membros: [fulano, fulana], total: 40 });
     const usuario = userEvent.setup();
     render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 
@@ -172,7 +190,7 @@ describe("BuscaMembro", () => {
   });
 
   it("não mostra o aviso quando todos os membros encontrados estão listados", async () => {
-    vi.mocked(buscarMembrosAtivos).mockResolvedValue(achados(fulano, fulana));
+    vi.mocked(buscarMembros).mockResolvedValue(achados(fulano, fulana));
     const usuario = userEvent.setup();
     render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 

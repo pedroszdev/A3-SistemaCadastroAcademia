@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  buscarMembrosAtivos,
+  buscarMembros,
   cancelarPagamento,
   criarPagamento,
   estaEmAberto,
   listarPagamentos,
   type Pagamento,
-  podeGerirPagamentos,
   registrarPagamento,
   type StatusPagamento,
 } from "./api";
@@ -102,7 +101,7 @@ describe("api de pagamentos", () => {
     expect(init?.body).toBe(JSON.stringify(dados));
   });
 
-  it("busca só membros ativos, com o termo aparado, e devolve id, nome e cpf", async () => {
+  it("sem opções busca só membros ativos e devolve id, nome e cpf", async () => {
     fetchMock.mockImplementation(async () =>
       Response.json({
         data: [
@@ -122,7 +121,7 @@ describe("api de pagamentos", () => {
       }),
     );
 
-    const resultado = await buscarMembrosAtivos("Ana");
+    const resultado = await buscarMembros("Ana");
 
     expect(ultimaChamada().url).toBe("/api/membros?busca=Ana&ativo=true&page=1&pageSize=10");
     expect(resultado).toEqual({
@@ -130,17 +129,24 @@ describe("api de pagamentos", () => {
       total: 1,
     });
   });
-});
 
-describe("podeGerirPagamentos", () => {
-  it("libera ADMIN e RECEPCIONISTA", () => {
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "ADMIN" })).toBe(true);
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "RECEPCIONISTA" })).toBe(true);
-  });
+  it("busca membros sem o filtro de ativos quando incluirInativos é verdadeiro", async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json({
+        data: [{ id: "m2", nome: "Beto Lima", cpf: "98765432100", ativo: false }],
+        total: 1,
+        page: 1,
+        pageSize: 10,
+      }),
+    );
 
-  it("barra INSTRUTOR e aluno", () => {
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" })).toBe(false);
-    expect(podeGerirPagamentos({ tipo: "ALUNO" })).toBe(false);
+    const resultado = await buscarMembros("Beto", { incluirInativos: true });
+
+    expect(ultimaChamada().url).toBe("/api/membros?busca=Beto&page=1&pageSize=10");
+    expect(resultado).toEqual({
+      membros: [{ id: "m2", nome: "Beto Lima", cpf: "98765432100" }],
+      total: 1,
+    });
   });
 });
 

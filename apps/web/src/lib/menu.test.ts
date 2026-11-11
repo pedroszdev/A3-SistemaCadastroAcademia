@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ITENS_MENU_ALUNO, estaAtivo, itensDoMenu } from "./menu";
-import type { Cargo } from "./sessao";
+import { ITENS_MENU_ALUNO, estaAtivo, itensDoMenu, temAcessoFinanceiro } from "./menu";
+import type { Cargo, UsuarioDoToken } from "./sessao";
 
 const ESPERADO: [Cargo, string[]][] = [
   [
@@ -41,5 +41,16 @@ describe("estaAtivo", () => {
     ["/aluno", false],
   ])("em %s dá %s", (pathname, esperado) => {
     expect(estaAtivo(pathname, "/aluno/treinos")).toBe(esperado);
+  });
+});
+
+describe("temAcessoFinanceiro", () => {
+  it.each<[UsuarioDoToken, boolean]>([
+    [{ tipo: "FUNCIONARIO", cargo: "ADMIN" }, true],
+    [{ tipo: "FUNCIONARIO", cargo: "RECEPCIONISTA" }, true],
+    [{ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" }, false],
+    [{ tipo: "ALUNO" }, false],
+  ])("temAcessoFinanceiro(%o) é %s", (usuario, esperado) => {
+    expect(temAcessoFinanceiro(usuario)).toBe(esperado);
   });
 });

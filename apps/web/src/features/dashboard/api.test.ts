@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { UsuarioDoToken } from "@/lib/sessao";
-import {
-  buscarInadimplentes,
-  buscarResumo,
-  podeVerInadimplentes,
-} from "./api";
+import { buscarInadimplentes, buscarResumo } from "./api";
 
 function respostaJson(corpo: unknown) {
   return new Response(JSON.stringify(corpo), {
@@ -44,14 +39,5 @@ describe("api do dashboard", () => {
       "/api/dashboard/inadimplentes",
       expect.any(Object),
     );
-  });
-
-  it.each<[UsuarioDoToken, boolean]>([
-    [{ tipo: "FUNCIONARIO", cargo: "ADMIN" }, true],
-    [{ tipo: "FUNCIONARIO", cargo: "RECEPCIONISTA" }, true],
-    [{ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" }, false],
-    [{ tipo: "ALUNO" }, false],
-  ])("podeVerInadimplentes(%o) é %s", (usuario, esperado) => {
-    expect(podeVerInadimplentes(usuario)).toBe(esperado);
   });
 });

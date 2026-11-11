@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
@@ -272,6 +272,31 @@ describe("TelaFuncionarios", () => {
     expect(await screen.findByText("Funcionário atualizado.")).toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Editar funcionário" })).toBeInTheDocument();
     expect(screen.getByLabelText("Nome")).toHaveValue("Beltrana Souza");
+  });
+
+  it("não deixa fechar o formulário enquanto o save é enviado", async () => {
+    let terminar: (f: Funcionario) => void = () => {};
+    vi.mocked(atualizarFuncionario).mockReturnValue(
+      new Promise<Funcionario>((resolve) => {
+        terminar = resolve;
+      }),
+    );
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Editar Fulano Silva" }));
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    const dialogo = screen.getByRole("dialog", { name: "Editar funcionário" });
+    expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
+    await usuario.keyboard("{Escape}");
+    await usuario.click(screen.getByTestId("dialog-overlay"));
+    expect(screen.getByRole("dialog", { name: "Editar funcionário" })).toBeInTheDocument();
+
+    await act(async () => terminar(fulano));
+
+    expect(await screen.findByText("Funcionário atualizado.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("mostra Acesso restrito e não chama a API para quem não é ADMIN", () => {

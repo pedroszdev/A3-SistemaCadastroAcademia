@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mascaraCpf } from "@/lib/format";
-import { buscarMembrosAtivos, type MembroBusca } from "./api";
+import { buscarMembros, type MembroBusca } from "./api";
 
 export const ESPERA_BUSCA_MS = 300;
 export const MINIMO_BUSCA = 2;
@@ -13,12 +13,24 @@ type BuscaMembroProps = {
   selecionado: MembroBusca | null;
   onSelecionar: (membro: MembroBusca | null) => void;
   erro?: string;
+  // RN04: por padrão só os ativos, porque só membro ativo recebe pagamento ou atividade.
+  // A API ainda responde 422 se o membro for desativado depois da busca. O histórico, que
+  // só consulta, inclui os inativos.
+  incluirInativos?: boolean;
+  // Durante o envio do formulário em volta, o membro escolhido não pode ser trocado.
+  desabilitado?: boolean;
 };
 
 type Resultado = { termo: string; membros: MembroBusca[]; total: number };
 type ErroBusca = { termo: string; mensagem: string };
 
-export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProps) {
+export function BuscaMembro({
+  selecionado,
+  onSelecionar,
+  erro,
+  incluirInativos = false,
+  desabilitado = false,
+}: BuscaMembroProps) {
   const [texto, setTexto] = useState("");
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [erroBusca, setErroBusca] = useState<ErroBusca | null>(null);
@@ -30,7 +42,7 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
 
     let cancelado = false;
     const timer = setTimeout(() => {
-      buscarMembrosAtivos(termo)
+      buscarMembros(termo, { incluirInativos })
         .then(({ membros, total }) => {
           if (cancelado) return;
           setResultado({ termo, membros, total });
@@ -44,7 +56,7 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
       cancelado = true;
       clearTimeout(timer);
     };
-  }, [termoAtual]);
+  }, [termoAtual, incluirInativos]);
 
   if (selecionado) {
     return (
@@ -54,7 +66,7 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
           <p className="text-sm">
             {selecionado.nome} · {mascaraCpf(selecionado.cpf)}
           </p>
-          <Button variante="secundario" onClick={() => onSelecionar(null)}>
+          <Button variante="secundario" onClick={() => onSelecionar(null)} disabled={desabilitado}>
             Trocar
           </Button>
         </div>
@@ -93,7 +105,9 @@ export function BuscaMembro({ selecionado, onSelecionar, erro }: BuscaMembroProp
         </p>
       )}
       {membros && membros.length === 0 && (
-        <p className="text-sm text-zinc-600">Nenhum membro ativo encontrado</p>
+        <p className="text-sm text-zinc-600">
+          {incluirInativos ? "Nenhum membro encontrado" : "Nenhum membro ativo encontrado"}
+        </p>
       )}
       {membros && membros.length > 0 && (
         <ul aria-label="Membros encontrados" className="flex flex-col gap-1">
