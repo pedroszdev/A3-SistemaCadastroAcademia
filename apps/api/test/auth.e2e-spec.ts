@@ -15,6 +15,7 @@ import {
 
 const NOME = 'Funcionária E2E';
 const MENSAGEM_TOKEN = 'Token ausente, inválido ou expirado';
+const MENSAGEM_LOGIN = 'Login ou senha inválidos';
 
 // Caminho feliz do login com banco real: select com senhaHash, JWT real e a
 // strategy consultando o funcionário no Postgres a cada requisição.
@@ -149,7 +150,24 @@ describe('Auth (e2e)', () => {
         .expect(401)
         .expect({
           statusCode: 401,
-          message: 'Login ou senha inválidos',
+          message: MENSAGEM_LOGIN,
+          error: 'Unauthorized',
+        });
+    });
+
+    it('membro inativo com a senha certa → 401 genérico (RN15)', async () => {
+      const inativo = await criarMembro(prisma, {
+        ativo: false,
+        senhaHash: hashSync(SENHA_PADRAO, 4),
+      });
+
+      await request(app.getHttpServer())
+        .post('/auth/login-aluno')
+        .send({ cpf: inativo.cpf, senha: SENHA_PADRAO })
+        .expect(401)
+        .expect({
+          statusCode: 401,
+          message: MENSAGEM_LOGIN,
           error: 'Unauthorized',
         });
     });
