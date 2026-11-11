@@ -1,0 +1,455 @@
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UsuarioProvider } from "@/features/auth/usuario";
+import { buscarMembros, type MembroBusca } from "@/features/pagamentos/api";
+import { ApiError } from "@/lib/api";
+import type { UsuarioDoToken } from "@/lib/sessao";
+import {
+  type Atividade,
+  consultarSituacao,
+  listarTreinosDoMembro,
+  registrarAtividade,
+  type SituacaoFinanceira,
+  type TreinoDoMembro,
+} from "./api";
+import { FormAtividade } from "./form-atividade";
+import { hojeEmSaoPaulo } from "./validacao";
+
+vi.mock("@/features/pagamentos/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/pagamentos/api")>()),
+  buscarMembros: vi.fn(),
+}));
+
+vi.mock("./api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./api")>()),
+  registrarAtividade: vi.fn(),
+  listarTreinosDoMembro: vi.fn(),
+  consultarSituacao: vi.fn(),
+}));
+
+const fulano: MembroBusca = { id: "m1", nome: "Fulano Silva", cpf: "12345678909" };
+const fulana: MembroBusca = { id: "m2", nome: "Fulana Souza", cpf: "98765432100" };
+
+const treinoDoFulano: TreinoDoMembro = {
+  id: "t1",
+  tipo: "Hipertrofia",
+  dataInicio: "2026-10-01T00:00:00.000Z",
+};
+const treinoDaFulana: TreinoDoMembro = {
+  id: "t2",
+  tipo: "Resistência",
+  dataInicio: "2026-09-15T00:00:00.000Z",
+};
+
+const registrada: Atividade = {
+  id: "a1",
+  membroId: "m1",
+  funcionarioId: "f1",
+  treinoId: null,
+  atividade: "Esteira",
+  data: "2026-11-09T00:00:00.000Z",
+  tempoExecucao: 30,
+  membro: { id: "m1", nome: "Fulano Silva" },
+  funcionario: { id: "f1", nome: "Ana Souza" },
+  treino: null,
+};
+
+const emDia: SituacaoFinanceira = { situacao: "EM_DIA", pagamentosAtrasados: 0, maiorAtrasoDias: 0 };
+const inadimplente: SituacaoFinanceira = {
+  situacao: "INADIMPLENTE",
+  pagamentosAtrasados: 2,
+  maiorAtrasoDias: 12,
+};
+
+const admin: UsuarioDoToken = { tipo: "FUNCIONARIO", cargo: "ADMIN" };
+const instrutor: UsuarioDoToken = { tipo: "FUNCIONARIO", cargo: "INSTRUTOR" };
+
+type Usuario = ReturnType<typeof userEvent.setup>;
+
+const onSalvo = vi.fn();
+const onCancelar = vi.fn();
+
+function renderizar(usuarioLogado: UsuarioDoToken = admin) {
+  render(
+    <UsuarioProvider usuario={usuarioLogado}>
+      <FormAtividade onSalvo={onSalvo} onCancelar={onCancelar} />
+    </UsuarioProvider>,
+  );
+}
+
+async function escolherMembro(usuario: Usuario, busca: string, nome: RegExp) {
+  await usuario.type(screen.getByLabelText("Membro"), busca);
+  await usuario.click(await screen.findByRole("button", { name: nome }));
+}
+
+async function preencher(usuario: Usuario) {
+  await escolherMembro(usuario, "Ful", /Fulano Silva/);
+  await usuario.type(screen.getByLabelText("Atividade"), "Esteira");
+  await usuario.type(screen.getByLabelText("Tempo (min)"), "30");
+}
+
+describe("FormAtividade", () => {
+  beforeEach(() => {
+    vi.mocked(registrarAtividade).mockReset();
+    vi.mocked(listarTreinosDoMembro).mockReset();
+    vi.mocked(consultarSituacao).mockReset();
+    vi.mocked(buscarMembros).mockReset();
+    vi.mocked(buscarMembros).mockResolvedValue({ membros: [fulano, fulana], total: 2 });
+    vi.mocked(listarTreinosDoMembro).mockImplementation(async (id) =>
+      id === "m1" ? [treinoDoFulano] : [treinoDaFulana],
+    );
+    vi.mocked(consultarSituacao).mockResolvedValue(emDia);
+    onSalvo.mockReset();
+    onCancelar.mockReset();
+  });
+
+  it("mostra os erros de validação sem chamar a API", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
+    expect(screen.getByText("atividade deve ter entre 3 e 120 caracteres")).toBeInTheDocument();
+    expect(
+      screen.getByText("tempoExecucao deve ser um número inteiro de minutos"),
+    ).toBeInTheDocument();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+    expect(onSalvo).not.toHaveBeenCalled();
+  });
+
+  it("começa com a data de hoje e limita o campo a hoje", () => {
+    renderizar();
+
+    expect(screen.getByLabelText("Data")).toHaveValue(hojeEmSaoPaulo());
+    expect(screen.getByLabelText("Data")).toHaveAttribute("max", hojeEmSaoPaulo());
+  });
+
+  it("mostra o erro de data futura sem chamar a API", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2999-12-31" } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByText("data não pode ser uma data futura")).toBeInTheDocument();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+    expect(onSalvo).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["700", "tempoExecucao deve ser no máximo 600 minutos"],
+    ["0", "tempoExecucao deve ser no mínimo 1 minuto"],
+    ["30.5", "tempoExecucao deve ser um número inteiro de minutos"],
+  ])("com tempo %s mostra a mensagem da API junto com os outros erros", async (tempo, mensagem) => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    fireEvent.change(screen.getByLabelText("Tempo (min)"), { target: { value: tempo } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByText(mensagem)).toBeInTheDocument();
+    expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("deixa digitar mais de 120 caracteres e mostra o erro de tamanho", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+    fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: "a".repeat(121) } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByLabelText("Atividade")).toHaveValue("a".repeat(121));
+    expect(screen.getByText("atividade deve ter entre 3 e 120 caracteres")).toBeInTheDocument();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("conta como a API: emoji vale 1 e os espaços das pontas não contam", async () => {
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar();
+    const atividade = "💪".repeat(120);
+
+    await preencher(usuario);
+    fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: `  ${atividade}  ` } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ atividade }));
+  });
+
+  it("deixa o treino desabilitado até escolher o membro", () => {
+    renderizar();
+
+    const treino = screen.getByLabelText("Treino (opcional)");
+    expect(treino).toBeDisabled();
+    expect(screen.getByRole("option", { name: "Escolha o membro primeiro" })).toBeInTheDocument();
+    expect(listarTreinosDoMembro).not.toHaveBeenCalled();
+  });
+
+  it("carrega os treinos do membro escolhido e manda o treinoId", async () => {
+    vi.mocked(registrarAtividade).mockResolvedValue({ ...registrada, treinoId: "t1" });
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+    await waitFor(() => expect(screen.getByLabelText("Treino (opcional)")).toBeEnabled());
+    expect(listarTreinosDoMembro).toHaveBeenCalledWith("m1");
+    expect(screen.getByRole("option", { name: "Sem treino" })).toBeInTheDocument();
+    await usuario.selectOptions(
+      screen.getByLabelText("Treino (opcional)"),
+      screen.getByRole("option", { name: "Hipertrofia · início 01/10/2026" }),
+    );
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith({
+      membroId: "m1",
+      treinoId: "t1",
+      atividade: "Esteira",
+      data: hojeEmSaoPaulo(),
+      tempoExecucao: 30,
+    });
+    expect(onSalvo).toHaveBeenCalled();
+  });
+
+  it("limpa o treino ao trocar de membro e carrega os treinos do novo", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    await waitFor(() => expect(screen.getByLabelText("Treino (opcional)")).toBeEnabled());
+    await usuario.selectOptions(screen.getByLabelText("Treino (opcional)"), "t1");
+    expect(screen.getByLabelText("Treino (opcional)")).toHaveValue("t1");
+
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+
+    expect(screen.getByLabelText("Treino (opcional)")).toBeDisabled();
+    expect(screen.getByLabelText("Treino (opcional)")).toHaveValue("");
+
+    await escolherMembro(usuario, "Ful", /Fulana Souza/);
+    await waitFor(() => expect(screen.getByLabelText("Treino (opcional)")).toBeEnabled());
+
+    expect(listarTreinosDoMembro).toHaveBeenLastCalledWith("m2");
+    expect(screen.getByLabelText("Treino (opcional)")).toHaveValue("");
+    expect(screen.getByRole("option", { name: /Resistência/ })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /Hipertrofia/ })).toBeNull();
+  });
+
+  it("segue sem treino quando o membro não tem treinos (ou a rota ainda não existe)", async () => {
+    vi.mocked(listarTreinosDoMembro).mockResolvedValue([]);
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+
+    expect(await screen.findByRole("option", { name: "Nenhum treino disponível" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Treino (opcional)")).toBeDisabled();
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith({
+      membroId: "m1",
+      treinoId: undefined,
+      atividade: "Esteira",
+      data: hojeEmSaoPaulo(),
+      tempoExecucao: 30,
+    });
+    expect(onSalvo).toHaveBeenCalled();
+  });
+
+  it("mostra o erro da lista de treinos e ainda deixa registrar sem treino", async () => {
+    vi.mocked(listarTreinosDoMembro).mockRejectedValue(new ApiError(500, "Falha interna"));
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+
+    expect(
+      await screen.findByText("Não foi possível carregar os treinos: Falha interna"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Treino (opcional)")).toBeDisabled();
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ treinoId: undefined }));
+  });
+
+  it("tira o erro dos treinos ao trocar de membro", async () => {
+    vi.mocked(listarTreinosDoMembro).mockRejectedValueOnce(new ApiError(500, "Falha interna"));
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    expect(await screen.findByText(/Não foi possível carregar os treinos/)).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+
+    expect(screen.queryByText(/Não foi possível carregar os treinos/)).toBeNull();
+  });
+
+  it("avisa e bloqueia o Salvar quando o ADMIN escolhe um membro inadimplente (RN09)", async () => {
+    vi.mocked(consultarSituacao).mockResolvedValue(inadimplente);
+    const usuario = userEvent.setup();
+    renderizar(admin);
+
+    await preencher(usuario);
+
+    const aviso = await screen.findByRole("alert");
+    expect(aviso).toHaveTextContent("Membro com pagamento em atraso");
+    expect(aviso).toHaveTextContent("(maior atraso: 12 dias)");
+    expect(consultarSituacao).toHaveBeenCalledWith("m1");
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("some com o aviso ao trocar para um membro em dia", async () => {
+    vi.mocked(consultarSituacao).mockImplementation(async (id) =>
+      id === "m1" ? inadimplente : emDia,
+    );
+    const usuario = userEvent.setup();
+    renderizar(admin);
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    await screen.findByRole("alert");
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+    await escolherMembro(usuario, "Ful", /Fulana Souza/);
+
+    await waitFor(() => expect(consultarSituacao).toHaveBeenLastCalledWith("m2"));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+  });
+
+  it("não mostra aviso nem bloqueia quando o ADMIN escolhe um membro em dia", async () => {
+    const usuario = userEvent.setup();
+    renderizar(admin);
+
+    await preencher(usuario);
+    await waitFor(() => expect(consultarSituacao).toHaveBeenCalledWith("m1"));
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+  });
+
+  it("não bloqueia quando a consulta da situação falha", async () => {
+    vi.mocked(consultarSituacao).mockRejectedValue(new ApiError(500, "Falha"));
+    const usuario = userEvent.setup();
+    renderizar(admin);
+
+    await preencher(usuario);
+    await waitFor(() => expect(consultarSituacao).toHaveBeenCalled());
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+  });
+
+  it("o INSTRUTOR não consulta a situação e vê o aviso destacado quando o POST responde 422 de inadimplência", async () => {
+    vi.mocked(registrarAtividade).mockRejectedValue(
+      new ApiError(422, "Membro com pagamento em atraso"),
+    );
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+
+    await preencher(usuario);
+    await waitFor(() => expect(listarTreinosDoMembro).toHaveBeenCalled());
+    expect(consultarSituacao).not.toHaveBeenCalled();
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    const aviso = await screen.findByRole("alert");
+    expect(aviso).toHaveTextContent("Membro com pagamento em atraso");
+    expect(aviso).toHaveClass("border-amber-300");
+    expect(aviso).not.toHaveClass("text-red-600");
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled();
+    expect(onSalvo).not.toHaveBeenCalled();
+  });
+
+  it("mostra outro 422 como texto vermelho comum e mantém o Salvar habilitado", async () => {
+    vi.mocked(registrarAtividade).mockRejectedValue(
+      new ApiError(422, "Treino não pertence ao membro"),
+    );
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    const erro = await screen.findByRole("alert");
+    expect(erro).toHaveTextContent("Treino não pertence ao membro");
+    expect(erro).toHaveClass("text-red-600");
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(onSalvo).not.toHaveBeenCalled();
+  });
+
+  it("mostra erro de rede como texto vermelho comum", async () => {
+    vi.mocked(registrarAtividade).mockRejectedValue(new Error("Falha de rede"));
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Falha de rede");
+  });
+
+  it("registra com o body certo, apara a atividade e chama onSalvo", async () => {
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    await usuario.type(screen.getByLabelText("Atividade"), "  Esteira  ");
+    await usuario.type(screen.getByLabelText("Tempo (min)"), "45");
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith({
+      membroId: "m1",
+      treinoId: undefined,
+      atividade: "Esteira",
+      data: hojeEmSaoPaulo(),
+      tempoExecucao: 45,
+    });
+    expect(onSalvo).toHaveBeenCalled();
+  });
+
+  it("desabilita o botão enquanto envia", async () => {
+    vi.mocked(registrarAtividade).mockReturnValue(new Promise(() => {}));
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
+  });
+
+  it("não deixa trocar o membro enquanto envia: o 422 de um não cai no outro", async () => {
+    let falhar: (e: Error) => void = () => {};
+    vi.mocked(registrarAtividade).mockReturnValue(
+      new Promise<Atividade>((_, reject) => {
+        falhar = reject;
+      }),
+    );
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    expect(screen.getByRole("button", { name: "Trocar" })).toBeDisabled();
+
+    await act(async () => falhar(new ApiError(422, "Membro com pagamento em atraso")));
+
+    expect(screen.getByText("Membro com pagamento em atraso")).toBeInTheDocument();
+    expect(screen.getByText(/Fulano Silva/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Trocar" })).toBeEnabled();
+  });
+
+  it("chama onCancelar sem chamar a API", async () => {
+    renderizar();
+
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(onCancelar).toHaveBeenCalled();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+});

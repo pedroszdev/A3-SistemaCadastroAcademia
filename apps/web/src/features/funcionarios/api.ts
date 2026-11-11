@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import type { Cargo } from "@/lib/sessao";
+import type { Pagina } from "@/lib/use-lista-paginada";
 
 export const TAMANHO_PAGINA = 20;
 
@@ -11,12 +12,7 @@ export type Funcionario = {
   ativo: boolean;
 };
 
-export type PaginaFuncionarios = {
-  data: Funcionario[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+export type PaginaFuncionarios = Pagina<Funcionario>;
 
 export type FiltroFuncionarios = { cargo?: Cargo; ativo?: boolean; page: number };
 
@@ -33,12 +29,12 @@ export type DadosAtualizarFuncionario = {
   senha?: string;
 };
 
-export function listarFuncionarios(filtro: FiltroFuncionarios) {
+export function listarFuncionarios(filtro: FiltroFuncionarios, pageSize = TAMANHO_PAGINA) {
   const params = new URLSearchParams();
   if (filtro.cargo) params.set("cargo", filtro.cargo);
   if (filtro.ativo !== undefined) params.set("ativo", String(filtro.ativo));
   params.set("page", String(filtro.page));
-  params.set("pageSize", String(TAMANHO_PAGINA));
+  params.set("pageSize", String(pageSize));
   return api<PaginaFuncionarios>(`/funcionarios?${params}`);
 }
 

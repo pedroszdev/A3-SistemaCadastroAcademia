@@ -1,12 +1,14 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
 import { UsuarioProvider } from "@/features/auth/usuario";
 import { ApiError } from "@/lib/api";
 import type { UsuarioDoToken } from "@/lib/sessao";
 import {
+  buscarMembros,
   cancelarPagamento,
+  criarPagamento,
   listarPagamentos,
   type Pagamento,
   type PaginaPagamentos,
@@ -19,6 +21,8 @@ vi.mock("./api", async (importOriginal) => ({
   listarPagamentos: vi.fn(),
   registrarPagamento: vi.fn(),
   cancelarPagamento: vi.fn(),
+  criarPagamento: vi.fn(),
+  buscarMembros: vi.fn(),
 }));
 
 function pagamento(
@@ -76,7 +80,16 @@ describe("TelaPagamentos", () => {
     vi.mocked(listarPagamentos).mockReset();
     vi.mocked(registrarPagamento).mockReset();
     vi.mocked(cancelarPagamento).mockReset();
+    vi.mocked(criarPagamento).mockReset();
+    vi.mocked(buscarMembros).mockReset();
     vi.mocked(listarPagamentos).mockResolvedValue(pagina([fulano, beltrana, ciclano, deltrano]));
+    // Só o relógio: os vencimentos fixos dos testes ficam dentro dos 90 dias aceitos.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-11T12:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("mostra a tabela com valor, datas e status de cada pagamento", async () => {
@@ -342,6 +355,109 @@ describe("TelaPagamentos", () => {
 
     expect(await screen.findByText("Pagamento cancelado.")).toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Registrar pagamento" })).toBeInTheDocument();
+  });
+
+  it("abre o formulário de novo pagamento e fecha em Cancelar sem chamar a API", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Novo pagamento" }));
+    const dialogo = screen.getByRole("dialog", { name: "Novo pagamento" });
+    expect(within(dialogo).getByLabelText("Membro")).toBeInTheDocument();
+    expect(within(dialogo).getByLabelText("Valor")).toBeInTheDocument();
+    expect(within(dialogo).getByLabelText("Vencimento")).toBeInTheDocument();
+    await usuario.click(within(dialogo).getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(criarPagamento).not.toHaveBeenCalled();
+  });
+
+  it("lança o pagamento, avisa, fecha o formulário e recarrega a lista", async () => {
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
+    vi.mocked(criarPagamento).mockResolvedValue({ ...fulano, id: "p9" });
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Novo pagamento" }));
+    const dialogo = screen.getByRole("dialog", { name: "Novo pagamento" });
+    await usuario.type(within(dialogo).getByLabelText("Membro"), "Eli");
+    await usuario.click(await within(dialogo).findByRole("button", { name: /Eliana Prado/ }));
+    await usuario.type(within(dialogo).getByLabelText("Valor"), "8990");
+    fireEvent.change(within(dialogo).getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
+    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+
+    expect(criarPagamento).toHaveBeenCalledWith({
+      membroId: "m-novo",
+      valor: 89.9,
+      dataVencimento: "2026-11-20",
+    });
+    expect(await screen.findByText("Pagamento lançado.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(listarPagamentos).toHaveBeenCalledTimes(2);
+  });
+
+  it("não deixa fechar o formulário enquanto o lançamento é enviado", async () => {
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
+    let terminar: (p: Pagamento) => void = () => {};
+    vi.mocked(criarPagamento).mockReturnValue(
+      new Promise<Pagamento>((resolve) => {
+        terminar = resolve;
+      }),
+    );
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Novo pagamento" }));
+    await usuario.type(screen.getByLabelText("Membro"), "Eli");
+    await usuario.click(await screen.findByRole("button", { name: /Eliana Prado/ }));
+    await usuario.type(screen.getByLabelText("Valor"), "8990");
+    fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    const dialogo = screen.getByRole("dialog", { name: "Novo pagamento" });
+    expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
+    await usuario.keyboard("{Escape}");
+    await usuario.click(screen.getByTestId("dialog-overlay"));
+    expect(screen.getByRole("dialog", { name: "Novo pagamento" })).toBeInTheDocument();
+
+    await act(async () => terminar({ ...fulano, id: "p9" }));
+
+    expect(await screen.findByText("Pagamento lançado.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("volta a deixar fechar o formulário quando o lançamento falha", async () => {
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
+    vi.mocked(criarPagamento).mockRejectedValue(
+      new ApiError(422, "Membro inativo não pode receber novo pagamento"),
+    );
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    await usuario.click(screen.getByRole("button", { name: "Novo pagamento" }));
+    await usuario.type(screen.getByLabelText("Membro"), "Eli");
+    await usuario.click(await screen.findByRole("button", { name: /Eliana Prado/ }));
+    await usuario.type(screen.getByLabelText("Valor"), "8990");
+    fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    expect(await screen.findByText("Membro inativo não pode receber novo pagamento")).toBeInTheDocument();
+
+    await usuario.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("mostra Acesso restrito e não chama a API para o instrutor", () => {

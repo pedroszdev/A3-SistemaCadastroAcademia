@@ -1,4 +1,4 @@
-import type { Cargo } from "./sessao";
+import type { Cargo, UsuarioDoToken } from "./sessao";
 
 export type ItemMenu = {
   rotulo: string;
@@ -10,6 +10,12 @@ const TODOS: readonly Cargo[] = ["ADMIN", "RECEPCIONISTA", "INSTRUTOR"];
 
 // Matriz 4.2: pagamentos e situação financeira são só do ADMIN e da RECEPCIONISTA.
 export const CARGOS_FINANCEIRO: readonly Cargo[] = ["ADMIN", "RECEPCIONISTA"];
+
+// Quem gere pagamentos e vê a situação financeira dos membros. Espelha a matriz 4.2;
+// quem barra de verdade é a API.
+export function temAcessoFinanceiro(usuario: UsuarioDoToken): boolean {
+  return usuario.tipo === "FUNCIONARIO" && CARGOS_FINANCEIRO.includes(usuario.cargo);
+}
 
 export const ITENS_MENU: readonly ItemMenu[] = [
   { rotulo: "Dashboard", href: "/dashboard", cargos: TODOS },

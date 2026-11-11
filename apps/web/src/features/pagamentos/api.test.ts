@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  buscarMembros,
   cancelarPagamento,
+  criarPagamento,
   estaEmAberto,
   listarPagamentos,
   type Pagamento,
-  podeGerirPagamentos,
   registrarPagamento,
   type StatusPagamento,
 } from "./api";
@@ -88,17 +89,64 @@ describe("api de pagamentos", () => {
     expect(init?.method).toBe("PATCH");
     expect(init?.body).toBeUndefined();
   });
-});
 
-describe("podeGerirPagamentos", () => {
-  it("libera ADMIN e RECEPCIONISTA", () => {
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "ADMIN" })).toBe(true);
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "RECEPCIONISTA" })).toBe(true);
+  it("cria com POST e o body em JSON", async () => {
+    const dados = { membroId: "m1", valor: 150.5, dataVencimento: "2026-11-20" };
+
+    await criarPagamento(dados);
+
+    const { url, init } = ultimaChamada();
+    expect(url).toBe("/api/pagamentos");
+    expect(init?.method).toBe("POST");
+    expect(init?.body).toBe(JSON.stringify(dados));
   });
 
-  it("barra INSTRUTOR e aluno", () => {
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" })).toBe(false);
-    expect(podeGerirPagamentos({ tipo: "ALUNO" })).toBe(false);
+  it("sem opções busca só membros ativos e devolve id, nome e cpf", async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json({
+        data: [
+          {
+            id: "m1",
+            nome: "Ana Souza",
+            cpf: "12345678909",
+            telefone: "11999990000",
+            endereco: "Rua Fictícia, 1",
+            ativo: true,
+            dataCadastro: "2026-01-10T00:00:00.000Z",
+          },
+        ],
+        total: 1,
+        page: 1,
+        pageSize: 10,
+      }),
+    );
+
+    const resultado = await buscarMembros("Ana");
+
+    expect(ultimaChamada().url).toBe("/api/membros?busca=Ana&ativo=true&page=1&pageSize=10");
+    expect(resultado).toEqual({
+      membros: [{ id: "m1", nome: "Ana Souza", cpf: "12345678909" }],
+      total: 1,
+    });
+  });
+
+  it("busca membros sem o filtro de ativos quando incluirInativos é verdadeiro", async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json({
+        data: [{ id: "m2", nome: "Beto Lima", cpf: "98765432100", ativo: false }],
+        total: 1,
+        page: 1,
+        pageSize: 10,
+      }),
+    );
+
+    const resultado = await buscarMembros("Beto", { incluirInativos: true });
+
+    expect(ultimaChamada().url).toBe("/api/membros?busca=Beto&page=1&pageSize=10");
+    expect(resultado).toEqual({
+      membros: [{ id: "m2", nome: "Beto Lima", cpf: "98765432100" }],
+      total: 1,
+    });
   });
 });
 
