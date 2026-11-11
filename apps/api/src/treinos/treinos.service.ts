@@ -84,8 +84,13 @@ export class TreinosService {
   }
 
   async update(id: string, dto: UpdateTreinoDto) {
-    await this.findOne(id);
-    if (dto.dataInicio !== undefined) {
+    const atual = await this.findOne(id);
+    // RN05 vale para a data nova: reenviar a já salva (um treino que começou no
+    // passado) não é troca de data, e o formulário de edição manda todos os campos.
+    if (
+      dto.dataInicio !== undefined &&
+      dto.dataInicio.getTime() !== atual.dataInicio.getTime()
+    ) {
       assertDataNaoAnteriorAHoje(dto.dataInicio);
     }
 
