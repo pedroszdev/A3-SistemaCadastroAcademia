@@ -1,3 +1,4 @@
+import { listarFuncionarios } from "@/features/funcionarios/api";
 import { api, ApiError } from "@/lib/api";
 import { CARGOS_FINANCEIRO } from "@/lib/menu";
 import type { UsuarioDoToken } from "@/lib/sessao";
@@ -86,12 +87,21 @@ export function consultarSituacao(membroId: string) {
   return api<SituacaoFinanceira>(`/membros/${encodeURIComponent(membroId)}/situacao`);
 }
 
-// Não reaproveita listarFuncionarios (features/funcionarios/api.ts), que fixa pageSize=20.
+// Maior pageSize que a API aceita (PaginationQueryDto).
+const MAXIMO_POR_PAGINA = 100;
+
+// Junta todas as páginas: o filtro não pode esconder quem passa dos 100 primeiros.
 export async function listarFuncionariosParaFiltro(): Promise<{ id: string; nome: string }[]> {
-  const pagina = await api<{ data: { id: string; nome: string }[] }>(
-    "/funcionarios?page=1&pageSize=100",
+  const primeira = await listarFuncionarios({ page: 1 }, MAXIMO_POR_PAGINA);
+  const totalDePaginas = Math.ceil(primeira.total / MAXIMO_POR_PAGINA);
+  const outras = await Promise.all(
+    Array.from({ length: Math.max(0, totalDePaginas - 1) }, (_, i) =>
+      listarFuncionarios({ page: i + 2 }, MAXIMO_POR_PAGINA),
+    ),
   );
-  return pagina.data.map(({ id, nome }) => ({ id, nome }));
+  return [primeira, ...outras].flatMap((pagina) =>
+    pagina.data.map(({ id, nome }) => ({ id, nome })),
+  );
 }
 
 // Espelha a matriz 4.2; quem barra de verdade é a API.

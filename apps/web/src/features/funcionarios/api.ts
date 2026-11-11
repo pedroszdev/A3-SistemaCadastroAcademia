@@ -33,12 +33,12 @@ export type DadosAtualizarFuncionario = {
   senha?: string;
 };
 
-export function listarFuncionarios(filtro: FiltroFuncionarios) {
+export function listarFuncionarios(filtro: FiltroFuncionarios, pageSize = TAMANHO_PAGINA) {
   const params = new URLSearchParams();
   if (filtro.cargo) params.set("cargo", filtro.cargo);
   if (filtro.ativo !== undefined) params.set("ativo", String(filtro.ativo));
   params.set("page", String(filtro.page));
-  params.set("pageSize", String(TAMANHO_PAGINA));
+  params.set("pageSize", String(pageSize));
   return api<PaginaFuncionarios>(`/funcionarios?${params}`);
 }
 

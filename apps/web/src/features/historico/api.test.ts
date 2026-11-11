@@ -131,7 +131,7 @@ describe("api do histórico", () => {
     expect(resultado).toEqual(situacao);
   });
 
-  it("lista até 100 funcionários e devolve id e nome", async () => {
+  it("lista os funcionários de 100 em 100 e devolve id e nome", async () => {
     fetchMock.mockImplementation(async () =>
       Response.json({
         data: [{ id: "f1", nome: "Ana Souza", login: "ana", cargo: "INSTRUTOR", ativo: true }],
@@ -143,8 +143,34 @@ describe("api do histórico", () => {
 
     const resultado = await listarFuncionariosParaFiltro();
 
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(ultimaChamada().url).toBe("/api/funcionarios?page=1&pageSize=100");
     expect(resultado).toEqual([{ id: "f1", nome: "Ana Souza" }]);
+  });
+
+  it("busca as outras páginas quando há mais de 100 funcionários", async () => {
+    fetchMock.mockImplementation(async (url) => {
+      const page = Number(new URL(String(url), "http://x").searchParams.get("page"));
+      return Response.json({
+        data: [{ id: `f${page}`, nome: `Funcionário ${page}` }],
+        total: 250,
+        page,
+        pageSize: 100,
+      });
+    });
+
+    const resultado = await listarFuncionariosParaFiltro();
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/funcionarios?page=1&pageSize=100",
+      "/api/funcionarios?page=2&pageSize=100",
+      "/api/funcionarios?page=3&pageSize=100",
+    ]);
+    expect(resultado).toEqual([
+      { id: "f1", nome: "Funcionário 1" },
+      { id: "f2", nome: "Funcionário 2" },
+      { id: "f3", nome: "Funcionário 3" },
+    ]);
   });
 });
 
