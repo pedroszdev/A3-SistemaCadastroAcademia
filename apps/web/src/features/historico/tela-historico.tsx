@@ -34,11 +34,11 @@ const COLUNAS: Coluna<Atividade>[] = [
   { chave: "funcionario", titulo: "Funcionário", celula: (a) => a.funcionario.nome },
 ];
 
-export function TelaHistorico() {
+export function TelaHistorico({ membroId }: { membroId?: string } = {}) {
   const usuario = useUsuario();
   const { mostrar } = useToast();
   const filtraPorFuncionario = podeFiltrarPorFuncionario(usuario);
-  const lista = useListaPaginada(listarAtividades, { page: 1 });
+  const lista = useListaPaginada(listarAtividades, membroId ? { page: 1, membroId } : { page: 1 });
   const { filtro, setFiltro } = lista;
   const formulario = useFormEmDialog();
   const [membroFiltro, setMembroFiltro] = useState<MembroBusca | null>(null);
@@ -72,15 +72,19 @@ export function TelaHistorico() {
     setFiltro({ ...filtro, membroId: membro?.id, page: 1 });
   }
 
+  const colunas = membroId ? COLUNAS.filter((c) => c.chave !== "membro") : COLUNAS;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-4">
-        <BuscaMembro
-          incluirInativos
-          rotulo="Membro"
-          selecionado={membroFiltro}
-          onSelecionar={aoEscolherMembro}
-        />
+        {!membroId && (
+          <BuscaMembro
+            incluirInativos
+            rotulo="Membro"
+            selecionado={membroFiltro}
+            onSelecionar={aoEscolherMembro}
+          />
+        )}
         {filtraPorFuncionario && (
           <Select
             rotulo="Funcionário"
@@ -116,7 +120,7 @@ export function TelaHistorico() {
       <TabelaPaginada
         pagina={lista.pagina}
         erro={lista.erro}
-        colunas={COLUNAS}
+        colunas={colunas}
         chaveDaLinha={(a) => a.id}
         vazio={<EmptyState titulo="Nenhuma atividade encontrada" />}
         onMudarPagina={(page) => setFiltro({ ...filtro, page })}
@@ -129,6 +133,7 @@ export function TelaHistorico() {
       >
         <FormAtividade
           key={formulario.form.chave}
+          membroId={membroId}
           onSalvo={aoSalvar}
           onCancelar={formulario.fechar}
         />
