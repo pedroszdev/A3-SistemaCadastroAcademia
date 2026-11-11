@@ -245,10 +245,10 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] MEM-06 Resumo/ficha do membro (API)
 - [ ] MEM-07 Liberar e redefinir o acesso do aluno
 - [x] TRE-01 DTOs de treinos
-- [ ] TRE-02 Service de treinos — 🔄 em PR (issue #29)
-- [ ] TRE-03 Controller de treinos — 🔄 em PR (issue #29)
-- [ ] TRE-04 Testes de treinos — 🔄 em PR (issue #29)
-- [ ] TRE-05 Treinos do aluno (`/me/treinos`) — 🔄 em PR (issue #29)
+- [x] TRE-02 Service de treinos — `create` com RN04 (`assertMembroAtivo`: 404 ou 422) e RN05 (`dataInicio` não anterior a hoje, no fuso de São Paulo: 400); `findAll` com filtro por membro e tipo e paginação; `findOne` (404); `update` revalida a data só quando ela muda, então reenviar a data de um treino que já começou passa; `remove` deixa as atividades com `treinoId = null`
+- [x] TRE-03 Controller de treinos — `GET/POST /treinos`, `GET/PATCH/DELETE /treinos/:id` (o `DELETE` responde 204) e `GET /membros/:id/treinos`. Todos os funcionários consultam; só ADMIN e INSTRUTOR criam, editam e excluem (RECEPCIONISTA → 403). As 6 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
+- [x] TRE-04 Testes de treinos — service, controllers e HTTP (pipes, validação e status), com 100% de cobertura em `src/treinos`. A data atual fica fixa com `jest.useFakeTimers().setSystemTime`
+- [x] TRE-05 Treinos do aluno (`/me/treinos`) — `GET /me/treinos` (tipo e paginação, mais recentes primeiro) e `GET /me/treinos/:id`, só para o ALUNO. O `membroId` vem do token e fica no `where`, então o treino de outro membro dá 404 e `membroId` na query dá 400 (RN16). As 2 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
 - [ ] WEB-G1 Lista de membros
 - [ ] WEB-G2 Formulário de membro
 - [ ] WEB-G3 Ficha do membro
