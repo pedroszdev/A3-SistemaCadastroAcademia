@@ -190,6 +190,52 @@ describe("FormPagamento", () => {
     expect(onEnviando.mock.calls).toEqual([[true], [false]]);
   });
 
+  it("com membro fixo, não mostra a busca e lança com esse membro", async () => {
+    vi.mocked(criarPagamento).mockResolvedValue(criado);
+    const usuario = userEvent.setup();
+    render(<FormPagamento membroId="m-fixo" onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    expect(screen.queryByLabelText("Membro")).toBeNull();
+    await usuario.type(screen.getByLabelText("Valor"), "15050");
+    fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(criarPagamento).toHaveBeenCalledWith({
+      membroId: "m-fixo",
+      valor: 150.5,
+      dataVencimento: "2026-11-20",
+    });
+    expect(buscarMembros).not.toHaveBeenCalled();
+    expect(onSalvo).toHaveBeenCalled();
+  });
+
+  it("com membro fixo, valida só valor e vencimento sem chamar a API", async () => {
+    const usuario = userEvent.setup();
+    render(<FormPagamento membroId="m-fixo" onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.queryByText("Selecione o membro")).toBeNull();
+    expect(screen.getByText("valor deve ser no mínimo 0,01")).toBeInTheDocument();
+    expect(screen.getByText("Informe o vencimento")).toBeInTheDocument();
+    expect(criarPagamento).not.toHaveBeenCalled();
+  });
+
+  it("membroId vazio conta como sem membro fixo: mostra a busca e lança com o escolhido", async () => {
+    vi.mocked(criarPagamento).mockResolvedValue(criado);
+    const usuario = userEvent.setup();
+    render(<FormPagamento membroId="" onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(criarPagamento).toHaveBeenCalledWith({
+      membroId: "m1",
+      valor: 150.5,
+      dataVencimento: "2026-11-20",
+    });
+  });
+
   it("chama onCancelar sem chamar a API", async () => {
     render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
 
