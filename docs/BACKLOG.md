@@ -284,7 +284,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] WEB-Y5 Testes do front (pagamentos/histórico) — `features/pagamentos` e `features/historico` acima de 80% de cobertura (Vitest). Cobertos: o `StatusBadge` de cada status, o formulário de pagamento com valor inválido, a ação pagar (PATCH `/pagamentos/:id/pagar` e a linha recarregada como "Pago", sem ações), o aviso de inadimplência no formulário de atividade (ADMIN pela situação, INSTRUTOR pelo 422) e as respostas atrasadas da busca de membro e do formulário de atividade (treinos e situação do membro anterior). Os testes dos componentes da ficha (`PagamentosDoMembro` e `HistoricoDoMembro`) entraram com eles no PR da WEB-Y4 (#54)
 - [x] WEB-Y6 Portal do aluno: Meu histórico — `/aluno/historico` com os cards de atividades e minutos do período e o filtro rápido 7 dias, 30 dias (padrão) ou mês atual, com o "hoje" no fuso de São Paulo, como na API. Abaixo vem a lista das atividades (data, atividade, tempo, treino vinculado), da mais recente para a mais antiga, com "Carregar mais" de 20 em 20 e o estado vazio "Nenhuma atividade no período". Consome `GET /me/atividades` e `GET /me/atividades/resumo` (HIS-05) pelo repasse `/api`
 - [x] E2E-01 Utilitários de e2e (banco limpo, login)
-- [ ] E2E-02 e2e do fluxo principal
+- [x] E2E-02 e2e do fluxo principal — `test/fluxo-principal.e2e-spec.ts` percorre o fluxo da seção 7 do `ESCOPO.md` com banco de teste, um `it` por critério (CA01 a CA08), cada um indicando o que verifica
 - [x] E2E-03 e2e da regra de inadimplência
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-03 Triagem semanal das issues do professor
