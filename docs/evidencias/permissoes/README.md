@@ -34,7 +34,7 @@ Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/
 | Funcionários (CRUD) | `GET/POST /funcionarios`, `GET/PATCH /funcionarios/:id`, `PATCH /funcionarios/:id/desativar` e `/reativar` | ✅ | ❌ | ❌ | ❌ | PR [#27](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/27), merge `b70b666` | ✅ |
 | Membros — listar/ver | `GET /membros`, `GET /membros/:id` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(membros)`), merge `4c21808` | ✅ |
 | Membros — criar/editar/desativar | `POST /membros`, `PATCH /membros/:id`, `PATCH /membros/:id/desativar` e `/reativar` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(membros)`), merge `4c21808` | ✅ |
-| Membros — liberar/redefinir acesso do aluno | ainda não existe | ✅ | ✅ | ❌ | ❌ | MEM-07 (Gabriel) | ⏳ |
+| Membros — liberar/redefinir acesso do aluno | ainda não existe | ✅ | ✅ | ❌ | ❌ | MEM-07 (Pedro) | ⏳ |
 | Treinos — listar/ver (todos) | `GET /treinos`, `GET /treinos/:id`, `GET /membros/:id/treinos` | ✅ | ✅ | ✅ | ❌ | TRE-03 (Gabriel) | 🔄 |
 | Treinos — criar/editar/excluir | `POST /treinos`, `PATCH /treinos/:id`, `DELETE /treinos/:id` | ✅ | ❌ | ✅ | ❌ | TRE-03 (Gabriel) | 🔄 |
 | Treinos — os próprios (`/me/treinos`) | `GET /me/treinos`, `GET /me/treinos/:id` | ❌ | ❌ | ❌ | ✅ | TRE-05 (Gabriel) | 🔄 |
@@ -111,6 +111,6 @@ Datas propostas, a confirmar no check-in do grupo.
 | Pendência | Task | Responsável | Data | Como fecha a linha da matriz |
 | --- | --- | --- | --- | --- |
 | Treinos | TRE-03 | Gabriel | 13/11 | linhas de `/treinos` na `MATRIZ` |
-| Liberar acesso do aluno | MEM-07 | Gabriel | 16/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
+| Liberar acesso do aluno | MEM-07 | Pedro | 16/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
 | Treinos do aluno | TRE-05 | Gabriel | 16/11 | `/me/treinos` só para ALUNO; aluno A não vê dados do aluno B (RN16, 404) |
 | E2E-05 completo | E2E-05 | Pedro | 16/11 | RN16 (aluno A × aluno B → 404) e aluno → 403 em `POST /treinos` |
