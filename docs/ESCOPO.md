@@ -27,15 +27,43 @@ Primeira entrega da A3. Este documento é a fonte para as seções 2.1, 2.2 e 2.
 
 ## 1. Problema atendido
 
-> A preencher — Pedro.
+A academia controla membros, mensalidades e frequência em planilhas e papel. Nesse formato o mesmo aluno aparece duplicado, ninguém sabe na hora quem está com mensalidade atrasada e o histórico de treinos some entre uma folha e outra.
+
+O sistema reúne tudo num lugar só:
+
+- cadastro de membros, com CPF validado e sem exclusão (só desativação);
+- treinos de cada membro, montados pelo instrutor;
+- mensalidades com status calculado e controle de inadimplência;
+- histórico de atividades, que a academia usa para acompanhar a frequência;
+- dashboard com os números do dia para a recepção e a gerência;
+- portal em que o aluno consulta os próprios treinos e o próprio histórico.
+
+Cada pessoa vê só o que o cargo dela permite.
 
 ## 2. Atores
 
-> A preencher — Pedro.
+| Ator | O que faz | Acesso |
+| --- | --- | --- |
+| **ADMIN** | Gerencia funcionários e acompanha toda a operação | Todos os módulos, inclusive funcionários |
+| **RECEPCIONISTA** | Atende o balcão: cadastra membros, lança e registra mensalidades, libera o acesso do aluno | Membros, pagamentos, dashboard; só consulta treinos e histórico |
+| **INSTRUTOR** | Monta os treinos e registra as atividades dos membros | Treinos e histórico; só consulta membros; dashboard sem a lista de inadimplentes |
+| **ALUNO** | Consulta os próprios treinos e o próprio histórico (somente leitura) | Só as rotas `/me/...` e `GET /auth/me` |
+
+Os três primeiros são funcionários e fazem login com **login e senha**. O aluno é um membro com acesso liberado pela recepção ou pelo admin e faz login com **CPF e senha**. A matriz completa de permissões está na [seção 4.2 do backlog](BACKLOG.md#42-matriz-de-permissões-rbac).
 
 ## 3. Tecnologias
 
-> A preencher — Pedro.
+| Camada | Tecnologia |
+| --- | --- |
+| API | NestJS 11 (TypeScript), validação com class-validator e class-transformer |
+| Banco de dados | PostgreSQL 17 (Docker Compose), acesso pelo Prisma 7 com migrations |
+| Autenticação | JWT (`@nestjs/jwt`, Passport) e senhas com bcrypt (`bcryptjs`) |
+| Front-end | Next.js 16, React 19 e Tailwind CSS 4 |
+| Testes da API | Jest 30 (unitários, com cobertura) e supertest (e2e com banco real) |
+| Testes do front | Vitest 5 e Testing Library |
+| Qualidade | ESLint, Prettier e SonarCloud (quality gate Sonar way) |
+| Integração contínua | GitHub Actions: lint, build, testes com cobertura, e2e e análise do Sonar |
+| Repositório | Monorepo com pnpm workspaces, Node.js 24 ou mais novo |
 
 ## 4. Requisitos funcionais
 
@@ -43,11 +71,28 @@ Cada módulo tem uma faixa fixa de IDs para que os três escrevam em paralelo se
 
 ### 4.1 Autenticação
 
-> A preencher — Pedro.
+| ID | Requisito | Perfis | Regras |
+| --- | --- | --- | --- |
+| **RF01** | Login do funcionário com login e senha (`POST /auth/login`); devolve um token JWT válido por **8 h** e o id, nome e cargo do funcionário; credencial errada ou funcionário inativo recebem a mesma mensagem genérica (401) | Público | RN12, RN14 |
+| **RF02** | Login do aluno com CPF (com ou sem máscara) e senha (`POST /auth/login-aluno`); membro sem acesso liberado, inativo ou com CPF ou senha errados recebe a mesma mensagem genérica (401) | Público | RN12, RN15 |
+| **RF03** | Consultar os próprios dados (`GET /auth/me`): o funcionário recebe o cadastro com o cargo, o aluno recebe os dados do membro; a senha nunca é devolvida | ADMIN, RECEPCIONISTA, INSTRUTOR, ALUNO | RN12 |
+| **RF04** | Exigir token em todas as rotas, exceto os dois logins e `GET /health`; token ausente, inválido ou expirado → 401; funcionário ou aluno desativado (ou aluno com acesso revogado) perde o acesso na hora, sem esperar o token expirar | Todos | RN14 |
+| **RF05** | Restringir cada rota aos cargos da matriz de permissões (sem permissão → 403); o aluno não entra em rota de funcionário nem o funcionário em rota do aluno | Todos | RN16, RN17 |
+
+O login dos dois tipos não depende de cargo: quem não tem cadastro ativo não passa do 401. O segredo do token (`JWT_SECRET`) precisa ter pelo menos **32** caracteres, e a validade (`JWT_EXPIRES_IN`) precisa ser um valor válido; se não for, a API não sobe.
 
 ### 4.2 Funcionários
 
-> A preencher — Pedro.
+| ID | Requisito | Perfis | Regras |
+| --- | --- | --- | --- |
+| **RF10** | Cadastrar funcionário com nome (**3 a 100** caracteres), cargo (ADMIN, RECEPCIONISTA ou INSTRUTOR), login (**3 a 30** letras e números) e senha (no mínimo **8** caracteres e no máximo **72** bytes); login repetido → 409 | ADMIN | RN12, RN13 |
+| **RF11** | Listar funcionários com paginação, ordenados por nome, com filtro por cargo e por ativo/inativo | ADMIN | — |
+| **RF12** | Consultar um funcionário pelo identificador (inexistente → 404) | ADMIN | RN12 |
+| **RF13** | Editar nome, cargo e senha de um funcionário; o login não pode ser alterado; não é possível tirar o cargo de ADMIN do último administrador ativo (422) | ADMIN | RN12, RN13 |
+| **RF14** | Desativar um funcionário, sem excluir o cadastro; ninguém desativa a si mesmo nem o último administrador ativo (422) | ADMIN | RN03, RN13 |
+| **RF15** | Reativar um funcionário desativado | ADMIN | RN03 |
+
+Só o ADMIN acessa as rotas de funcionários; os outros cargos e o ALUNO recebem 403.
 
 ### 4.3 Membros
 
@@ -149,15 +194,55 @@ A RECEPCIONISTA só consulta; quem registra é o INSTRUTOR ou o ADMIN.
 
 ### 4.7 Dashboard
 
-> A preencher — Pedro.
+| ID | Requisito | Perfis | Regras |
+| --- | --- | --- | --- |
+| **RF60** | Consultar o resumo do dia (`GET /dashboard`): membros ativos, membros inadimplentes, pagamentos atrasados, receita do mês (pagamentos pagos com data de pagamento dentro do mês corrente) e atividades de hoje | ADMIN, RECEPCIONISTA, INSTRUTOR | RN07, RN09 |
+| **RF61** | Listar os membros inadimplentes (`GET /dashboard/inadimplentes`), em ordem de nome, com o maior atraso de cada um em dias | ADMIN, RECEPCIONISTA | RN09 |
+
+Os números reaproveitam os services de membros, pagamentos e histórico, então seguem as mesmas regras desses módulos. O INSTRUTOR vê o resumo, mas a lista de inadimplentes traz situação financeira e dá 403 para ele; o ALUNO não acessa o dashboard (403).
 
 ## 5. Requisitos não funcionais
 
-> A preencher — Pedro.
+Cada requisito tem uma meta com número e uma forma de verificar. Só entram metas que o repositório configura ou que o backlog define.
+
+| ID | Requisito | Meta mensurável | Como é verificado |
+| --- | --- | --- | --- |
+| **RNF01** | Cobertura de testes | Cobertura **≥ 80%** (mínimo da A3: **75%**) na API e no front | Jest e Vitest geram o `lcov.info` no CI e o SonarCloud calcula a cobertura (badge no README); a última medição registrada foi 99,4% em 09/11/2026 |
+| **RNF02** | Quality gate do SonarCloud | Gate **Sonar way** aprovado: código novo com cobertura **≥ 80%**, duplicação **≤ 3%**, ratings de confiabilidade, segurança e manutenibilidade **A** e **100%** dos security hotspots revisados | O passo do Sonar no CI usa `sonar.qualitygate.wait=true`; gate reprovado deixa o CI vermelho |
+| **RNF03** | Integração contínua obrigatória para o merge | **0** PRs mergeados com o check "Lint, build e testes" vermelho; **1** aprovação de outro integrante; merge sem squash | Proteção da `main` (ruleset versionado em `.github/rulesets/main.json`); o CI roda lint, build, testes unitários, e2e com Postgres e Sonar |
+| **RNF04** | Senhas | Hash **bcrypt com 10 rounds**; senha de **8 a 72 bytes**; **0** respostas da API com `senhaHash` | Testes unitários de funcionários e auth; `auth.e2e-spec.ts` confere que o hash não sai nas respostas |
+| **RNF05** | Sessão | Token JWT (HS256) que expira em **8 h**; `JWT_SECRET` com **≥ 32** caracteres (senão a API não sobe) | Testes unitários de `expiracao-token` e `segredo-jwt`; `seguranca.e2e-spec.ts` cobre token inválido e expirado → 401 |
+| **RNF06** | Controle de acesso | **100%** das rotas com `@Roles` ou `@Public`; matriz de permissões (401, 403 e sucesso por cargo) testada por HTTP | `test/seguranca.e2e-spec.ts` roda no CI; o teste "cobertura da matriz" falha se uma rota ficar de fora. Evidência em `docs/evidencias/permissoes/README.md` |
+| **RNF07** | Login sem vazamento de informação | **1** mensagem genérica ("Login ou senha inválidos") para login inexistente, senha errada, funcionário ou membro inativo e aluno sem acesso; o hash é comparado mesmo quando a conta não existe | Testes unitários do `AuthService` e e2e de auth |
+| **RNF08** | Validação de entrada | **100%** dos corpos e filtros passam pelo `ValidationPipe` global; campo desconhecido → 400 | `configurar-app.spec.ts`, testes HTTP e e2e; os DTOs têm specs próprios |
+| **RNF09** | Paginação | Listagens com `pageSize` padrão **20** e máximo **100**; resposta no formato `{ data, total, page, pageSize }` | `pagination-query.dto.spec.ts` e os testes de cada listagem |
+| **RNF10** | Desempenho | Listagens paginadas respondem em **menos de 500 ms** (meta do backlog) | Medição manual na demonstração, com os dados do seed; ainda não há teste automatizado de tempo |
+| **RNF11** | Privacidade (LGPD) | **0** dados pessoais reais no repositório: CPF, telefone e endereço de seed, testes e prints são fictícios | Revisão do PR (regra 9 do backlog); `pnpm db:seed` cria só dados fictícios |
+| **RNF12** | Mensagens de erro | Erros no formato padrão `{ statusCode, message, error }`, com mensagens de validação em português | Specs dos DTOs e testes HTTP conferem o texto e o status |
 
 ## 6. Regras de negócio
 
-> A preencher — Pedro. Copiar a tabela da seção 4.1 do backlog.
+Mesma tabela da [seção 4.1 do backlog](BACKLOG.md#41-regras-de-negócio); se uma regra mudar, ela muda lá primeiro.
+
+| ID | Regra | Dono | Resposta da API ao violar |
+| --- | --- | --- | --- |
+| **RN01** | O CPF deve ser válido (dígitos verificadores, sem sequências repetidas como `111.111.111-11`) e é guardado só com os números | Gabriel | 400 |
+| **RN02** | O CPF é único no sistema e não pode ser alterado depois do cadastro | Gabriel | 409 (duplicado) / 400 (tentar alterar) |
+| **RN03** | Membro e funcionário **não são excluídos**, apenas desativados (`ativo = false`) e reativados | Gabriel / Pedro | — |
+| **RN04** | Membro **inativo** não pode receber novo treino, novo pagamento nem nova atividade | Gabriel (helper) / todos usam | 422 |
+| **RN05** | Treino: duração entre **1 e 300 min**; `dataInicio` não pode ser anterior a hoje; tipo deve ser um da lista (Musculação, Cardio, Funcional, Alongamento, Crossfit, Outro) | Gabriel | 400 |
+| **RN06** | Pagamento: valor **> 0 e ≤ 10.000**; data de vencimento obrigatória; vencimento e data de pagamento com no máximo **90 dias no passado** (constante `DIAS_RETROATIVOS_MAX = 90`); no máximo **uma cobrança não cancelada** por membro em cada vencimento | Yohan | 400 / 409 |
+| **RN07** | O status do pagamento é **calculado**. No banco ficam só `PENDENTE`, `PAGO` e `CANCELADO`. Na resposta: `CANCELADO` se cancelado; `PAGO` se tem `dataPagamento`; `ATRASADO` se o vencimento é anterior a hoje e não foi pago; senão `PENDENTE` | Yohan | — |
+| **RN08** | Não é possível pagar um pagamento já pago ou cancelado, nem cancelar um pagamento já pago | Yohan | 409 |
+| **RN09** | Membro **inadimplente** é aquele com algum pagamento atrasado há **mais de 10 dias** (constante `DIAS_TOLERANCIA = 10`). Inadimplente **não pode registrar atividade** | Yohan | 422 ("Membro com pagamento em atraso") |
+| **RN10** | Atividade: tempo de execução entre **1 e 600 min**; a data não pode ser futura; se tiver `treinoId`, o treino deve ser **do mesmo membro** | Yohan | 400 / 422 |
+| **RN11** | A atividade registra automaticamente o funcionário logado (`funcionarioId` vem do token, não do body) | Yohan | — |
+| **RN12** | Senha guardada só como hash (bcrypt) e nunca devolvida pela API. Login e senha errados ou funcionário inativo recebem a **mesma** mensagem genérica | Pedro | 401 |
+| **RN13** | O login é único. Um funcionário não pode desativar a si mesmo, e o sistema não pode ficar sem nenhum ADMIN ativo | Pedro | 409 / 422 |
+| **RN14** | Todas as rotas exigem JWT, exceto `POST /auth/login`, `POST /auth/login-aluno` e `GET /health`. O token expira em 8h | Pedro | 401 |
+| **RN15** | **Aluno** (membro) faz login com **CPF + senha**. O acesso é liberado pela recepção ou pelo admin, que define a senha inicial. Membro sem acesso liberado ou **inativo** não consegue logar (mesma mensagem genérica da RN12) | Pedro (login) / Gabriel (liberar acesso) | 401 |
+| **RN16** | O aluno **só enxerga os próprios dados**: os próprios treinos e o próprio histórico. O `membroId` vem **sempre do token**, nunca da URL ou do body. Pedir um treino ou atividade de outro membro → 404, para não revelar que o recurso existe | Gabriel (treinos) / Yohan (histórico) | 404 |
+| **RN17** | O aluno é **somente leitura**: não cria, edita nem exclui nada, inclusive treinos e atividades próprios | Pedro (RBAC) | 403 | Copiar a tabela da seção 4.1 do backlog.
 
 ## 7. Fluxo principal e critérios de aceitação
 
@@ -252,20 +337,55 @@ O limite da tolerância (atraso de 10 dias ainda em dia, de 11 dias inadimplente
 
 ### 7.3 Rastreabilidade
 
-Quem preencher as seções 4.1, 4.3, 4.4 e 4.7 troca o "(a preencher)" da sua linha pelos RFs correspondentes.
+Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR aberto) · ⏳ planejado. A rastreabilidade por requisito de membros e treinos está na seção 4.8.
 
-| Critério | RFs | RNs | Teste |
+| Critério | RFs | RNs | Teste | Arquivo | Status |
+| --- | --- | --- | --- | --- | --- |
+| **CA01** | RF01, RF03 | RN14 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
+| **CA02** | RF20, RF21 | RN01, RN02 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
+| **CA03** | RF30 | RN04, RN05 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 (depende do PR #55) |
+| **CA04** | RF40 | RN06, RN07 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
+| **CA05** | RF43 | RN08 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
+| **CA06** | RF50 | RN04, RN09, RN10, RN11 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
+| **CA07** | RF52 | — | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
+| **CA08** | RF60 | — | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
+| **CA09** | RF50 | RN09 | E2E-03 | `apps/api/test/inadimplencia.e2e-spec.ts` | ✅ (PR #26) |
+| **CA10** | RF50 | RN09 | E2E-03 | `apps/api/test/inadimplencia.e2e-spec.ts` | ✅ (PR #26) |
+| **CA11** | RF43, RF50 | RN09 | E2E-03 | `apps/api/test/inadimplencia.e2e-spec.ts` | ✅ (PR #26) |
+| **CA12** | RF40, RF50 | RN04 | PAG-06 / HIS-04 (unitário) | `apps/api/src/pagamentos/pagamentos.service.spec.ts`, `apps/api/src/historico/historico.service.spec.ts` | ✅ |
+| Limite de 10/11 dias | RF45 | RN09 | PAG-02 / PAG-06 (unitário) + E2E-03 | `apps/api/src/pagamentos/pagamento-status.spec.ts`, `pagamentos.service.spec.ts`, `test/inadimplencia.e2e-spec.ts` | ✅ |
+
+A cobertura de 100% do escopo analisado vale só para o que já está na `main`; os módulos ⏳ entram na rastreabilidade quando forem entregues.
+
+### 7.4 Cronograma do que falta para o fluxo principal
+
+| Entrega | O que libera | Responsável | Data |
 | --- | --- | --- | --- |
-| **CA01** | 4.1 (a preencher) | RN14 | E2E-02 |
-| **CA02** | RF20, RF21 | RN01, RN02 | E2E-02 |
-| **CA03** | RF30 | RN04, RN05 | E2E-02 |
-| **CA04** | RF40 | RN06, RN07 | E2E-02 |
-| **CA05** | RF43 | RN08 | E2E-02 |
-| **CA06** | RF50 | RN04, RN09, RN10, RN11 | E2E-02 |
-| **CA07** | RF52 | — | E2E-02 |
-| **CA08** | 4.7 (a preencher) | — | E2E-02 |
-| **CA09** | RF50 | RN09 | E2E-03 |
-| **CA10** | RF50 | RN09 | E2E-03 |
-| **CA11** | RF43, RF50 | RN09 | E2E-03 |
-| **CA12** | RF40, RF50 | RN04 | PAG-06 / HIS-04 (unitário) |
-| Limite de 10/11 dias | RF45 | RN09 | PAG-02 / PAG-06 (unitário) |
+| Merge do PR #55 (TRE-02 a TRE-05) | módulo de treinos na API (passo 3 do fluxo) | Gabriel | 12/11 |
+| Merge do E2E-02 (`fluxo-principal.e2e-spec.ts`) | teste de sistema CA01–CA08 com banco de teste | Gabriel | 12/11, logo depois do #55 |
+| MEM-06 e MEM-07 | ficha do membro e acesso do aluno (RF25, RF26) | Gabriel | 13/11 |
+| WEB-G1 a WEB-G4 | telas de membros e treinos (passos 2 e 3 pela interface) | Gabriel | 14/11 a 15/11 |
+| WEB-G5, WEB-G6 e E2E-04 | testes do front, "Meus treinos" e e2e de validações | Gabriel | 16/11 |
+| E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | 16/11 |
+| QA-01 a QA-05 | issues do Sonar zeradas, cobertura consolidada ≥ 75% e quality gate aprovado | Pedro, Gabriel e Yohan | 17/11 a 23/11 (code freeze) |
+
+As telas de login, pagamentos, histórico e dashboard já estão na `main`; as únicas telas que faltam para percorrer o fluxo pela interface são as de membros e treinos.
+
+### 7.5 Demonstração do fluxo e participação de cada integrante
+
+Preparação: `pnpm install`, `docker compose up -d`, `pnpm db:migrate`, `pnpm db:seed` e `pnpm dev` (API em `:3000`, web em `:3001`). Todos os dados são fictícios (LGPD) e as datas do seed são relativas a hoje; a senha dos logins do seed é `senha1234`. A prova automática do mesmo roteiro é o `pnpm --filter api test:e2e` (E2E-02 e E2E-03).
+
+| Passo | CA | Como demonstrar | Quem apresenta (dono do módulo) |
+| --- | --- | --- | --- |
+| 1 Login do funcionário | CA01 | login `recepcao` na tela de login; o menu mostra o cargo | Pedro |
+| 2 Cadastrar membro | CA02 | cadastro de um membro novo com CPF fictício válido; ele aparece ativo na lista (pela API até a WEB-G2 entrar; roteiro na seção 4.8) | Gabriel |
+| 3 Criar treino | CA03 | login `instrutor`, treino de Musculação de 45 min a partir de hoje para o membro (roteiro, RN04, RN05 e permissão na seção 4.8) | Gabriel |
+| 4 Lançar pagamento | CA04 | tela de pagamentos, mensalidade de R$ 100,00 com vencimento futuro → PENDENTE | Yohan |
+| 5 Registrar pagamento | CA05 | "Registrar pagamento" sem data → PAGO com a data de hoje | Yohan |
+| 6 Registrar atividade | CA06 | tela de histórico, atividade de 60 min hoje com o treino do passo 3 | Yohan |
+| 7 Consultar histórico | CA07 | histórico do membro mostra a atividade com o instrutor e os 60 min | Yohan |
+| 8 Conferir o dashboard | CA08 | os cards mostram o membro ativo, os R$ 100,00 na receita do mês e a atividade de hoje | Pedro |
+| Alternativo: inadimplência | CA09–CA11 | Bruno Lima (seed, inadimplente): o registro de atividade mostra "Membro com pagamento em atraso"; depois de pagar, registra | Yohan |
+| Alternativo: portal do aluno | RF35, RN16 | login da aluna Ana Souza: "Minhas atividades" e `/me/treinos` só com os dados dela | Gabriel |
+
+Divisão do trabalho, pelos responsáveis do backlog: Pedro (infraestrutura, CI/Sonar, autenticação, funcionários, dashboard e coordenação do escopo), Gabriel (membros, treinos e portal do aluno: treinos) e Yohan (pagamentos, histórico de atividades, critérios de aceitação e e2e de inadimplência).
