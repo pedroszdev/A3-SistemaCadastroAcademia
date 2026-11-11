@@ -40,6 +40,7 @@ export function FormAtividade({ onSalvo, onCancelar, onEnviando }: FormAtividade
   const [hoje] = useState(() => hojeEmSaoPaulo());
   const [membro, setMembro] = useState<MembroBusca | null>(null);
   const [treinos, setTreinos] = useState<TreinoDoMembro[] | null>(null);
+  const [erroTreinos, setErroTreinos] = useState<string | null>(null);
   const [treinoId, setTreinoId] = useState("");
   const [atividade, setAtividade] = useState("");
   const [data, setData] = useState(hoje);
@@ -60,8 +61,10 @@ export function FormAtividade({ onSalvo, onCancelar, onEnviando }: FormAtividade
       .then((lista) => {
         if (!cancelado) setTreinos(lista);
       })
-      .catch(() => {
-        if (!cancelado) setTreinos([]);
+      .catch((e: Error) => {
+        if (cancelado) return;
+        setTreinos([]);
+        setErroTreinos(`Não foi possível carregar os treinos: ${e.message}`);
       });
     if (consultaSituacao) {
       consultarSituacao(membroId)
@@ -81,6 +84,7 @@ export function FormAtividade({ onSalvo, onCancelar, onEnviando }: FormAtividade
     setMembro(escolhido);
     setTreinoId("");
     setTreinos(null);
+    setErroTreinos(null);
     setSituacao(null);
     setInadimplente422(false);
     setErroApi(null);
@@ -141,6 +145,7 @@ export function FormAtividade({ onSalvo, onCancelar, onEnviando }: FormAtividade
         value={treinoId}
         onChange={(e) => setTreinoId(e.target.value)}
         disabled={!membro || !treinos?.length}
+        erro={erroTreinos ?? undefined}
       />
       <Input
         rotulo="Atividade"

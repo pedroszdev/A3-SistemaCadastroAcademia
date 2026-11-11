@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { CARGOS_FINANCEIRO } from "@/lib/menu";
 import type { UsuarioDoToken } from "@/lib/sessao";
 import type { Pagina } from "@/lib/use-lista-paginada";
@@ -60,12 +60,20 @@ export function registrarAtividade({ treinoId, ...dados }: DadosRegistrarAtivida
 
 export type TreinoDoMembro = { id: string; tipo: string; dataInicio: string };
 
-// Rota da TRE-03 (Gabriel): enquanto ela não existir a chamada falha e o formulário segue sem treino.
+// Rota da TRE-03 (Gabriel). Enquanto ela não existir, responde 404, que vale como "sem
+// treinos": o formulário segue sem treino. Qualquer outro erro sobe para quem chamou.
 export async function listarTreinosDoMembro(membroId: string): Promise<TreinoDoMembro[]> {
-  const pagina = await api<{ data: TreinoDoMembro[] }>(
-    `/membros/${encodeURIComponent(membroId)}/treinos?page=1&pageSize=100`,
-  );
-  return pagina.data;
+  let pagina: { data?: unknown };
+  try {
+    pagina = await api<{ data?: unknown }>(
+      `/membros/${encodeURIComponent(membroId)}/treinos?page=1&pageSize=100`,
+    );
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return [];
+    throw e;
+  }
+  if (!Array.isArray(pagina?.data)) throw new Error("Resposta inesperada da lista de treinos");
+  return pagina.data as TreinoDoMembro[];
 }
 
 export type SituacaoFinanceira = {

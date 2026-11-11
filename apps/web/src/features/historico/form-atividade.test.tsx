@@ -238,8 +238,8 @@ describe("FormAtividade", () => {
     expect(screen.queryByRole("option", { name: /Hipertrofia/ })).toBeNull();
   });
 
-  it("segue sem treino quando a rota de treinos falha", async () => {
-    vi.mocked(listarTreinosDoMembro).mockRejectedValue(new ApiError(404, "Cannot GET"));
+  it("segue sem treino quando o membro não tem treinos (ou a rota ainda não existe)", async () => {
+    vi.mocked(listarTreinosDoMembro).mockResolvedValue([]);
     vi.mocked(registrarAtividade).mockResolvedValue(registrada);
     const usuario = userEvent.setup();
     renderizar();
@@ -258,6 +258,35 @@ describe("FormAtividade", () => {
       tempoExecucao: 30,
     });
     expect(onSalvo).toHaveBeenCalled();
+  });
+
+  it("mostra o erro da lista de treinos e ainda deixa registrar sem treino", async () => {
+    vi.mocked(listarTreinosDoMembro).mockRejectedValue(new ApiError(500, "Falha interna"));
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+
+    expect(
+      await screen.findByText("Não foi possível carregar os treinos: Falha interna"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Treino (opcional)")).toBeDisabled();
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ treinoId: undefined }));
+  });
+
+  it("tira o erro dos treinos ao trocar de membro", async () => {
+    vi.mocked(listarTreinosDoMembro).mockRejectedValueOnce(new ApiError(500, "Falha interna"));
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    expect(await screen.findByText(/Não foi possível carregar os treinos/)).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+
+    expect(screen.queryByText(/Não foi possível carregar os treinos/)).toBeNull();
   });
 
   it("avisa e bloqueia o Salvar quando o ADMIN escolhe um membro inadimplente (RN09)", async () => {

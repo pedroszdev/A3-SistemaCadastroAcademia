@@ -97,6 +97,30 @@ describe("api do histórico", () => {
     expect(resultado).toEqual(treinos);
   });
 
+  it("devolve lista vazia quando a rota de treinos responde 404", async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json({ statusCode: 404, message: "Cannot GET" }, { status: 404 }),
+    );
+
+    await expect(listarTreinosDoMembro("m1")).resolves.toEqual([]);
+  });
+
+  it("repassa os outros erros da rota de treinos", async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json({ statusCode: 500, message: "Falha interna" }, { status: 500 }),
+    );
+
+    await expect(listarTreinosDoMembro("m1")).rejects.toThrow("Falha interna");
+  });
+
+  it("recusa uma resposta de treinos sem a lista em data", async () => {
+    fetchMock.mockImplementation(async () => Response.json([{ id: "t1" }]));
+
+    await expect(listarTreinosDoMembro("m1")).rejects.toThrow(
+      "Resposta inesperada da lista de treinos",
+    );
+  });
+
   it("consulta a situação financeira do membro", async () => {
     const situacao = { situacao: "INADIMPLENTE", pagamentosAtrasados: 2, maiorAtrasoDias: 12 };
     fetchMock.mockImplementation(async () => Response.json(situacao));
