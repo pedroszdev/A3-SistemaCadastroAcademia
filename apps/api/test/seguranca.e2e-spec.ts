@@ -352,11 +352,7 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       senhaHash: hashSync(SENHA_PADRAO, 4),
     });
     alunoId = aluno.id;
-    const resposta = await request(app.getHttpServer())
-      .post('/auth/login-aluno')
-      .send({ cpf: aluno.cpf, senha: SENHA_PADRAO })
-      .expect(200);
-    tokens[ALUNO] = (resposta.body as { accessToken: string }).accessToken;
+    tokens[ALUNO] = await logarAluno(aluno.cpf);
   });
 
   // Ordem das FKs: filhos antes do membro e do funcionário.
@@ -401,6 +397,15 @@ describe('Segurança: matriz de permissões (e2e)', () => {
   afterAll(async () => {
     await app.close();
   });
+
+  /** Login de verdade do aluno pelo CPF (RN15); devolve o token. */
+  async function logarAluno(cpf: string): Promise<string> {
+    const resposta = await request(app.getHttpServer())
+      .post('/auth/login-aluno')
+      .send({ cpf, senha: SENHA_PADRAO })
+      .expect(200);
+    return (resposta.body as { accessToken: string }).accessToken;
+  }
 
   /** Monta a requisição da linha, já com o corpo válido, se a rota tiver um. */
   function chamar(linha: Linha, token?: string) {
