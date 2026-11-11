@@ -29,6 +29,36 @@ describe("useListaPaginada", () => {
     expect(result.current.erro).toBeNull();
   });
 
+  it("aceita um carregar inline sem buscar de novo a cada render", async () => {
+    const carregar = vi.fn<(filtro: Filtro & { membroId: string }) => Promise<Pagina<string>>>();
+    carregar.mockResolvedValue(pagina(["a"]));
+
+    const { result } = renderHook(() =>
+      useListaPaginada((filtro: Filtro) => carregar({ ...filtro, membroId: "m1" }), { page: 1 }),
+    );
+    await waitFor(() => expect(result.current.pagina).toEqual(pagina(["a"])));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+    expect(carregar).toHaveBeenCalledTimes(1);
+    expect(carregar).toHaveBeenCalledWith({ page: 1, membroId: "m1" });
+  });
+
+  it("usa o carregar mais recente ao recarregar", async () => {
+    const carregar = vi.fn<(filtro: Filtro & { membroId: string }) => Promise<Pagina<string>>>();
+    carregar.mockResolvedValue(pagina(["a"]));
+    const { result, rerender } = renderHook(
+      ({ membroId }) =>
+        useListaPaginada((filtro: Filtro) => carregar({ ...filtro, membroId }), { page: 1 }),
+      { initialProps: { membroId: "m1" } },
+    );
+    await waitFor(() => expect(result.current.pagina).not.toBeNull());
+
+    rerender({ membroId: "m2" });
+    act(() => result.current.recarregar());
+
+    await waitFor(() => expect(carregar).toHaveBeenLastCalledWith({ page: 1, membroId: "m2" }));
+  });
+
   it("recarrega quando o filtro muda", async () => {
     const carregar = vi.fn<(filtro: Filtro) => Promise<Pagina<string>>>();
     carregar.mockResolvedValue(pagina(["a"]));
