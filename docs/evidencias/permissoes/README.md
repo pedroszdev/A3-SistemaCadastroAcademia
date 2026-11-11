@@ -57,7 +57,7 @@ O login do aluno (AUTH-04) entrou na `main` com o PR #32 (`e9240a7`). O `RolesGu
 | RECEPCIONISTA não registra atividades | `contrato da issue #28 › RECEPCIONISTA não registra atividade: 403 e nada gravado` |
 | Somente ADMIN gerencia funcionários | `contrato da issue #28 › só ADMIN gerencia funcionários` (6 rotas × RECEPCIONISTA e INSTRUTOR → 403; nada criado) |
 | ALUNO é somente leitura (RN17) | `contrato da issue #28 › ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)` |
-| 401 sem autenticação | `sem token → 401` (as 28 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
+| 401 sem autenticação | `sem token → 401` (as 36 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
 
 ## 3. Como reproduzir
 
@@ -78,7 +78,7 @@ Tests:       237 passed, 237 total      # todos os e2e da API (10 suítes)
 Tests:       678 passed, 678 total      # unitários da API, 100% de cobertura
 ```
 
-A suíte de segurança tem 152 casos: 28 de 401, 112 por papel (28 rotas × 4 papéis), 6 do contrato da issue, 3 de token e 3 de cobertura da matriz. Os PRs que fecharam as linhas da matriz entraram na `main` com estes merges: #27 (`b70b666`), #32 (`e9240a7`), #33 (`6565f38`), #35 (`4c21808`), #40 (`0950cb8`) e #46 (`f921ce2`).
+No `f921ce2`, a suíte de segurança tinha 152 casos: 28 de 401, 112 por papel (28 rotas × 4 papéis), 6 do contrato da issue, 3 de token e 3 de cobertura da matriz. Com as 8 rotas de treinos do PR [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55), passa a ter 194 casos: 36 de 401, 144 por papel (36 rotas × 4 papéis), 8 do contrato da issue, 3 de token e 3 de cobertura da matriz. Os PRs que fecharam as linhas da matriz entraram na `main` com estes merges: #27 (`b70b666`), #32 (`e9240a7`), #33 (`6565f38`), #35 (`4c21808`), #40 (`0950cb8`) e #46 (`f921ce2`).
 
 Na branch `feat/rbac-matriz`, em 06/11/2026, antes do merge do #35, eram 131 casos (24 rotas). Depois entraram o `GET /dashboard/inadimplentes` do #40 (136 casos e 25 rotas em `5823a81`) e as três rotas `/me/atividades` do #46, com o caso do RN16 no contrato da issue.
 
