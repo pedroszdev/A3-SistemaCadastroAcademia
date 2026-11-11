@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buscarMembros,
-  buscarMembrosAtivos,
   cancelarPagamento,
   criarPagamento,
   estaEmAberto,
@@ -103,7 +102,7 @@ describe("api de pagamentos", () => {
     expect(init?.body).toBe(JSON.stringify(dados));
   });
 
-  it("busca só membros ativos, com o termo aparado, e devolve id, nome e cpf", async () => {
+  it("sem opções busca só membros ativos e devolve id, nome e cpf", async () => {
     fetchMock.mockImplementation(async () =>
       Response.json({
         data: [
@@ -123,7 +122,7 @@ describe("api de pagamentos", () => {
       }),
     );
 
-    const resultado = await buscarMembrosAtivos("Ana");
+    const resultado = await buscarMembros("Ana");
 
     expect(ultimaChamada().url).toBe("/api/membros?busca=Ana&ativo=true&page=1&pageSize=10");
     expect(resultado).toEqual({

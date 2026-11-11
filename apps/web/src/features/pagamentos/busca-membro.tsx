@@ -13,6 +13,9 @@ type BuscaMembroProps = {
   selecionado: MembroBusca | null;
   onSelecionar: (membro: MembroBusca | null) => void;
   erro?: string;
+  // RN04: por padrão só os ativos, porque só membro ativo recebe pagamento ou atividade.
+  // A API ainda responde 422 se o membro for desativado depois da busca. O histórico, que
+  // só consulta, inclui os inativos.
   incluirInativos?: boolean;
   rotulo?: string;
   // Durante o envio do formulário em volta, o membro escolhido não pode ser trocado.

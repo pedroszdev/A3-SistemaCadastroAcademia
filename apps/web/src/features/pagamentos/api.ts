@@ -58,7 +58,7 @@ export type MembroBusca = { id: string; nome: string; cpf: string };
 // `total` conta todos os que batem com a busca, não só os `membros` devolvidos.
 export type ResultadoBuscaMembros = { membros: MembroBusca[]; total: number };
 
-// O termo já chega sem espaços nas pontas (BuscaMembro).
+// Sem opções, lista só os ativos (RN04). O termo já chega sem espaços nas pontas (BuscaMembro).
 export async function buscarMembros(
   busca: string,
   opcoes: { incluirInativos?: boolean } = {},
@@ -72,12 +72,6 @@ export async function buscarMembros(
     membros: pagina.data.map(({ id, nome, cpf }) => ({ id, nome, cpf })),
     total: pagina.total,
   };
-}
-
-// RN04: só membro ativo recebe novo pagamento, então a busca lista só os ativos.
-// A API ainda responde 422 se o membro for desativado depois da busca.
-export function buscarMembrosAtivos(busca: string): Promise<ResultadoBuscaMembros> {
-  return buscarMembros(busca);
 }
 
 export function registrarPagamento(id: string, dataPagamento?: string) {
