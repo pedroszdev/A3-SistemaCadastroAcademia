@@ -468,6 +468,22 @@ describe('Segurança: matriz de permissões (e2e)', () => {
     );
   });
 
+  // RN12: o hash da senha nunca sai da API. O aluno da massa tem senhaHash e
+  // os funcionários também, então as listas de membros e funcionários os incluem.
+  describe('senhaHash fora das respostas (RN12)', () => {
+    const HASH = /senhaHash|\$2[aby]\$/;
+
+    it.each(
+      MATRIZ.map(
+        (l) => [l.permitidos[0], l.metodo.toUpperCase(), l.rota, l] as const,
+      ),
+    )('%s %s %s → sem senhaHash', async (papel, _metodo, _rota, l) => {
+      const resposta = await chamar(l, tokens[papel]).expect(l.sucesso);
+
+      expect(JSON.stringify(resposta.body)).not.toMatch(HASH);
+    });
+  });
+
   describe('contrato da issue #28', () => {
     it('INSTRUTOR não acessa pagamentos nem a situação financeira', async () => {
       const rotas = MATRIZ.filter(
