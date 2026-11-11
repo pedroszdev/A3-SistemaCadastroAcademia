@@ -32,7 +32,7 @@ export type FiltroAtividades = {
   page: number;
 };
 
-export function listarAtividades(filtro: FiltroAtividades) {
+function paramsDoFiltro(filtro: FiltroAtividades) {
   const params = new URLSearchParams();
   if (filtro.membroId) params.set("membroId", filtro.membroId);
   if (filtro.funcionarioId) params.set("funcionarioId", filtro.funcionarioId);
@@ -40,7 +40,21 @@ export function listarAtividades(filtro: FiltroAtividades) {
   if (filtro.dataAte) params.set("dataAte", filtro.dataAte);
   params.set("page", String(filtro.page));
   params.set("pageSize", String(TAMANHO_PAGINA));
-  return api<PaginaAtividades>(`/atividades?${params}`);
+  return params;
+}
+
+export function listarAtividades(filtro: FiltroAtividades) {
+  return api<PaginaAtividades>(`/atividades?${paramsDoFiltro(filtro)}`);
+}
+
+// GET /membros/:id/atividades (HIS-03): responde 404 se o membro não existe
+// e recusa membroId na query.
+export function listarAtividadesDoMembro(
+  membroId: string,
+  filtro: Omit<FiltroAtividades, "membroId">,
+) {
+  const params = paramsDoFiltro({ ...filtro, membroId: undefined });
+  return api<PaginaAtividades>(`/membros/${encodeURIComponent(membroId)}/atividades?${params}`);
 }
 
 export type DadosRegistrarAtividade = {

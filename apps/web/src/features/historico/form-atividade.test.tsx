@@ -350,15 +350,36 @@ describe("FormAtividade", () => {
     expect(buscarMembros).not.toHaveBeenCalled();
   });
 
-  it("com membro fixo inadimplente, mostra o aviso e bloqueia o Salvar", async () => {
+  it("com membro fixo inadimplente, mostra o aviso e não envia nem por submit do form", async () => {
     vi.mocked(consultarSituacao).mockResolvedValue(inadimplente);
+    const usuario = userEvent.setup();
     renderizar(admin, "m1");
 
     const aviso = await screen.findByRole("alert");
     expect(aviso).toHaveTextContent("Membro com pagamento em atraso");
     expect(aviso).toHaveTextContent("(maior atraso: 12 dias)");
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled();
+    const salvar = screen.getByRole("button", { name: "Salvar" });
+    expect(salvar).toBeDisabled();
+
+    // Com o resto válido, só o bloqueio da RN09 impede o POST.
+    await usuario.type(screen.getByLabelText("Atividade"), "Esteira");
+    await usuario.type(screen.getByLabelText("Tempo (min)"), "30");
+    fireEvent.submit(salvar.closest("form") as HTMLFormElement);
+
     expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("membroId vazio conta como sem membro fixo: mostra a busca e registra com o escolhido", async () => {
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar(instrutor, "");
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    await usuario.type(screen.getByLabelText("Atividade"), "Esteira");
+    await usuario.type(screen.getByLabelText("Tempo (min)"), "30");
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ membroId: "m1" }));
   });
 
   it("com membro fixo, registra com esse membroId e o treino escolhido", async () => {

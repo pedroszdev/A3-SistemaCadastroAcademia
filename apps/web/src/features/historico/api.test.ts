@@ -3,6 +3,7 @@ import type { Cargo, UsuarioDoToken } from "@/lib/sessao";
 import {
   consultarSituacao,
   listarAtividades,
+  listarAtividadesDoMembro,
   listarFuncionariosParaFiltro,
   listarTreinosDoMembro,
   podeConsultarSituacao,
@@ -55,6 +56,16 @@ describe("api do histórico", () => {
     await listarAtividades({ membroId: undefined, dataDe: "", page: 3 });
 
     expect(ultimaChamada().url).toBe("/api/atividades?page=3&pageSize=20");
+  });
+
+  it("lista pela rota do membro com os outros filtros e sem membroId na query", async () => {
+    const filtro = { membroId: "outro", funcionarioId: "f1", dataDe: "2026-11-01", page: 2 };
+
+    await listarAtividadesDoMembro("m 1", filtro);
+
+    expect(ultimaChamada().url).toBe(
+      "/api/membros/m%201/atividades?funcionarioId=f1&dataDe=2026-11-01&page=2&pageSize=20",
+    );
   });
 
   it("registra com POST e o body em JSON, com o treino quando há", async () => {

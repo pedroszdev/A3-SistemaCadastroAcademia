@@ -53,7 +53,8 @@ export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: For
   const [erroApi, setErroApi] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  const membroId = membroFixo ?? membro?.id;
+  // `||`: "" conta como sem membro fixo, igual ao `!membroFixo` que decide se a busca aparece.
+  const membroId = membroFixo || membro?.id;
 
   useEffect(() => {
     if (!membroId) return;
@@ -89,8 +90,12 @@ export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: For
     setErroApi(null);
   }
 
+  const bloqueado = situacao?.situacao === "INADIMPLENTE" || inadimplente422;
+
   async function aoEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    // RN09: o bloqueio vale para qualquer submit, não só para o botão desabilitado.
+    if (bloqueado) return;
     const errosEncontrados = validarAtividade(
       { membroId: membroId ?? null, atividade, data, tempoExecucao: tempo },
       hoje,
@@ -118,8 +123,6 @@ export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: For
       setEnviando(false);
     }
   }
-
-  const bloqueado = situacao?.situacao === "INADIMPLENTE" || inadimplente422;
 
   return (
     <form onSubmit={aoEnviar} className="flex flex-col gap-4">
