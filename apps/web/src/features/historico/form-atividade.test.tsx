@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UsuarioProvider } from "@/features/auth/usuario";
@@ -247,6 +247,47 @@ describe("FormAtividade", () => {
     await waitFor(() => expect(consultarSituacao).toHaveBeenLastCalledWith("m2"));
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+  });
+
+  it("a situação do membro anterior que chega tarde não vale para o novo", async () => {
+    const situacaoDoFulano = Promise.withResolvers<SituacaoFinanceira>();
+    vi.mocked(consultarSituacao).mockImplementation((id) =>
+      id === "m1" ? situacaoDoFulano.promise : Promise.resolve(emDia),
+    );
+    const usuario = userEvent.setup();
+    renderizar(admin);
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+    await escolherMembro(usuario, "Ful", /Fulana Souza/);
+    await waitFor(() => expect(screen.getByLabelText("Treino (opcional)")).toBeEnabled());
+    await act(async () => situacaoDoFulano.resolve(inadimplente));
+
+    expect(consultarSituacao).toHaveBeenLastCalledWith("m2");
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+  });
+
+  it.each([
+    ["a lista", (treinos: PromiseWithResolvers<TreinoDoMembro[]>) => treinos.resolve([treinoDoFulano])],
+    ["a falha", (treinos: PromiseWithResolvers<TreinoDoMembro[]>) => treinos.reject(new ApiError(500, "Falha"))],
+  ])("%s de treinos do membro anterior que chega tarde não troca os treinos do novo", async (_, terminar) => {
+    const treinosDoFulano = Promise.withResolvers<TreinoDoMembro[]>();
+    vi.mocked(listarTreinosDoMembro).mockImplementation((id) =>
+      id === "m1" ? treinosDoFulano.promise : Promise.resolve([treinoDaFulana]),
+    );
+    const usuario = userEvent.setup();
+    renderizar(admin);
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+    await escolherMembro(usuario, "Ful", /Fulana Souza/);
+    expect(await screen.findByRole("option", { name: /Resistência/ })).toBeInTheDocument();
+    await act(async () => terminar(treinosDoFulano));
+
+    expect(screen.getByLabelText("Treino (opcional)")).toBeEnabled();
+    expect(screen.getByRole("option", { name: /Resistência/ })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /Hipertrofia/ })).toBeNull();
   });
 
   it("não mostra aviso nem bloqueia quando o ADMIN escolhe um membro em dia", async () => {
