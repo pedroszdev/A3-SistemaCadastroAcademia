@@ -224,7 +224,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] WEB-03 Telas de funcionários — tudo em `/funcionarios`: lista paginada com filtro de cargo e situação, criar e editar num Dialog (login travado na edição, senha em branco mantém a atual) e desativar/reativar com confirmação. Quem não é ADMIN vê "Acesso restrito" e a tela nem chama a API
 - [x] WEB-04 Tela do dashboard — cards com os 5 números do `GET /dashboard` para todos os cargos; a lista de inadimplentes (link para `/membros/<id>`) vem da rota nova `GET /dashboard/inadimplentes`, só ADMIN e RECEPCIONISTA, como a situação financeira na matriz 4.2. O link dá 404 até a WEB-G3
 - [x] WEB-05 Login e portal do aluno — `/login` com abas Funcionário e Aluno (CPF com máscara); o aluno entra pelo handler `app/api/sessao/aluno`, que chama o `/auth/login-aluno` e grava o mesmo cookie httpOnly. O `proxy.ts` e os layouts separam as áreas pelo `tipo` do token: aluno só abre `/aluno/**`, funcionário nunca abre. O portal `(aluno)/layout.tsx` mostra o nome (via `GET /auth/me`), o menu *Meus treinos* / *Meu histórico* e o Sair, em coluna única para o celular
-- [ ] E2E-05 e2e de segurança (401/403) — 🟡 **parcial**: `test/seguranca.e2e-spec.ts` cobre a matriz 4.2 das rotas que existem (401, 403 e sucesso por rota e por papel, incluindo o ALUNO; token inválido e expirado; e a checagem de que toda rota declara `@Roles` ou `@Public`), no PR #35 da issue #28. A RN17 (aluno → 403 em toda rota de funcionário) está coberta; acesso revogado e `senhaHash` fora das respostas estão no `auth.e2e-spec.ts` da AUTH-04. Falta a RN16 (aluno A × aluno B → 404), que depende das rotas `/me` da TRE-05 e da HIS-05
+- [ ] E2E-05 e2e de segurança (401/403) — 🟡 **parcial**: `test/seguranca.e2e-spec.ts` cobre a matriz 4.2 das rotas que existem (401, 403 e sucesso por rota e por papel, incluindo o ALUNO; token inválido e expirado; e a checagem de que toda rota declara `@Roles` ou `@Public`), no PR #35 da issue #28. A RN17 (aluno → 403 em toda rota de funcionário) está coberta; acesso revogado e `senhaHash` fora das respostas estão no `auth.e2e-spec.ts` da AUTH-04. A RN16 (aluno A × aluno B → 404) está coberta nas atividades (HIS-05, #46) e nos treinos (TRE-05, #55), e o aluno → 403 em `POST /treinos` entrou na `MATRIZ` com a TRE-03 (#55)
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-02 Cobertura consolidada
 - [ ] QA-05 Evidências (prints antes/depois)
@@ -245,10 +245,10 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] MEM-06 Resumo/ficha do membro (API)
 - [ ] MEM-07 Liberar e redefinir o acesso do aluno
 - [x] TRE-01 DTOs de treinos
-- [ ] TRE-02 Service de treinos
-- [ ] TRE-03 Controller de treinos
-- [ ] TRE-04 Testes de treinos
-- [ ] TRE-05 Treinos do aluno (`/me/treinos`)
+- [x] TRE-02 Service de treinos — `create` com RN04 (`assertMembroAtivo`: 404 ou 422) e RN05 (`dataInicio` não anterior a hoje, no fuso de São Paulo: 400); `findAll` com filtro por membro e tipo e paginação; `findOne` (404); `update` revalida a data só quando ela muda, então reenviar a data de um treino que já começou passa; `remove` deixa as atividades com `treinoId = null`
+- [x] TRE-03 Controller de treinos — `GET/POST /treinos`, `GET/PATCH/DELETE /treinos/:id` (o `DELETE` responde 204) e `GET /membros/:id/treinos`. Todos os funcionários consultam; só ADMIN e INSTRUTOR criam, editam e excluem (RECEPCIONISTA → 403). As 6 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
+- [x] TRE-04 Testes de treinos — service, controllers e HTTP (pipes, validação e status), com 100% de cobertura em `src/treinos`. A data atual fica fixa com `jest.useFakeTimers().setSystemTime`
+- [x] TRE-05 Treinos do aluno (`/me/treinos`) — `GET /me/treinos` (tipo e paginação, mais recentes primeiro) e `GET /me/treinos/:id`, só para o ALUNO. O `membroId` vem do token e fica no `where`, então o treino de outro membro dá 404 e `membroId` na query dá 400 (RN16). As 2 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
 - [ ] WEB-G1 Lista de membros
 - [ ] WEB-G2 Formulário de membro
 - [ ] WEB-G3 Ficha do membro
@@ -1307,7 +1307,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 - A `MATRIZ` no topo do arquivo é a seção 4.2 em forma de dados: método, rota, cargos permitidos, status de sucesso e corpo válido. Os casos de 401, 403 e sucesso são gerados dela com `it.each`.
 - O bloco "cobertura da matriz" lê as rotas registradas no `AppModule` e falha se alguma não tiver `@Roles` nem `@Public`, ou se uma rota protegida não estiver na `MATRIZ`.
 - O ALUNO já está na `MATRIZ`: 200 em `GET /auth/me` e 403 em todas as rotas de funcionário (RN17). Acesso revogado e `senhaHash` ficam no `auth.e2e-spec.ts` (AUTH-04, #32).
-- **Falta:** a RN16 e o `POST /treinos` do aluno, que entram com a TRE-03, a TRE-05 e a HIS-05.
+- A RN16 está no contrato da issue: "ALUNO não vê a atividade de outro membro" (HIS-05, #46) e "ALUNO não vê o treino de outro membro" (TRE-05, #55). O `POST /treinos` do aluno → 403 está na `MATRIZ` desde a TRE-03 (#55).
 
 **Resultado esperado**
 - O RNF de segurança está coberto por testes. Isso entra no relatório como "testes de segurança" (2.4). A evidência fica em [`docs/evidencias/permissoes/README.md`](evidencias/permissoes/README.md).
