@@ -110,9 +110,10 @@ describe("TelaHistorico", () => {
       pagamentosAtrasados: 0,
       maiorAtrasoDias: 0,
     });
-    vi.mocked(buscarMembros).mockResolvedValue([
-      { id: "m1", nome: "Fulano Silva", cpf: "12345678909" },
-    ]);
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m1", nome: "Fulano Silva", cpf: "12345678909" }],
+      total: 1,
+    });
   });
 
   it("mostra a tabela com data, membro, atividade, tempo, treino e funcionário", async () => {
@@ -304,9 +305,10 @@ describe("TelaHistorico", () => {
   });
 
   it("registra a atividade, avisa, fecha o formulário e recarrega a lista", async () => {
-    vi.mocked(buscarMembros).mockResolvedValue([
-      { id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" },
-    ]);
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
     vi.mocked(registrarAtividade).mockResolvedValue(atividade("a9"));
     const usuario = userEvent.setup();
     renderizar(instrutor);
@@ -324,9 +326,10 @@ describe("TelaHistorico", () => {
   });
 
   it("um registro que termina tarde não fecha o formulário reaberto", async () => {
-    vi.mocked(buscarMembros).mockResolvedValue([
-      { id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" },
-    ]);
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
     let terminar: (a: Atividade) => void = () => {};
     vi.mocked(registrarAtividade).mockReturnValue(
       new Promise<Atividade>((resolve) => {

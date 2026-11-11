@@ -95,7 +95,7 @@ describe("FormAtividade", () => {
     vi.mocked(listarTreinosDoMembro).mockReset();
     vi.mocked(consultarSituacao).mockReset();
     vi.mocked(buscarMembros).mockReset();
-    vi.mocked(buscarMembros).mockResolvedValue([fulano, fulana]);
+    vi.mocked(buscarMembros).mockResolvedValue({ membros: [fulano, fulana], total: 2 });
     vi.mocked(listarTreinosDoMembro).mockImplementation(async (id) =>
       id === "m1" ? [treinoDoFulano] : [treinoDaFulana],
     );

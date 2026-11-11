@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useUsuario } from "@/features/auth/usuario";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { type Coluna, Table } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import type { Cargo } from "@/lib/sessao";
+import { useFormDialog } from "@/lib/use-form-dialog";
 import {
   desativarFuncionario,
   type FiltroFuncionarios,
@@ -25,10 +26,6 @@ const OPCOES_SITUACAO = [
   { valor: "true", rotulo: "Ativos" },
   { valor: "false", rotulo: "Inativos" },
 ];
-
-// A chave muda a cada abertura: um save que termina depois de o Dialog ter sido
-// fechado e reaberto não fecha o formulário novo.
-type EstadoForm = { aberto: boolean; chave: number; funcionario?: Funcionario };
 
 export function TelaFuncionarios() {
   const usuario = useUsuario();
@@ -51,8 +48,8 @@ function GestaoFuncionarios() {
   const [versao, setVersao] = useState(0);
   const [pagina, setPagina] = useState<PaginaFuncionarios | null>(null);
   const [erroLista, setErroLista] = useState<string | null>(null);
-  const [form, setForm] = useState<EstadoForm>({ aberto: false, chave: 0 });
-  const proximaChave = useRef(0);
+  const dialogForm = useFormDialog<Funcionario>();
+  const { form } = dialogForm;
   const [confirmar, setConfirmar] = useState<Funcionario | null>(null);
   const [processando, setProcessando] = useState(false);
 
@@ -86,19 +83,9 @@ function GestaoFuncionarios() {
     setVersao((v) => v + 1);
   }
 
-  function abrirForm(funcionario?: Funcionario) {
-    proximaChave.current += 1;
-    setForm({ aberto: true, chave: proximaChave.current, funcionario });
-  }
-
-  function fecharForm() {
-    setForm((atual) => ({ ...atual, aberto: false }));
-  }
-
   function aoSalvar() {
-    const { chave, funcionario } = form;
-    mostrar(funcionario ? "Funcionário atualizado." : "Funcionário cadastrado.");
-    setForm((atual) => (atual.chave === chave ? { ...atual, aberto: false } : atual));
+    mostrar(form.dados ? "Funcionário atualizado." : "Funcionário cadastrado.");
+    dialogForm.concluir();
     recarregar();
   }
 
@@ -141,7 +128,7 @@ function GestaoFuncionarios() {
           <Button
             variante="secundario"
             aria-label={`Editar ${f.nome}`}
-            onClick={() => abrirForm(f)}
+            onClick={() => dialogForm.abrir(f)}
           >
             Editar
           </Button>
@@ -184,7 +171,7 @@ function GestaoFuncionarios() {
             })
           }
         />
-        <Button className="ml-auto" onClick={() => abrirForm()}>
+        <Button className="ml-auto" onClick={() => dialogForm.abrir()}>
           Novo funcionário
         </Button>
       </div>
@@ -216,14 +203,14 @@ function GestaoFuncionarios() {
 
       <Dialog
         aberto={form.aberto}
-        titulo={form.funcionario ? "Editar funcionário" : "Novo funcionário"}
-        onFechar={fecharForm}
+        titulo={form.dados ? "Editar funcionário" : "Novo funcionário"}
+        onFechar={dialogForm.fechar}
       >
         <FormFuncionario
           key={form.chave}
-          funcionario={form.funcionario}
+          funcionario={form.dados}
           onSalvo={aoSalvar}
-          onCancelar={fecharForm}
+          onCancelar={dialogForm.fechar}
         />
       </Dialog>
 

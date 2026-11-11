@@ -21,7 +21,7 @@ export function RodapeFormulario({
         </p>
       )}
       <div className="flex justify-end gap-2">
-        <Button variante="secundario" onClick={onCancelar}>
+        <Button variante="secundario" onClick={onCancelar} disabled={enviando}>
           Cancelar
         </Button>
         <Button type="submit" disabled={enviando || desabilitado}>
