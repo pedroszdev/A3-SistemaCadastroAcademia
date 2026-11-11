@@ -75,6 +75,18 @@ function linhaDe(nome: string): HTMLElement {
   return screen.getByText(nome).closest("tr") as HTMLElement;
 }
 
+type Usuario = ReturnType<typeof userEvent.setup>;
+
+// As maneiras de fechar a confirmação sem confirmar.
+const modosDeFechar: [string, (usuario: Usuario) => Promise<void>][] = [
+  [
+    "em Voltar",
+    (usuario) => usuario.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Voltar" })),
+  ],
+  ["com Escape", (usuario) => usuario.keyboard("{Escape}")],
+  ["clicando fora", (usuario) => usuario.click(screen.getByTestId("dialog-overlay"))],
+];
+
 describe("TelaPagamentos", () => {
   beforeEach(() => {
     vi.mocked(listarPagamentos).mockReset();
@@ -215,8 +227,13 @@ describe("TelaPagamentos", () => {
     expect(screen.queryByText("Nenhum pagamento encontrado")).toBeNull();
   });
 
-  it("registra o pagamento sem data, avisa e recarrega a lista", async () => {
+  it("registra o pagamento sem data, avisa e mostra a linha recarregada como Pago, sem ações", async () => {
+    // A resposta do PATCH não traz a data do pagamento: os 10/11/2026 só vêm da lista recarregada.
     vi.mocked(registrarPagamento).mockResolvedValue({ ...fulano, status: "PAGO" });
+    const fulanoPago = { ...fulano, status: "PAGO" as const, dataPagamento: "2026-11-10T00:00:00.000Z" };
+    vi.mocked(listarPagamentos)
+      .mockResolvedValueOnce(pagina([fulano, beltrana]))
+      .mockResolvedValueOnce(pagina([fulanoPago, beltrana]));
     const usuario = userEvent.setup();
     renderizar();
     await screen.findByText("Fulano Silva");
@@ -236,6 +253,13 @@ describe("TelaPagamentos", () => {
     expect(await screen.findByText("Pagamento registrado.")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(listarPagamentos).toHaveBeenCalledTimes(2);
+    expect(listarPagamentos).toHaveBeenLastCalledWith({ page: 1 });
+    await waitFor(() =>
+      expect(within(linhaDe("Fulano Silva")).getByText("10/11/2026")).toBeInTheDocument(),
+    );
+    const linha = within(linhaDe("Fulano Silva"));
+    expect(linha.getByText("Pago")).toBeInTheDocument();
+    expect(linha.queryByRole("button")).toBeNull();
   });
 
   it("registra o pagamento com a data informada", async () => {
@@ -250,27 +274,6 @@ describe("TelaPagamentos", () => {
 
     expect(registrarPagamento).toHaveBeenCalledWith("p1", "2026-11-05");
     expect(await screen.findByText("Pagamento registrado.")).toBeInTheDocument();
-  });
-
-  it("depois de pagar, a lista recarregada mostra a linha como Pago e sem ações", async () => {
-    const fulanoPago = { ...fulano, status: "PAGO" as const, dataPagamento: "2026-11-10T00:00:00.000Z" };
-    vi.mocked(registrarPagamento).mockResolvedValue(fulanoPago);
-    vi.mocked(listarPagamentos)
-      .mockResolvedValueOnce(pagina([fulano, beltrana]))
-      .mockResolvedValueOnce(pagina([fulanoPago, beltrana]));
-    const usuario = userEvent.setup();
-    renderizar();
-    await screen.findByText("Fulano Silva");
-
-    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" }));
-    await usuario.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirmar" }));
-
-    expect(registrarPagamento).toHaveBeenCalledWith("p1", undefined);
-    await waitFor(() => expect(within(linhaDe("Fulano Silva")).getByText("Pago")).toBeInTheDocument());
-    const linha = within(linhaDe("Fulano Silva"));
-    expect(linha.queryByRole("button", { name: /Registrar pagamento/ })).toBeNull();
-    expect(linha.queryByRole("button", { name: /Cancelar/ })).toBeNull();
-    expect(linha.getByText("10/11/2026")).toBeInTheDocument();
   });
 
   it("limpa a data do pagamento a cada vez que a confirmação abre", async () => {
@@ -308,30 +311,17 @@ describe("TelaPagamentos", () => {
     expect(listarPagamentos).toHaveBeenCalledTimes(2);
   });
 
-  it("fecha a confirmação em Voltar sem chamar a API", async () => {
-    renderizar();
-    await screen.findByText("Fulano Silva");
-
-    await userEvent.click(screen.getByRole("button", { name: "Cancelar pagamento de Fulano Silva" }));
-    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Voltar" }));
-
-    expect(cancelarPagamento).not.toHaveBeenCalled();
-    expect(registrarPagamento).not.toHaveBeenCalled();
-    expect(screen.queryByRole("dialog")).toBeNull();
-  });
-
-  it("fecha a confirmação com Escape sem chamar a API", async () => {
+  it.each(modosDeFechar)("fecha a confirmação %s sem chamar a API", async (_, fechar) => {
     const usuario = userEvent.setup();
     renderizar();
     await screen.findByText("Fulano Silva");
 
-    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Fulano Silva" }));
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    await usuario.keyboard("{Escape}");
+    await usuario.click(screen.getByRole("button", { name: "Cancelar pagamento de Fulano Silva" }));
+    await fechar(usuario);
 
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(registrarPagamento).not.toHaveBeenCalled();
     expect(cancelarPagamento).not.toHaveBeenCalled();
+    expect(registrarPagamento).not.toHaveBeenCalled();
   });
 
   it("mostra o erro 409 da baixa num toast, fecha a confirmação e recarrega", async () => {
@@ -364,26 +354,25 @@ describe("TelaPagamentos", () => {
     expect(listarPagamentos).toHaveBeenCalledTimes(2);
   });
 
-  it("um pedido que termina tarde não fecha outra confirmação", async () => {
-    let terminar: (p: Pagamento) => void = () => {};
-    vi.mocked(cancelarPagamento).mockReturnValue(
-      new Promise<Pagamento>((resolve) => {
-        terminar = resolve;
-      }),
-    );
-    const usuario = userEvent.setup();
-    renderizar();
-    await screen.findByText("Fulano Silva");
+  it.each(modosDeFechar)(
+    "um pedido que termina tarde não fecha outra confirmação aberta depois de fechar %s",
+    async (_, fechar) => {
+      const pedido = Promise.withResolvers<Pagamento>();
+      vi.mocked(cancelarPagamento).mockReturnValue(pedido.promise);
+      const usuario = userEvent.setup();
+      renderizar();
+      await screen.findByText("Fulano Silva");
 
-    await usuario.click(screen.getByRole("button", { name: "Cancelar pagamento de Fulano Silva" }));
-    await usuario.click(screen.getByRole("button", { name: "Confirmar" }));
-    await usuario.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Voltar" }));
-    await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Beltrana Souza" }));
-    terminar({ ...fulano, status: "CANCELADO" });
+      await usuario.click(screen.getByRole("button", { name: "Cancelar pagamento de Fulano Silva" }));
+      await usuario.click(screen.getByRole("button", { name: "Confirmar" }));
+      await fechar(usuario);
+      await usuario.click(screen.getByRole("button", { name: "Registrar pagamento de Beltrana Souza" }));
+      pedido.resolve({ ...fulano, status: "CANCELADO" });
 
-    expect(await screen.findByText("Pagamento cancelado.")).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Registrar pagamento" })).toBeInTheDocument();
-  });
+      expect(await screen.findByText("Pagamento cancelado.")).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "Registrar pagamento" })).toBeInTheDocument();
+    },
+  );
 
   it("abre o formulário de novo pagamento e fecha em Cancelar sem chamar a API", async () => {
     const usuario = userEvent.setup();
@@ -432,12 +421,8 @@ describe("TelaPagamentos", () => {
     vi.mocked(buscarMembros).mockResolvedValue([
       { id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" },
     ]);
-    let terminar: (p: Pagamento) => void = () => {};
-    vi.mocked(criarPagamento).mockReturnValue(
-      new Promise<Pagamento>((resolve) => {
-        terminar = resolve;
-      }),
-    );
+    const lancamento = Promise.withResolvers<Pagamento>();
+    vi.mocked(criarPagamento).mockReturnValue(lancamento.promise);
     const usuario = userEvent.setup();
     renderizar();
     await screen.findByText("Fulano Silva");
@@ -450,7 +435,7 @@ describe("TelaPagamentos", () => {
     await usuario.click(screen.getByRole("button", { name: "Salvar" }));
     await usuario.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancelar" }));
     await usuario.click(screen.getByRole("button", { name: "Novo pagamento" }));
-    terminar({ ...fulano, id: "p9" });
+    lancamento.resolve({ ...fulano, id: "p9" });
 
     expect(await screen.findByText("Pagamento lançado.")).toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Novo pagamento" })).toBeInTheDocument();
