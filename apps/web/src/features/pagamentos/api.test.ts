@@ -6,7 +6,6 @@ import {
   estaEmAberto,
   listarPagamentos,
   type Pagamento,
-  podeGerirPagamentos,
   registrarPagamento,
   type StatusPagamento,
 } from "./api";
@@ -148,18 +147,6 @@ describe("api de pagamentos", () => {
       membros: [{ id: "m2", nome: "Beto Lima", cpf: "98765432100" }],
       total: 1,
     });
-  });
-});
-
-describe("podeGerirPagamentos", () => {
-  it("libera ADMIN e RECEPCIONISTA", () => {
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "ADMIN" })).toBe(true);
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "RECEPCIONISTA" })).toBe(true);
-  });
-
-  it("barra INSTRUTOR e aluno", () => {
-    expect(podeGerirPagamentos({ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" })).toBe(false);
-    expect(podeGerirPagamentos({ tipo: "ALUNO" })).toBe(false);
   });
 });
 

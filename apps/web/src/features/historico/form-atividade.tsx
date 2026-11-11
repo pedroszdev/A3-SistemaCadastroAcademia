@@ -9,11 +9,11 @@ import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
 import { ApiError } from "@/lib/api";
 import { formatarData } from "@/lib/format";
+import { temAcessoFinanceiro } from "@/lib/menu";
 import {
   consultarSituacao,
   listarTreinosDoMembro,
   MENSAGEM_INADIMPLENTE,
-  podeConsultarSituacao,
   registrarAtividade,
   type SituacaoFinanceira,
   type TreinoDoMembro,
@@ -36,7 +36,7 @@ function placeholderDoTreino(membro: MembroBusca | null, treinos: TreinoDoMembro
 
 export function FormAtividade({ onSalvo, onCancelar, onEnviando }: FormAtividadeProps) {
   const usuario = useUsuario();
-  const consultaSituacao = podeConsultarSituacao(usuario);
+  const consultaSituacao = temAcessoFinanceiro(usuario);
   const [hoje] = useState(() => hojeEmSaoPaulo());
   const [membro, setMembro] = useState<MembroBusca | null>(null);
   const [treinos, setTreinos] = useState<TreinoDoMembro[] | null>(null);

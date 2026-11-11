@@ -1,6 +1,4 @@
 import { api } from "@/lib/api";
-import { CARGOS_FINANCEIRO } from "@/lib/menu";
-import type { UsuarioDoToken } from "@/lib/sessao";
 import type { Pagina } from "@/lib/use-lista-paginada";
 
 export const TAMANHO_PAGINA = 20;
@@ -85,11 +83,6 @@ export function cancelarPagamento(id: string) {
   return api<Pagamento>(`/pagamentos/${encodeURIComponent(id)}/cancelar`, {
     method: "PATCH",
   });
-}
-
-// Espelha a matriz 4.2; quem barra de verdade é a API.
-export function podeGerirPagamentos(usuario: UsuarioDoToken): boolean {
-  return usuario.tipo === "FUNCIONARIO" && CARGOS_FINANCEIRO.includes(usuario.cargo);
 }
 
 // RN07/RN08: só o pagamento PENDENTE no banco (PENDENTE ou ATRASADO na tela) pode ser pago ou cancelado.

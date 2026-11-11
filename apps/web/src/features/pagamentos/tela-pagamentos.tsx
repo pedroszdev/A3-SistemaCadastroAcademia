@@ -11,6 +11,7 @@ import { TabelaPaginada } from "@/components/ui/tabela-paginada";
 import type { Coluna } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { formatarData, formatarMoeda } from "@/lib/format";
+import { temAcessoFinanceiro } from "@/lib/menu";
 import { useFormDialog } from "@/lib/use-form-dialog";
 import { useListaPaginada } from "@/lib/use-lista-paginada";
 import {
@@ -18,7 +19,6 @@ import {
   estaEmAberto,
   listarPagamentos,
   type Pagamento,
-  podeGerirPagamentos,
   registrarPagamento,
   type StatusPagamento,
 } from "./api";
@@ -30,7 +30,7 @@ type Confirmacao = { acao: "pagar" | "cancelar"; pagamento: Pagamento };
 export function TelaPagamentos() {
   const usuario = useUsuario();
 
-  if (!podeGerirPagamentos(usuario)) {
+  if (!temAcessoFinanceiro(usuario)) {
     return (
       <EmptyState
         titulo="Acesso restrito"

@@ -1,6 +1,5 @@
 import { listarFuncionarios } from "@/features/funcionarios/api";
 import { api, ApiError } from "@/lib/api";
-import { CARGOS_FINANCEIRO } from "@/lib/menu";
 import type { UsuarioDoToken } from "@/lib/sessao";
 import type { Pagina } from "@/lib/use-lista-paginada";
 
@@ -113,8 +112,4 @@ export function podeRegistrarAtividade(usuario: UsuarioDoToken): boolean {
 
 export function podeFiltrarPorFuncionario(usuario: UsuarioDoToken): boolean {
   return usuario.tipo === "FUNCIONARIO" && usuario.cargo === "ADMIN";
-}
-
-export function podeConsultarSituacao(usuario: UsuarioDoToken): boolean {
-  return usuario.tipo === "FUNCIONARIO" && CARGOS_FINANCEIRO.includes(usuario.cargo);
 }

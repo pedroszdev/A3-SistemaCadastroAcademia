@@ -5,7 +5,6 @@ import {
   listarAtividades,
   listarFuncionariosParaFiltro,
   listarTreinosDoMembro,
-  podeConsultarSituacao,
   podeFiltrarPorFuncionario,
   podeRegistrarAtividade,
   registrarAtividade,
@@ -187,12 +186,5 @@ describe("permissões do histórico", () => {
     expect(podeFiltrarPorFuncionario(funcionario("RECEPCIONISTA"))).toBe(false);
     expect(podeFiltrarPorFuncionario(funcionario("INSTRUTOR"))).toBe(false);
     expect(podeFiltrarPorFuncionario(aluno)).toBe(false);
-  });
-
-  it("só ADMIN e RECEPCIONISTA consultam a situação financeira", () => {
-    expect(podeConsultarSituacao(funcionario("ADMIN"))).toBe(true);
-    expect(podeConsultarSituacao(funcionario("RECEPCIONISTA"))).toBe(true);
-    expect(podeConsultarSituacao(funcionario("INSTRUTOR"))).toBe(false);
-    expect(podeConsultarSituacao(aluno)).toBe(false);
   });
 });
