@@ -12,6 +12,7 @@ import { HistoricoModule } from './historico/historico.module';
 import { MembrosModule } from './membros/membros.module';
 import { PagamentosModule } from './pagamentos/pagamentos.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { TreinosModule } from './treinos/treinos.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AuthModule,
     FuncionariosModule,
     MembrosModule,
+    TreinosModule,
     PagamentosModule,
     HistoricoModule,
     DashboardModule,
