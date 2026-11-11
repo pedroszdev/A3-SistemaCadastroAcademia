@@ -157,6 +157,21 @@ describe("FormPagamento", () => {
     expect(criarPagamento).not.toHaveBeenCalled();
   });
 
+  it("membroId vazio conta como sem membro fixo: mostra a busca e lança com o escolhido", async () => {
+    vi.mocked(criarPagamento).mockResolvedValue(criado);
+    const usuario = userEvent.setup();
+    render(<FormPagamento membroId="" onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(criarPagamento).toHaveBeenCalledWith({
+      membroId: "m1",
+      valor: 150.5,
+      dataVencimento: "2026-11-20",
+    });
+  });
+
   it("chama onCancelar sem chamar a API", async () => {
     render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
 

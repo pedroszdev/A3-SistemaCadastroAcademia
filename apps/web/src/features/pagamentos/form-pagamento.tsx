@@ -23,7 +23,8 @@ export function FormPagamento({ membroId: membroFixo, onSalvo, onCancelar }: For
   const [erroApi, setErroApi] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  const membroId = membroFixo ?? membro?.id ?? null;
+  // `||`: "" conta como sem membro fixo, igual ao `!membroFixo` que decide se a busca aparece.
+  const membroId = membroFixo || membro?.id || null;
 
   async function aoEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();

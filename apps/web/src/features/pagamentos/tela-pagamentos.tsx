@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useUsuario } from "@/features/auth/usuario";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ import { useFormEmDialog, useListaPaginada } from "@/lib/use-lista-paginada";
 import {
   cancelarPagamento,
   estaEmAberto,
+  type FiltroPagamentos,
   listarPagamentos,
   type Pagamento,
   podeGerirPagamentos,
@@ -26,7 +27,20 @@ import { BadgeStatusPagamento, OPCOES_STATUS_PAGAMENTO } from "./status-pagament
 
 type Confirmacao = { acao: "pagar" | "cancelar"; pagamento: Pagamento };
 
-export function TelaPagamentos({ membroId }: { membroId?: string } = {}) {
+type TelaPagamentosProps = {
+  // Na ficha do membro (WEB-Y4) a lista e o formulário ficam presos a esse membro.
+  membroId?: string;
+  // RN04: membro inativo não recebe novo pagamento (a API responde 422).
+  membroInativo?: boolean;
+  // Chamado depois de lançar, pagar ou cancelar, para a ficha atualizar a situação financeira.
+  onAlterado?: () => void;
+};
+
+export function TelaPagamentos({
+  membroId,
+  membroInativo = false,
+  onAlterado,
+}: TelaPagamentosProps) {
   const usuario = useUsuario();
 
   if (!podeGerirPagamentos(usuario)) {
@@ -38,25 +52,50 @@ export function TelaPagamentos({ membroId }: { membroId?: string } = {}) {
     );
   }
 
-  return <GestaoPagamentos membroId={membroId} />;
+  // "" conta como sem membro, igual a undefined.
+  const membroFixo = membroId || undefined;
+
+  // A key zera filtros, página e diálogos ao trocar de membro.
+  return (
+    <GestaoPagamentos
+      key={membroFixo}
+      membroFixo={membroFixo}
+      membroInativo={membroInativo}
+      onAlterado={onAlterado}
+    />
+  );
 }
 
-function GestaoPagamentos({ membroId }: { membroId?: string }) {
+type GestaoPagamentosProps = {
+  membroFixo: string | undefined;
+  membroInativo: boolean;
+  onAlterado?: () => void;
+};
+
+function GestaoPagamentos({ membroFixo, membroInativo, onAlterado }: GestaoPagamentosProps) {
   const { mostrar } = useToast();
-  const { filtro, setFiltro, pagina, erro, recarregar } = useListaPaginada(
-    listarPagamentos,
-    membroId ? { page: 1, membroId } : { page: 1 },
+  // O membro fixo entra no carregamento, não no filtro: nenhum setFiltro consegue perdê-lo.
+  const carregar = useCallback(
+    (filtro: FiltroPagamentos) =>
+      listarPagamentos(membroFixo ? { ...filtro, membroId: membroFixo } : filtro),
+    [membroFixo],
   );
+  const { filtro, setFiltro, pagina, erro, recarregar } = useListaPaginada(carregar, { page: 1 });
   const [confirmar, setConfirmar] = useState<Confirmacao | null>(null);
   const [dataPagamento, setDataPagamento] = useState("");
   const [processando, setProcessando] = useState(false);
   const { form, abrir: abrirForm, fechar: fecharForm, fecharSeAinda } = useFormEmDialog();
 
+  function atualizar() {
+    recarregar();
+    onAlterado?.();
+  }
+
   function aoSalvar() {
     const { chave } = form;
     mostrar("Pagamento lançado.");
     fecharSeAinda(chave);
-    recarregar();
+    atualizar();
   }
 
   function abrirConfirmacao(acao: Confirmacao["acao"], pagamento: Pagamento) {
@@ -75,11 +114,11 @@ function GestaoPagamentos({ membroId }: { membroId?: string }) {
         await cancelarPagamento(alvo.pagamento.id);
       }
       mostrar(alvo.acao === "pagar" ? "Pagamento registrado." : "Pagamento cancelado.");
-      recarregar();
+      atualizar();
     } catch (e) {
       mostrar((e as Error).message, "erro");
       // A linha pode ter mudado de estado (ex.: já paga por outra pessoa).
-      recarregar();
+      atualizar();
     } finally {
       setProcessando(false);
       // Só fecha se a confirmação aberta ainda é a deste pedido.
@@ -87,8 +126,23 @@ function GestaoPagamentos({ membroId }: { membroId?: string }) {
     }
   }
 
+  const colunaMembro: Coluna<Pagamento> = {
+    chave: "membro",
+    titulo: "Membro",
+    celula: (p) => p.membro.nome,
+  };
+
+  // Na ficha toda linha é do mesmo membro: o nome não distingue os botões,
+  // o valor e o vencimento sim.
+  function descricao(p: Pagamento) {
+    return membroFixo
+      ? `${formatarMoeda(p.valor)} com vencimento em ${formatarData(p.dataVencimento)}`
+      : p.membro.nome;
+  }
+
   const colunas: Coluna<Pagamento>[] = [
-    { chave: "membro", titulo: "Membro", celula: (p) => p.membro.nome },
+    // Na ficha do membro a coluna Membro repetiria o mesmo nome em toda linha.
+    ...(membroFixo ? [] : [colunaMembro]),
     { chave: "valor", titulo: "Valor", celula: (p) => formatarMoeda(p.valor) },
     { chave: "vencimento", titulo: "Vencimento", celula: (p) => formatarData(p.dataVencimento) },
     {
@@ -104,14 +158,14 @@ function GestaoPagamentos({ membroId }: { membroId?: string }) {
         estaEmAberto(p) ? (
           <div className="flex gap-2">
             <Button
-              aria-label={`Registrar pagamento de ${p.membro.nome}`}
+              aria-label={`Registrar pagamento de ${descricao(p)}`}
               onClick={() => abrirConfirmacao("pagar", p)}
             >
               Registrar pagamento
             </Button>
             <Button
               variante="perigo"
-              aria-label={`Cancelar pagamento de ${p.membro.nome}`}
+              aria-label={`Cancelar pagamento de ${descricao(p)}`}
               onClick={() => abrirConfirmacao("cancelar", p)}
             >
               Cancelar
@@ -120,8 +174,6 @@ function GestaoPagamentos({ membroId }: { membroId?: string }) {
         ) : null,
     },
   ];
-
-  const colunasVisiveis = membroId ? colunas.filter((c) => c.chave !== "membro") : colunas;
 
   const pagando = confirmar?.acao === "pagar";
   const alvoDaConfirmacao = confirmar?.pagamento;
@@ -156,15 +208,21 @@ function GestaoPagamentos({ membroId }: { membroId?: string }) {
           min={filtro.vencimentoDe}
           onChange={(e) => setFiltro({ ...filtro, vencimentoAte: e.target.value || undefined, page: 1 })}
         />
-        <Button className="ml-auto" onClick={abrirForm}>
-          Novo pagamento
-        </Button>
+        {membroInativo ? (
+          <p className="ml-auto text-sm text-zinc-600">
+            Membro inativo não recebe novo pagamento.
+          </p>
+        ) : (
+          <Button className="ml-auto" onClick={abrirForm}>
+            Novo pagamento
+          </Button>
+        )}
       </div>
 
       <TabelaPaginada
         pagina={pagina}
         erro={erro}
-        colunas={colunasVisiveis}
+        colunas={colunas}
         chaveDaLinha={(p) => p.id}
         vazio={<EmptyState titulo="Nenhum pagamento encontrado" />}
         onMudarPagina={(page) => setFiltro({ ...filtro, page })}
@@ -214,7 +272,7 @@ function GestaoPagamentos({ membroId }: { membroId?: string }) {
       <Dialog aberto={form.aberto} titulo="Novo pagamento" onFechar={fecharForm}>
         <FormPagamento
           key={form.chave}
-          membroId={membroId}
+          membroId={membroFixo}
           onSalvo={aoSalvar}
           onCancelar={fecharForm}
         />

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 export type Pagina<T> = { data: T[]; total: number; page: number; pageSize: number };
 
-// `carregar` precisa ser estável (função de módulo): ela entra nas dependências do efeito.
+// `carregar` precisa ser estável (função de módulo ou useCallback): ela entra nas
+// dependências do efeito.
 export function useListaPaginada<F extends { page: number }, T>(
   carregar: (filtro: F) => Promise<Pagina<T>>,
   filtroInicial: NoInfer<F>,
