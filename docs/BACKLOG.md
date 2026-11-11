@@ -245,10 +245,10 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] MEM-06 Resumo/ficha do membro (API)
 - [ ] MEM-07 Liberar e redefinir o acesso do aluno
 - [x] TRE-01 DTOs de treinos
-- [ ] TRE-02 Service de treinos
-- [ ] TRE-03 Controller de treinos
-- [ ] TRE-04 Testes de treinos
-- [ ] TRE-05 Treinos do aluno (`/me/treinos`)
+- [ ] TRE-02 Service de treinos — 🔄 em PR (issue #29)
+- [ ] TRE-03 Controller de treinos — 🔄 em PR (issue #29)
+- [ ] TRE-04 Testes de treinos — 🔄 em PR (issue #29)
+- [ ] TRE-05 Treinos do aluno (`/me/treinos`) — 🔄 em PR (issue #29)
 - [ ] WEB-G1 Lista de membros
 - [ ] WEB-G2 Formulário de membro
 - [ ] WEB-G3 Ficha do membro

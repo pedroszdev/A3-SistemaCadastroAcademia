@@ -35,9 +35,9 @@ Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/
 | Membros — listar/ver | `GET /membros`, `GET /membros/:id` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(membros)`), merge `4c21808` | ✅ |
 | Membros — criar/editar/desativar | `POST /membros`, `PATCH /membros/:id`, `PATCH /membros/:id/desativar` e `/reativar` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(membros)`), merge `4c21808` | ✅ |
 | Membros — liberar/redefinir acesso do aluno | ainda não existe | ✅ | ✅ | ❌ | ❌ | MEM-07 (Gabriel) | ⏳ |
-| Treinos — listar/ver (todos) | ainda não existe | ✅ | ✅ | ✅ | ❌ | TRE-03 (Gabriel) | ⏳ |
-| Treinos — criar/editar/excluir | ainda não existe | ✅ | ❌ | ✅ | ❌ | TRE-03 (Gabriel) | ⏳ |
-| Treinos — os próprios (`/me/treinos`) | ainda não existe | — | — | — | ✅ | TRE-05 (Gabriel) | ⏳ |
+| Treinos — listar/ver (todos) | `GET /treinos`, `GET /treinos/:id`, `GET /membros/:id/treinos` | ✅ | ✅ | ✅ | ❌ | TRE-03 (Gabriel) | 🔄 |
+| Treinos — criar/editar/excluir | `POST /treinos`, `PATCH /treinos/:id`, `DELETE /treinos/:id` | ✅ | ❌ | ✅ | ❌ | TRE-03 (Gabriel) | 🔄 |
+| Treinos — os próprios (`/me/treinos`) | `GET /me/treinos`, `GET /me/treinos/:id` | ❌ | ❌ | ❌ | ✅ | TRE-05 (Gabriel) | 🔄 |
 | Pagamentos — tudo | `GET/POST /pagamentos`, `GET /pagamentos/:id`, `PATCH /pagamentos/:id/pagar` e `/cancelar` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`), merge `4c21808` | ✅ |
 | Situação financeira (RF45) | `GET /membros/:id/situacao` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`), merge `4c21808` | ✅ |
 | Histórico — listar/ver (todos) | `GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`), merge `4c21808` | ✅ |
