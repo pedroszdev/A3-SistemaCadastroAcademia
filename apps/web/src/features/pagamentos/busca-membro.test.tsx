@@ -68,19 +68,6 @@ describe("BuscaMembro", () => {
     expect(screen.queryByText("Nenhum membro ativo encontrado")).toBeNull();
   });
 
-  it("usa o rótulo informado no campo de busca e no membro escolhido", () => {
-    const { rerender } = render(
-      <BuscaMembro selecionado={null} onSelecionar={onSelecionar} rotulo="Filtrar membro" />,
-    );
-
-    expect(screen.getByLabelText("Filtrar membro")).toBeInTheDocument();
-
-    rerender(<BuscaMembro selecionado={fulano} onSelecionar={onSelecionar} rotulo="Filtrar membro" />);
-
-    expect(screen.getByText("Filtrar membro")).toBeInTheDocument();
-    expect(screen.queryByText("Membro")).toBeNull();
-  });
-
   it("desabilitado não deixa trocar o membro escolhido", async () => {
     render(<BuscaMembro selecionado={fulano} onSelecionar={onSelecionar} desabilitado />);
 

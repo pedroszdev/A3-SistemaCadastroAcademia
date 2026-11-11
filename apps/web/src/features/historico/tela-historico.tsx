@@ -99,12 +99,7 @@ export function TelaHistorico() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-4">
-        <BuscaMembro
-          incluirInativos
-          rotulo="Membro"
-          selecionado={membroFiltro}
-          onSelecionar={aoEscolherMembro}
-        />
+        <BuscaMembro incluirInativos selecionado={membroFiltro} onSelecionar={aoEscolherMembro} />
         {filtraPorFuncionario && (
           <Select
             rotulo="Funcionário"

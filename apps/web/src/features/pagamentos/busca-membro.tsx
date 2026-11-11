@@ -17,7 +17,6 @@ type BuscaMembroProps = {
   // A API ainda responde 422 se o membro for desativado depois da busca. O histórico, que
   // só consulta, inclui os inativos.
   incluirInativos?: boolean;
-  rotulo?: string;
   // Durante o envio do formulário em volta, o membro escolhido não pode ser trocado.
   desabilitado?: boolean;
 };
@@ -30,7 +29,6 @@ export function BuscaMembro({
   onSelecionar,
   erro,
   incluirInativos = false,
-  rotulo = "Membro",
   desabilitado = false,
 }: BuscaMembroProps) {
   const [texto, setTexto] = useState("");
@@ -63,7 +61,7 @@ export function BuscaMembro({
   if (selecionado) {
     return (
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-zinc-800">{rotulo}</span>
+        <span className="text-sm font-medium text-zinc-800">Membro</span>
         <div className="flex items-center justify-between gap-2 rounded border border-zinc-300 px-3 py-2">
           <p className="text-sm">
             {selecionado.nome} · {mascaraCpf(selecionado.cpf)}
@@ -90,7 +88,7 @@ export function BuscaMembro({
   return (
     <div className="flex flex-col gap-2">
       <Input
-        rotulo={rotulo}
+        rotulo="Membro"
         placeholder="Nome ou CPF"
         autoComplete="off"
         value={texto}
