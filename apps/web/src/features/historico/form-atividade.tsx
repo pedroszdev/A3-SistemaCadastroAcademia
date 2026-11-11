@@ -9,11 +9,11 @@ import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
 import { ApiError } from "@/lib/api";
 import { formatarData } from "@/lib/format";
+import { temAcessoFinanceiro } from "@/lib/menu";
 import {
   consultarSituacao,
   listarTreinosDoMembro,
   MENSAGEM_INADIMPLENTE,
-  podeConsultarSituacao,
   registrarAtividade,
   type SituacaoFinanceira,
   type TreinoDoMembro,
@@ -24,6 +24,8 @@ import { type ErrosAtividade, hojeEmSaoPaulo, validarAtividade } from "./validac
 type FormAtividadeProps = {
   onSalvo: () => void;
   onCancelar: () => void;
+  // Avisa quem abriu o formulário para não deixar fechá-lo durante o envio.
+  onEnviando?: (enviando: boolean) => void;
 };
 
 function placeholderDoTreino(membro: MembroBusca | null, treinos: TreinoDoMembro[] | null): string {
@@ -32,12 +34,13 @@ function placeholderDoTreino(membro: MembroBusca | null, treinos: TreinoDoMembro
   return treinos.length === 0 ? "Nenhum treino disponível" : "Sem treino";
 }
 
-export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
+export function FormAtividade({ onSalvo, onCancelar, onEnviando }: FormAtividadeProps) {
   const usuario = useUsuario();
-  const consultaSituacao = podeConsultarSituacao(usuario);
+  const consultaSituacao = temAcessoFinanceiro(usuario);
   const [hoje] = useState(() => hojeEmSaoPaulo());
   const [membro, setMembro] = useState<MembroBusca | null>(null);
   const [treinos, setTreinos] = useState<TreinoDoMembro[] | null>(null);
+  const [erroTreinos, setErroTreinos] = useState<string | null>(null);
   const [treinoId, setTreinoId] = useState("");
   const [atividade, setAtividade] = useState("");
   const [data, setData] = useState(hoje);
@@ -58,8 +61,10 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
       .then((lista) => {
         if (!cancelado) setTreinos(lista);
       })
-      .catch(() => {
-        if (!cancelado) setTreinos([]);
+      .catch((e: Error) => {
+        if (cancelado) return;
+        setTreinos([]);
+        setErroTreinos(`Não foi possível carregar os treinos: ${e.message}`);
       });
     if (consultaSituacao) {
       consultarSituacao(membroId)
@@ -79,6 +84,7 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
     setMembro(escolhido);
     setTreinoId("");
     setTreinos(null);
+    setErroTreinos(null);
     setSituacao(null);
     setInadimplente422(false);
     setErroApi(null);
@@ -95,6 +101,7 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
     if (Object.keys(errosEncontrados).length > 0 || !membro) return;
 
     setEnviando(true);
+    onEnviando?.(true);
     try {
       await registrarAtividade({
         membroId: membro.id,
@@ -111,14 +118,22 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
         setErroApi((e as Error).message);
       }
       setEnviando(false);
+      onEnviando?.(false);
     }
   }
 
   const bloqueado = situacao?.situacao === "INADIMPLENTE" || inadimplente422;
 
   return (
-    <form onSubmit={aoEnviar} className="flex flex-col gap-4">
-      <BuscaMembro selecionado={membro} onSelecionar={aoSelecionarMembro} erro={erros.membro} />
+    // noValidate: o max da data e os limites do tempo só ajudam no campo; quem barra e mostra
+    // a mensagem igual à da API é o validarAtividade.
+    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
+      <BuscaMembro
+        selecionado={membro}
+        onSelecionar={aoSelecionarMembro}
+        erro={erros.membro}
+        desabilitado={enviando}
+      />
       {bloqueado && <AvisoInadimplencia maiorAtrasoDias={situacao?.maiorAtrasoDias} />}
       <Select
         rotulo="Treino (opcional)"
@@ -130,10 +145,10 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
         value={treinoId}
         onChange={(e) => setTreinoId(e.target.value)}
         disabled={!membro || !treinos?.length}
+        erro={erroTreinos ?? undefined}
       />
       <Input
         rotulo="Atividade"
-        maxLength={120}
         value={atividade}
         onChange={(e) => setAtividade(e.target.value)}
         erro={erros.atividade}

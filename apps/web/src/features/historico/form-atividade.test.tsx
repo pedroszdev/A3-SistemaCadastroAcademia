@@ -95,7 +95,7 @@ describe("FormAtividade", () => {
     vi.mocked(listarTreinosDoMembro).mockReset();
     vi.mocked(consultarSituacao).mockReset();
     vi.mocked(buscarMembros).mockReset();
-    vi.mocked(buscarMembros).mockResolvedValue([fulano, fulana]);
+    vi.mocked(buscarMembros).mockResolvedValue({ membros: [fulano, fulana], total: 2 });
     vi.mocked(listarTreinosDoMembro).mockImplementation(async (id) =>
       id === "m1" ? [treinoDoFulano] : [treinoDaFulana],
     );
@@ -126,7 +126,7 @@ describe("FormAtividade", () => {
     expect(screen.getByLabelText("Data")).toHaveAttribute("max", hojeEmSaoPaulo());
   });
 
-  it("não registra com data futura (o max do campo barra o envio)", async () => {
+  it("mostra o erro de data futura sem chamar a API", async () => {
     const usuario = userEvent.setup();
     renderizar();
 
@@ -134,8 +134,51 @@ describe("FormAtividade", () => {
     fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2999-12-31" } });
     await usuario.click(screen.getByRole("button", { name: "Salvar" }));
 
+    expect(screen.getByText("data não pode ser uma data futura")).toBeInTheDocument();
     expect(registrarAtividade).not.toHaveBeenCalled();
     expect(onSalvo).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["700", "tempoExecucao deve ser no máximo 600 minutos"],
+    ["0", "tempoExecucao deve ser no mínimo 1 minuto"],
+    ["30.5", "tempoExecucao deve ser um número inteiro de minutos"],
+  ])("com tempo %s mostra a mensagem da API junto com os outros erros", async (tempo, mensagem) => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    fireEvent.change(screen.getByLabelText("Tempo (min)"), { target: { value: tempo } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByText(mensagem)).toBeInTheDocument();
+    expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("deixa digitar mais de 120 caracteres e mostra o erro de tamanho", async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+    fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: "a".repeat(121) } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByLabelText("Atividade")).toHaveValue("a".repeat(121));
+    expect(screen.getByText("atividade deve ter entre 3 e 120 caracteres")).toBeInTheDocument();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("conta como a API: emoji vale 1 e os espaços das pontas não contam", async () => {
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar();
+    const atividade = "💪".repeat(120);
+
+    await preencher(usuario);
+    fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: `  ${atividade}  ` } });
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ atividade }));
   });
 
   it("deixa o treino desabilitado até escolher o membro", () => {
@@ -195,8 +238,8 @@ describe("FormAtividade", () => {
     expect(screen.queryByRole("option", { name: /Hipertrofia/ })).toBeNull();
   });
 
-  it("segue sem treino quando a rota de treinos falha", async () => {
-    vi.mocked(listarTreinosDoMembro).mockRejectedValue(new ApiError(404, "Cannot GET"));
+  it("segue sem treino quando o membro não tem treinos (ou a rota ainda não existe)", async () => {
+    vi.mocked(listarTreinosDoMembro).mockResolvedValue([]);
     vi.mocked(registrarAtividade).mockResolvedValue(registrada);
     const usuario = userEvent.setup();
     renderizar();
@@ -215,6 +258,35 @@ describe("FormAtividade", () => {
       tempoExecucao: 30,
     });
     expect(onSalvo).toHaveBeenCalled();
+  });
+
+  it("mostra o erro da lista de treinos e ainda deixa registrar sem treino", async () => {
+    vi.mocked(listarTreinosDoMembro).mockRejectedValue(new ApiError(500, "Falha interna"));
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await preencher(usuario);
+
+    expect(
+      await screen.findByText("Não foi possível carregar os treinos: Falha interna"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Treino (opcional)")).toBeDisabled();
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ treinoId: undefined }));
+  });
+
+  it("tira o erro dos treinos ao trocar de membro", async () => {
+    vi.mocked(listarTreinosDoMembro).mockRejectedValueOnce(new ApiError(500, "Falha interna"));
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await escolherMembro(usuario, "Ful", /Fulano Silva/);
+    expect(await screen.findByText(/Não foi possível carregar os treinos/)).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+
+    expect(screen.queryByText(/Não foi possível carregar os treinos/)).toBeNull();
   });
 
   it("avisa e bloqueia o Salvar quando o ADMIN escolhe um membro inadimplente (RN09)", async () => {
@@ -390,6 +462,27 @@ describe("FormAtividade", () => {
     await usuario.click(screen.getByRole("button", { name: "Salvar" }));
 
     expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
+  });
+
+  it("não deixa trocar o membro enquanto envia: o 422 de um não cai no outro", async () => {
+    let falhar: (e: Error) => void = () => {};
+    vi.mocked(registrarAtividade).mockReturnValue(
+      new Promise<Atividade>((_, reject) => {
+        falhar = reject;
+      }),
+    );
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    expect(screen.getByRole("button", { name: "Trocar" })).toBeDisabled();
+
+    await act(async () => falhar(new ApiError(422, "Membro com pagamento em atraso")));
+
+    expect(screen.getByText("Membro com pagamento em atraso")).toBeInTheDocument();
+    expect(screen.getByText(/Fulano Silva/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Trocar" })).toBeEnabled();
   });
 
   it("chama onCancelar sem chamar a API", async () => {

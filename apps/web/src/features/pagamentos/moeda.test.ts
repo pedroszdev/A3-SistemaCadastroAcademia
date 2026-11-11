@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mascaraMoeda, valorDaMascara } from "./moeda";
+import { mascaraMoeda, mascaraMoedaColada, valorDaMascara } from "./moeda";
 
 describe("mascaraMoeda", () => {
   it("devolve vazio quando não há dígitos", () => {
@@ -34,5 +34,23 @@ describe("valorDaMascara", () => {
 
   it("devolve 0 quando vazio", () => {
     expect(valorDaMascara("")).toBe(0);
+  });
+});
+
+describe("mascaraMoedaColada", () => {
+  it.each([
+    ["150", /^R\$\s150,00$/],
+    ["1.234,5", /^R\$\s1\.234,50$/],
+    ["R$ 1.234,56", /^R\$\s1\.234,56$/],
+    ["150.5", /^R\$\s150,50$/],
+    ["1.234", /^R\$\s1\.234,00$/],
+    ["0,05", /^R\$\s0,05$/],
+  ])("lê %j com as casas decimais escritas", (colado, esperado) => {
+    expect(mascaraMoedaColada(colado)).toMatch(esperado);
+  });
+
+  it("devolve vazio quando não há valor", () => {
+    expect(mascaraMoedaColada("abc")).toBe("");
+    expect(mascaraMoedaColada("0,00")).toBe("");
   });
 });

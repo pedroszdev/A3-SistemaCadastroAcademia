@@ -13,7 +13,8 @@ import { useUsuario } from "@/features/auth/usuario";
 import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
 import { formatarData } from "@/lib/format";
-import { useFormEmDialog, useListaPaginada } from "@/lib/use-lista-paginada";
+import { useFormDialog } from "@/lib/use-form-dialog";
+import { useListaPaginada } from "@/lib/use-lista-paginada";
 import {
   type Atividade,
   listarAtividades,
@@ -24,6 +25,15 @@ import {
 import { FormAtividade } from "./form-atividade";
 
 type OpcaoFuncionario = { id: string; nome: string };
+
+type Periodo = { dataDe: string; dataAte: string };
+
+// Mesma mensagem da API (query-atividade.dto.ts).
+const MENSAGEM_PERIODO_INVERTIDO = "dataAte não pode ser anterior a dataDe";
+
+function estaInvertido({ dataDe, dataAte }: Periodo): boolean {
+  return dataDe !== "" && dataAte !== "" && dataDe > dataAte;
+}
 
 const COLUNAS: Coluna<Atividade>[] = [
   { chave: "data", titulo: "Data", celula: (a) => formatarData(a.data) },
@@ -40,9 +50,12 @@ export function TelaHistorico() {
   const filtraPorFuncionario = podeFiltrarPorFuncionario(usuario);
   const lista = useListaPaginada(listarAtividades, { page: 1 });
   const { filtro, setFiltro } = lista;
-  const formulario = useFormEmDialog();
+  const formulario = useFormDialog();
   const [membroFiltro, setMembroFiltro] = useState<MembroBusca | null>(null);
   const [funcionarios, setFuncionarios] = useState<OpcaoFuncionario[]>([]);
+  // O período digitado só vira filtro quando é válido: invertido, a API responderia 400 e a
+  // tabela sumiria.
+  const [periodo, setPeriodo] = useState<Periodo>({ dataDe: "", dataAte: "" });
 
   useEffect(() => {
     if (!filtraPorFuncionario) return;
@@ -61,10 +74,21 @@ export function TelaHistorico() {
   }, [filtraPorFuncionario]);
 
   function aoSalvar() {
-    const { chave } = formulario.form;
     mostrar("Atividade registrada.");
-    formulario.fecharSeAinda(chave);
+    formulario.concluir();
     lista.recarregar();
+  }
+
+  function aoMudarPeriodo(campo: keyof Periodo, valor: string) {
+    const novo = { ...periodo, [campo]: valor };
+    setPeriodo(novo);
+    if (estaInvertido(novo)) return;
+    setFiltro({
+      ...filtro,
+      dataDe: novo.dataDe || undefined,
+      dataAte: novo.dataAte || undefined,
+      page: 1,
+    });
   }
 
   function aoEscolherMembro(membro: MembroBusca | null) {
@@ -75,12 +99,7 @@ export function TelaHistorico() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-4">
-        <BuscaMembro
-          incluirInativos
-          rotulo="Membro"
-          selecionado={membroFiltro}
-          onSelecionar={aoEscolherMembro}
-        />
+        <BuscaMembro incluirInativos selecionado={membroFiltro} onSelecionar={aoEscolherMembro} />
         {filtraPorFuncionario && (
           <Select
             rotulo="Funcionário"
@@ -95,19 +114,20 @@ export function TelaHistorico() {
         <Input
           rotulo="Data de"
           type="date"
-          value={filtro.dataDe ?? ""}
-          max={filtro.dataAte}
-          onChange={(e) => setFiltro({ ...filtro, dataDe: e.target.value || undefined, page: 1 })}
+          value={periodo.dataDe}
+          max={periodo.dataAte || undefined}
+          onChange={(e) => aoMudarPeriodo("dataDe", e.target.value)}
         />
         <Input
           rotulo="Data até"
           type="date"
-          value={filtro.dataAte ?? ""}
-          min={filtro.dataDe}
-          onChange={(e) => setFiltro({ ...filtro, dataAte: e.target.value || undefined, page: 1 })}
+          value={periodo.dataAte}
+          min={periodo.dataDe || undefined}
+          onChange={(e) => aoMudarPeriodo("dataAte", e.target.value)}
+          erro={estaInvertido(periodo) ? MENSAGEM_PERIODO_INVERTIDO : undefined}
         />
         {podeRegistrarAtividade(usuario) && (
-          <Button className="ml-auto" onClick={formulario.abrir}>
+          <Button className="ml-auto" onClick={() => formulario.abrir()}>
             Registrar atividade
           </Button>
         )}
@@ -131,6 +151,7 @@ export function TelaHistorico() {
           key={formulario.form.chave}
           onSalvo={aoSalvar}
           onCancelar={formulario.fechar}
+          onEnviando={formulario.setOcupado}
         />
       </Dialog>
     </div>

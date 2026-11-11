@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
@@ -110,9 +110,10 @@ describe("TelaHistorico", () => {
       pagamentosAtrasados: 0,
       maiorAtrasoDias: 0,
     });
-    vi.mocked(buscarMembros).mockResolvedValue([
-      { id: "m1", nome: "Fulano Silva", cpf: "12345678909" },
-    ]);
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m1", nome: "Fulano Silva", cpf: "12345678909" }],
+      total: 1,
+    });
   });
 
   it("mostra a tabela com data, membro, atividade, tempo, treino e funcionário", async () => {
@@ -166,6 +167,31 @@ describe("TelaHistorico", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Falha ao listar");
     expect(screen.queryByText("Esteira")).toBeNull();
+  });
+
+  it("com o período invertido mostra o erro, não busca e mantém a tabela", async () => {
+    renderizar();
+    await screen.findByText("Esteira");
+
+    fireEvent.change(screen.getByLabelText("Data até"), { target: { value: "2026-11-01" } });
+    expect(listarAtividades).toHaveBeenLastCalledWith({ dataAte: "2026-11-01", page: 1 });
+    const chamadas = vi.mocked(listarAtividades).mock.calls.length;
+
+    fireEvent.change(screen.getByLabelText("Data de"), { target: { value: "2026-11-30" } });
+
+    expect(screen.getByText("dataAte não pode ser anterior a dataDe")).toBeInTheDocument();
+    expect(screen.getByLabelText("Data de")).toHaveValue("2026-11-30");
+    expect(listarAtividades).toHaveBeenCalledTimes(chamadas);
+    expect(screen.getByText("Esteira")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Data de"), { target: { value: "2026-10-01" } });
+
+    expect(screen.queryByText("dataAte não pode ser anterior a dataDe")).toBeNull();
+    expect(listarAtividades).toHaveBeenLastCalledWith({
+      dataDe: "2026-10-01",
+      dataAte: "2026-11-01",
+      page: 1,
+    });
   });
 
   it("filtra por membro, incluindo inativos, e limpa o filtro em Trocar", async () => {
@@ -304,9 +330,10 @@ describe("TelaHistorico", () => {
   });
 
   it("registra a atividade, avisa, fecha o formulário e recarrega a lista", async () => {
-    vi.mocked(buscarMembros).mockResolvedValue([
-      { id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" },
-    ]);
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
     vi.mocked(registrarAtividade).mockResolvedValue(atividade("a9"));
     const usuario = userEvent.setup();
     renderizar(instrutor);
@@ -323,10 +350,11 @@ describe("TelaHistorico", () => {
     expect(listarAtividades).toHaveBeenCalledTimes(2);
   });
 
-  it("um registro que termina tarde não fecha o formulário reaberto", async () => {
-    vi.mocked(buscarMembros).mockResolvedValue([
-      { id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" },
-    ]);
+  it("não deixa fechar o formulário enquanto a atividade é enviada", async () => {
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
     let terminar: (a: Atividade) => void = () => {};
     vi.mocked(registrarAtividade).mockReturnValue(
       new Promise<Atividade>((resolve) => {
@@ -339,11 +367,33 @@ describe("TelaHistorico", () => {
 
     const dialogo = await abrirFormEPreencher(usuario);
     await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
-    await usuario.click(within(dialogo).getByRole("button", { name: "Cancelar" }));
-    await usuario.click(screen.getByRole("button", { name: "Registrar atividade" }));
-    terminar(atividade("a9"));
+
+    expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
+    await usuario.keyboard("{Escape}");
+    await usuario.click(screen.getByTestId("dialog-overlay"));
+    expect(screen.getByRole("dialog", { name: "Registrar atividade" })).toBeInTheDocument();
+
+    await act(async () => terminar(atividade("a9")));
 
     expect(await screen.findByText("Atividade registrada.")).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Registrar atividade" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("volta a deixar fechar o formulário quando o registro falha", async () => {
+    vi.mocked(buscarMembros).mockResolvedValue({
+      membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+      total: 1,
+    });
+    vi.mocked(registrarAtividade).mockRejectedValue(new ApiError(422, "Membro inativo"));
+    const usuario = userEvent.setup();
+    renderizar(instrutor);
+    await screen.findByText("Esteira");
+
+    const dialogo = await abrirFormEPreencher(usuario);
+    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialogo).findByRole("alert")).toHaveTextContent("Membro inativo");
+    await usuario.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

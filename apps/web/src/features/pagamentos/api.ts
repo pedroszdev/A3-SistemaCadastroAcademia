@@ -1,6 +1,4 @@
 import { api } from "@/lib/api";
-import { CARGOS_FINANCEIRO } from "@/lib/menu";
-import type { UsuarioDoToken } from "@/lib/sessao";
 import type { Pagina } from "@/lib/use-lista-paginada";
 
 export const TAMANHO_PAGINA = 20;
@@ -55,22 +53,23 @@ export function criarPagamento(dados: DadosCriarPagamento) {
 
 export type MembroBusca = { id: string; nome: string; cpf: string };
 
+// `total` conta todos os que batem com a busca, não só os `membros` devolvidos.
+export type ResultadoBuscaMembros = { membros: MembroBusca[]; total: number };
+
+// Sem opções, lista só os ativos (RN04). O termo já chega sem espaços nas pontas (BuscaMembro).
 export async function buscarMembros(
   busca: string,
   opcoes: { incluirInativos?: boolean } = {},
-): Promise<MembroBusca[]> {
-  const params = new URLSearchParams({ busca: busca.trim() });
+): Promise<ResultadoBuscaMembros> {
+  const params = new URLSearchParams({ busca });
   if (!opcoes.incluirInativos) params.set("ativo", "true");
   params.set("page", "1");
   params.set("pageSize", String(TAMANHO_BUSCA_MEMBROS));
-  const pagina = await api<{ data: MembroBusca[] }>(`/membros?${params}`);
-  return pagina.data.map(({ id, nome, cpf }) => ({ id, nome, cpf }));
-}
-
-// RN04: só membro ativo recebe novo pagamento, então a busca lista só os ativos.
-// A API ainda responde 422 se o membro for desativado depois da busca.
-export function buscarMembrosAtivos(busca: string): Promise<MembroBusca[]> {
-  return buscarMembros(busca);
+  const pagina = await api<{ data: MembroBusca[]; total: number }>(`/membros?${params}`);
+  return {
+    membros: pagina.data.map(({ id, nome, cpf }) => ({ id, nome, cpf })),
+    total: pagina.total,
+  };
 }
 
 export function registrarPagamento(id: string, dataPagamento?: string) {
@@ -84,11 +83,6 @@ export function cancelarPagamento(id: string) {
   return api<Pagamento>(`/pagamentos/${encodeURIComponent(id)}/cancelar`, {
     method: "PATCH",
   });
-}
-
-// Espelha a matriz 4.2; quem barra de verdade é a API.
-export function podeGerirPagamentos(usuario: UsuarioDoToken): boolean {
-  return usuario.tipo === "FUNCIONARIO" && CARGOS_FINANCEIRO.includes(usuario.cargo);
 }
 
 // RN07/RN08: só o pagamento PENDENTE no banco (PENDENTE ou ATRASADO na tela) pode ser pago ou cancelado.

@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { type Pagina, useFormEmDialog, useListaPaginada } from "./use-lista-paginada";
+import { type Pagina, useListaPaginada } from "./use-lista-paginada";
 
 type Filtro = { termo?: string; page: number };
 
@@ -27,6 +27,36 @@ describe("useListaPaginada", () => {
     await waitFor(() => expect(result.current.pagina).toEqual(pagina(["a"])));
     expect(carregar).toHaveBeenCalledWith({ page: 1 });
     expect(result.current.erro).toBeNull();
+  });
+
+  it("aceita um carregar inline sem buscar de novo a cada render", async () => {
+    const carregar = vi.fn<(filtro: Filtro & { membroId: string }) => Promise<Pagina<string>>>();
+    carregar.mockResolvedValue(pagina(["a"]));
+
+    const { result } = renderHook(() =>
+      useListaPaginada((filtro: Filtro) => carregar({ ...filtro, membroId: "m1" }), { page: 1 }),
+    );
+    await waitFor(() => expect(result.current.pagina).toEqual(pagina(["a"])));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+    expect(carregar).toHaveBeenCalledTimes(1);
+    expect(carregar).toHaveBeenCalledWith({ page: 1, membroId: "m1" });
+  });
+
+  it("usa o carregar mais recente ao recarregar", async () => {
+    const carregar = vi.fn<(filtro: Filtro & { membroId: string }) => Promise<Pagina<string>>>();
+    carregar.mockResolvedValue(pagina(["a"]));
+    const { result, rerender } = renderHook(
+      ({ membroId }) =>
+        useListaPaginada((filtro: Filtro) => carregar({ ...filtro, membroId }), { page: 1 }),
+      { initialProps: { membroId: "m1" } },
+    );
+    await waitFor(() => expect(result.current.pagina).not.toBeNull());
+
+    rerender({ membroId: "m2" });
+    act(() => result.current.recarregar());
+
+    await waitFor(() => expect(carregar).toHaveBeenLastCalledWith({ page: 1, membroId: "m2" }));
   });
 
   it("recarrega quando o filtro muda", async () => {
@@ -119,46 +149,5 @@ describe("useListaPaginada", () => {
 
     expect(result.current.erro).toBeNull();
     expect(result.current.pagina?.data).toEqual(["nova"]);
-  });
-});
-
-describe("useFormEmDialog", () => {
-  it("começa fechado", () => {
-    const { result } = renderHook(() => useFormEmDialog());
-
-    expect(result.current.form).toEqual({ aberto: false, chave: 0 });
-  });
-
-  it("abrir incrementa a chave a cada abertura", () => {
-    const { result } = renderHook(() => useFormEmDialog());
-
-    act(() => result.current.abrir());
-    expect(result.current.form).toEqual({ aberto: true, chave: 1 });
-
-    act(() => result.current.fechar());
-    expect(result.current.form).toEqual({ aberto: false, chave: 1 });
-
-    act(() => result.current.abrir());
-    expect(result.current.form).toEqual({ aberto: true, chave: 2 });
-  });
-
-  it("fecharSeAinda fecha quando a chave é a atual", () => {
-    const { result } = renderHook(() => useFormEmDialog());
-    act(() => result.current.abrir());
-
-    act(() => result.current.fecharSeAinda(1));
-
-    expect(result.current.form).toEqual({ aberto: false, chave: 1 });
-  });
-
-  it("fecharSeAinda com chave velha não fecha o formulário reaberto", () => {
-    const { result } = renderHook(() => useFormEmDialog());
-    act(() => result.current.abrir());
-    act(() => result.current.fechar());
-    act(() => result.current.abrir());
-
-    act(() => result.current.fecharSeAinda(1));
-
-    expect(result.current.form).toEqual({ aberto: true, chave: 2 });
   });
 });
