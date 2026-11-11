@@ -15,6 +15,7 @@ Primeira entrega da A3. Este documento é a fonte para as seções 2.1, 2.2 e 2.
 | 4.2 Funcionários | Pedro |
 | 4.3 Membros | Gabriel |
 | 4.4 Treinos | Gabriel |
+| 4.8 Membros e treinos: rastreabilidade, cronograma e demonstração | Gabriel |
 | 4.5 Pagamentos | Yohan |
 | 4.6 Histórico de atividades | Yohan |
 | 4.7 Dashboard | Pedro |
@@ -74,6 +75,53 @@ O INSTRUTOR só lista e consulta membros; a ficha resumida fica de fora porque t
 | **RF35** | O aluno consulta os próprios treinos (lista paginada com filtro por tipo, mais recentes primeiro, e detalhe); o treino de outro membro responde 404 | ALUNO | RN16, RN17 |
 
 A RECEPCIONISTA só consulta; quem cria, edita e exclui é o INSTRUTOR ou o ADMIN.
+
+### 4.8 Membros e treinos: rastreabilidade, cronograma e demonstração (Gabriel)
+
+Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR aberto) · ⏳ planejado.
+
+**Rastreabilidade requisito → critério → teste → arquivo**
+
+| RF | CA | Teste | Arquivo | Status |
+| --- | --- | --- | --- | --- |
+| **RF20** cadastrar membro | CA02 | unitário (create, CPF duplicado → 409), HTTP (CPF e telefone só com dígitos, CPF inválido → 400), matriz de permissões | `apps/api/src/membros/membros.service.spec.ts`, `membros.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ |
+| **RF21** listar membros | CA02 | unitário (busca por nome/CPF, filtro ativo, paginação), matriz de permissões | `membros.service.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ |
+| **RF22** consultar membro | — | unitário (404), matriz de permissões | `membros.service.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ |
+| **RF23** editar membro | — | unitário (CPF fora do update), HTTP (CPF no body → 400) | `membros.service.spec.ts`, `membros.http.spec.ts` | ✅ |
+| **RF24** desativar e reativar | CA12 | unitário (`desativar`, `reativar`, `assertMembroAtivo` → 422), e2e sem token → 401 | `membros.service.spec.ts`, `test/membros.e2e-spec.ts` | ✅ |
+| **RF25** ficha resumida | — | MEM-06 (unitário), tela WEB-G3 | `apps/api/src/membros/` (a criar) | ⏳ |
+| **RF26** acesso do aluno ao portal | — | MEM-07 (unitário + e2e) | `apps/api/src/membros/` (a criar) | ⏳ |
+| **RF30** criar treino | CA03 | unitário (RN04 → 422, RN05 → 400, data = hoje passa), HTTP (body inválido → 400), matriz de permissões (RECEPCIONISTA → 403) | `apps/api/src/treinos/treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #55 |
+| **RF31** listar treinos e treinos do membro | CA06 (escolha do treino) | unitário (filtros, paginação, membro inexistente → 404) | `treinos.service.spec.ts`, `membros-treinos.controller.spec.ts` | 🔄 PR #55 |
+| **RF32** consultar treino | — | unitário (404) | `treinos.service.spec.ts` | 🔄 PR #55 |
+| **RF33** editar treino | — | unitário (só revalida a data se ela vier) | `treinos.service.spec.ts` | 🔄 PR #55 |
+| **RF34** excluir treino | — | unitário (404), HTTP (204), matriz de permissões | `treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #55 |
+| **RF35** treinos do aluno | — | unitário e HTTP (`membroId` do token, outro membro → 404, `membroId` na query → 400), e2e RN16 | `treinos.service.spec.ts`, `meus-treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #55 |
+| RF20 a RF35 (validações ponta a ponta) | CA02, CA03 | E2E-04 | `test/membros-treinos.e2e-spec.ts` (a criar) | ⏳ |
+
+**Cronograma do que falta (Gabriel)**
+
+| Task | O que entrega | Data |
+| --- | --- | --- |
+| PR #55 (TRE-02 a TRE-05) | módulo de treinos na API, libera o passo 3 do E2E-02 | merge até 12/11 |
+| MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | 13/11 |
+| MEM-07 | liberar, redefinir e revogar o acesso do aluno (RF26) | 13/11 |
+| WEB-G1, WEB-G2 | lista e formulário de membros | 14/11 |
+| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | 15/11 |
+| WEB-G5, WEB-G6 | testes do front e "Meus treinos" do portal do aluno | 16/11 |
+| E2E-04 | e2e das validações de membros e treinos | 16/11 |
+
+**Demonstração: membros e treinos (passos 2 e 3 do fluxo)**
+
+Antes: `pnpm db:seed` e `pnpm dev` (API em `:3000`). Todos os dados são fictícios; a senha dos logins do seed é `senha1234`. Enquanto as telas WEB-G1 a G4 não entram, a demonstração é pela API:
+
+1. Login da recepção (`recepcao`) e do instrutor (`instrutor`) em `POST /auth/login` e guardar os dois tokens.
+2. **CA02:** com o token da recepção, `GET /membros?busca=Diego` mostra o Diego Rocha ativo; `POST /membros` com um CPF fictício válido cadastra um membro novo, que já começa ativo.
+3. **RN04:** com o token do instrutor, `POST /treinos` para a Isabela Moura (inativa no seed) → 422.
+4. **RN05:** `POST /treinos` para o Diego com `dataInicio` de ontem → 400.
+5. **CA03:** `POST /treinos` para o Diego com tipo `Musculação`, duração 45 e `dataInicio` de hoje → 201; `GET /membros/:id/treinos` mostra o treino.
+6. **Permissão:** o mesmo `POST /treinos` com o token da recepção → 403.
+7. **RN16:** login da aluna Ana Souza em `POST /auth/login-aluno`; `GET /me/treinos` lista só os treinos dela, e `GET /me/treinos/<id do treino do Diego>` → 404.
 
 ### 4.5 Pagamentos
 
