@@ -1,7 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { MENSAGEM_TIPO_TREINO } from '../tipos-treino';
-import { QueryTreinoDto } from './query-treino.dto';
+import { QueryTreinoDto, QueryTreinoMembroDto } from './query-treino.dto';
 
 async function validar(query: Record<string, unknown>) {
   const dto = plainToInstance(QueryTreinoDto, query);
@@ -40,5 +40,29 @@ describe('QueryTreinoDto', () => {
     const { mensagens } = await validar(query);
 
     expect(mensagens).toContain(mensagem);
+  });
+});
+
+describe('QueryTreinoMembroDto', () => {
+  it('aceita só tipo e paginação e converte a página para número', async () => {
+    const dto = plainToInstance(QueryTreinoMembroDto, {
+      tipo: 'Cardio',
+      page: '2',
+    });
+    const erros = await validate(dto);
+
+    expect(erros).toEqual([]);
+    expect(dto.tipo).toBe('Cardio');
+    expect(dto.page).toBe(2);
+    expect(dto.pageSize).toBe(20);
+  });
+
+  it('recusa tipo fora da lista', async () => {
+    const erros = await validate(
+      plainToInstance(QueryTreinoMembroDto, { tipo: 'Yoga' }),
+    );
+    const mensagens = erros.flatMap((e) => Object.values(e.constraints ?? {}));
+
+    expect(mensagens).toContain(MENSAGEM_TIPO_TREINO);
   });
 });
