@@ -1,6 +1,6 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api";
 import { buscarMembros, type MembroBusca } from "./api";
 import { BuscaMembro, ESPERA_BUSCA_MS } from "./busca-membro";
@@ -12,16 +12,6 @@ const fulana: MembroBusca = { id: "m2", nome: "Fulana Souza", cpf: "98765432100"
 
 function esperar(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function adiada() {
-  let resolver: (membros: MembroBusca[]) => void = () => {};
-  let rejeitar: (erro: Error) => void = () => {};
-  const promessa = new Promise<MembroBusca[]>((resolve, reject) => {
-    resolver = resolve;
-    rejeitar = reject;
-  });
-  return { promessa, resolver, rejeitar };
 }
 
 describe("BuscaMembro", () => {
@@ -132,46 +122,45 @@ describe("BuscaMembro", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("uma resposta atrasada de um termo antigo não sobrescreve a mais nova", async () => {
-    const antiga = adiada();
-    const nova = adiada();
-    vi.mocked(buscarMembros)
-      .mockReturnValueOnce(antiga.promessa)
-      .mockReturnValueOnce(nova.promessa);
-    const usuario = userEvent.setup();
-    render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
+  describe("com uma busca antiga terminando depois da nova", () => {
+    type Adiada = PromiseWithResolvers<MembroBusca[]>;
 
-    await usuario.type(screen.getByLabelText("Membro"), "Fu");
-    await waitFor(() => expect(buscarMembros).toHaveBeenCalledTimes(1));
-    await usuario.type(screen.getByLabelText("Membro"), "l");
-    await waitFor(() => expect(buscarMembros).toHaveBeenCalledTimes(2));
+    // O debounce roda em tempo falso: o teste não espera os 300ms de verdade. O
+    // shouldAdvanceTime deixa correr os setTimeout(0) que a Testing Library usa por dentro.
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
 
-    await act(async () => nova.resolver([fulana]));
-    await act(async () => antiga.resolver([fulano]));
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
-    expect(screen.getByRole("button", { name: /Fulana Souza/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Fulano Silva/ })).toBeNull();
-  });
+    it.each([
+      ["a resposta", (antiga: Adiada) => antiga.resolve([fulano])],
+      ["o erro", (antiga: Adiada) => antiga.reject(new ApiError(500, "Falha na busca antiga"))],
+    ])("%s do termo antigo não aparece no lugar da busca nova", async (_, terminarAntiga) => {
+      const antiga = Promise.withResolvers<MembroBusca[]>();
+      const nova = Promise.withResolvers<MembroBusca[]>();
+      vi.mocked(buscarMembros)
+        .mockReturnValueOnce(antiga.promise)
+        .mockReturnValueOnce(nova.promise);
+      const usuario = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
 
-  it("um erro atrasado de um termo antigo não aparece depois da busca nova", async () => {
-    const antiga = adiada();
-    const nova = adiada();
-    vi.mocked(buscarMembros)
-      .mockReturnValueOnce(antiga.promessa)
-      .mockReturnValueOnce(nova.promessa);
-    const usuario = userEvent.setup();
-    render(<BuscaMembro selecionado={null} onSelecionar={onSelecionar} />);
+      await usuario.type(screen.getByLabelText("Membro"), "Fu");
+      await act(async () => vi.advanceTimersByTime(ESPERA_BUSCA_MS));
+      expect(buscarMembros).toHaveBeenCalledTimes(1);
+      await usuario.type(screen.getByLabelText("Membro"), "l");
+      await act(async () => vi.advanceTimersByTime(ESPERA_BUSCA_MS));
+      expect(buscarMembros).toHaveBeenCalledTimes(2);
 
-    await usuario.type(screen.getByLabelText("Membro"), "Fu");
-    await waitFor(() => expect(buscarMembros).toHaveBeenCalledTimes(1));
-    await usuario.type(screen.getByLabelText("Membro"), "l");
-    await waitFor(() => expect(buscarMembros).toHaveBeenCalledTimes(2));
+      await act(async () => nova.resolve([fulana]));
+      await act(async () => terminarAntiga(antiga));
 
-    await act(async () => nova.resolver([fulana]));
-    await act(async () => antiga.rejeitar(new ApiError(500, "Falha na busca antiga")));
-
-    expect(screen.queryByText("Falha na busca antiga")).toBeNull();
-    expect(screen.getByRole("button", { name: /Fulana Souza/ })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Fulana Souza/ })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Fulano Silva/ })).toBeNull();
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
   });
 
   it("mostra o membro escolhido e volta à busca em Trocar", async () => {
