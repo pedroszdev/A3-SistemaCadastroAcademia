@@ -70,10 +70,10 @@ type Usuario = ReturnType<typeof userEvent.setup>;
 const onSalvo = vi.fn();
 const onCancelar = vi.fn();
 
-function renderizar(usuarioLogado: UsuarioDoToken = admin) {
+function renderizar(usuarioLogado: UsuarioDoToken = admin, membroId?: string) {
   render(
     <UsuarioProvider usuario={usuarioLogado}>
-      <FormAtividade onSalvo={onSalvo} onCancelar={onCancelar} />
+      <FormAtividade membroId={membroId} onSalvo={onSalvo} onCancelar={onCancelar} />
     </UsuarioProvider>,
   );
 }
@@ -337,6 +337,49 @@ describe("FormAtividade", () => {
       data: hojeEmSaoPaulo(),
       tempoExecucao: 45,
     });
+    expect(onSalvo).toHaveBeenCalled();
+  });
+
+  it("com membro fixo, carrega treinos e situação na abertura, sem a busca", async () => {
+    renderizar(admin, "m1");
+
+    await waitFor(() => expect(listarTreinosDoMembro).toHaveBeenCalledWith("m1"));
+    await waitFor(() => expect(consultarSituacao).toHaveBeenCalledWith("m1"));
+    expect(screen.queryByLabelText("Membro")).toBeNull();
+    await waitFor(() => expect(screen.getByLabelText("Treino (opcional)")).toBeEnabled());
+    expect(buscarMembros).not.toHaveBeenCalled();
+  });
+
+  it("com membro fixo inadimplente, mostra o aviso e bloqueia o Salvar", async () => {
+    vi.mocked(consultarSituacao).mockResolvedValue(inadimplente);
+    renderizar(admin, "m1");
+
+    const aviso = await screen.findByRole("alert");
+    expect(aviso).toHaveTextContent("Membro com pagamento em atraso");
+    expect(aviso).toHaveTextContent("(maior atraso: 12 dias)");
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled();
+    expect(registrarAtividade).not.toHaveBeenCalled();
+  });
+
+  it("com membro fixo, registra com esse membroId e o treino escolhido", async () => {
+    vi.mocked(registrarAtividade).mockResolvedValue(registrada);
+    const usuario = userEvent.setup();
+    renderizar(instrutor, "m1");
+
+    await waitFor(() => expect(screen.getByLabelText("Treino (opcional)")).toBeEnabled());
+    await usuario.selectOptions(screen.getByLabelText("Treino (opcional)"), "t1");
+    await usuario.type(screen.getByLabelText("Atividade"), "Esteira");
+    await usuario.type(screen.getByLabelText("Tempo (min)"), "30");
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(registrarAtividade).toHaveBeenCalledWith({
+      membroId: "m1",
+      treinoId: "t1",
+      atividade: "Esteira",
+      data: hojeEmSaoPaulo(),
+      tempoExecucao: 30,
+    });
+    expect(consultarSituacao).not.toHaveBeenCalled();
     expect(onSalvo).toHaveBeenCalled();
   });
 

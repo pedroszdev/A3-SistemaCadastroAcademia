@@ -22,17 +22,22 @@ import { AvisoInadimplencia } from "./aviso-inadimplencia";
 import { type ErrosAtividade, hojeEmSaoPaulo, validarAtividade } from "./validacao";
 
 type FormAtividadeProps = {
+  // Na ficha do membro (WEB-Y4) o membro já vem fixo e a busca some.
+  membroId?: string;
   onSalvo: () => void;
   onCancelar: () => void;
 };
 
-function placeholderDoTreino(membro: MembroBusca | null, treinos: TreinoDoMembro[] | null): string {
-  if (!membro) return "Escolha o membro primeiro";
+function placeholderDoTreino(
+  membroId: string | undefined,
+  treinos: TreinoDoMembro[] | null,
+): string {
+  if (!membroId) return "Escolha o membro primeiro";
   if (!treinos) return "Carregando treinos…";
   return treinos.length === 0 ? "Nenhum treino disponível" : "Sem treino";
 }
 
-export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
+export function FormAtividade({ membroId: membroFixo, onSalvo, onCancelar }: FormAtividadeProps) {
   const usuario = useUsuario();
   const consultaSituacao = podeConsultarSituacao(usuario);
   const [hoje] = useState(() => hojeEmSaoPaulo());
@@ -48,7 +53,7 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
   const [erroApi, setErroApi] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  const membroId = membro?.id;
+  const membroId = membroFixo ?? membro?.id;
 
   useEffect(() => {
     if (!membroId) return;
@@ -87,17 +92,17 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
   async function aoEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     const errosEncontrados = validarAtividade(
-      { membroId: membro?.id ?? null, atividade, data, tempoExecucao: tempo },
+      { membroId: membroId ?? null, atividade, data, tempoExecucao: tempo },
       hoje,
     );
     setErros(errosEncontrados);
     setErroApi(null);
-    if (Object.keys(errosEncontrados).length > 0 || !membro) return;
+    if (Object.keys(errosEncontrados).length > 0 || !membroId) return;
 
     setEnviando(true);
     try {
       await registrarAtividade({
-        membroId: membro.id,
+        membroId,
         treinoId: treinoId || undefined,
         atividade: atividade.trim(),
         data,
@@ -118,18 +123,20 @@ export function FormAtividade({ onSalvo, onCancelar }: FormAtividadeProps) {
 
   return (
     <form onSubmit={aoEnviar} className="flex flex-col gap-4">
-      <BuscaMembro selecionado={membro} onSelecionar={aoSelecionarMembro} erro={erros.membro} />
+      {!membroFixo && (
+        <BuscaMembro selecionado={membro} onSelecionar={aoSelecionarMembro} erro={erros.membro} />
+      )}
       {bloqueado && <AvisoInadimplencia maiorAtrasoDias={situacao?.maiorAtrasoDias} />}
       <Select
         rotulo="Treino (opcional)"
-        placeholder={placeholderDoTreino(membro, treinos)}
+        placeholder={placeholderDoTreino(membroId, treinos)}
         opcoes={(treinos ?? []).map((treino) => ({
           valor: treino.id,
           rotulo: `${treino.tipo} · início ${formatarData(treino.dataInicio)}`,
         }))}
         value={treinoId}
         onChange={(e) => setTreinoId(e.target.value)}
-        disabled={!membro || !treinos?.length}
+        disabled={!membroId || !treinos?.length}
       />
       <Input
         rotulo="Atividade"
