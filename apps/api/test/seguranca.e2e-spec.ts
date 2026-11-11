@@ -579,6 +579,41 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       expect(corpo.total).toBe(1);
     });
 
+    it('dois alunos logados: nenhum vê o treino nem a atividade do outro, nos dois sentidos (RN16)', async () => {
+      const outro = await criarMembro(prisma, {
+        senhaHash: hashSync(SENHA_PADRAO, 4),
+      });
+      const tokenOutro = await logarAluno(outro.cpf);
+      const treinoDoOutro = await criarTreino(prisma, outro.id);
+      const atividadeDoOutro = await criarAtividade(prisma, {
+        membroId: outro.id,
+      });
+      const get = (token: string, url: string) =>
+        request(app.getHttpServer())
+          .get(url)
+          .set('Authorization', bearer(token));
+
+      // aluno A → recursos do aluno B, e o contrário
+      await get(tokens[ALUNO], `/me/treinos/${treinoDoOutro.id}`).expect(404);
+      await get(tokens[ALUNO], `/me/atividades/${atividadeDoOutro.id}`).expect(
+        404,
+      );
+      await get(tokenOutro, `/me/treinos/${massa.treinoDoAlunoId}`).expect(404);
+      await get(
+        tokenOutro,
+        `/me/atividades/${massa.atividadeDoAlunoId}`,
+      ).expect(404);
+
+      // cada um continua vendo os próprios
+      await get(tokens[ALUNO], `/me/treinos/${massa.treinoDoAlunoId}`).expect(
+        200,
+      );
+      await get(tokenOutro, `/me/treinos/${treinoDoOutro.id}`).expect(200);
+      await get(tokenOutro, `/me/atividades/${atividadeDoOutro.id}`).expect(
+        200,
+      );
+    });
+
     it('corpo inválido com cargo sem permissão → 403, não 400', async () => {
       await request(app.getHttpServer())
         .post('/pagamentos')
