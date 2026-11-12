@@ -42,6 +42,7 @@ export function paraResposta({ senhaHash, ...membro }: MembroComHash) {
 
 const SO_DIGITOS = /^\d+$/;
 const ESPACOS = /\s/g;
+const ACESSO_DE_INATIVO = 'Membro inativo não pode ter o acesso liberado';
 
 // Busca só com números (com ou sem a máscara ou espaços) procura pelo início
 // do CPF; qualquer outra coisa procura no nome, sem diferenciar maiúsculas.
@@ -170,18 +171,27 @@ export class MembrosService {
   // SALT_ROUNDS do login (auth.service.ts), para o tempo do compare não revelar
   // a conta.
   async liberarAcesso(id: string, dto: LiberarAcessoDto) {
-    await this.assertMembroAtivo(
-      id,
-      'Membro inativo não pode ter o acesso liberado',
-    );
+    await this.assertMembroAtivo(id, ACESSO_DE_INATIVO);
     const senhaHash = await hashSenha(dto.senha);
-    return paraResposta(
-      await this.prisma.membro.update({
-        where: { id },
-        data: { senhaHash },
-        select: MEMBRO_SELECT_COM_HASH,
-      }),
-    );
+    try {
+      return paraResposta(
+        await this.prisma.membro.update({
+          // ativo no where: se o membro foi desativado depois da checagem, o
+          // update não acha a linha e nada é gravado.
+          where: { id, ativo: true },
+          data: { senhaHash },
+          select: MEMBRO_SELECT_COM_HASH,
+        }),
+      );
+    } catch (erro) {
+      if (
+        erro instanceof PrismaClientKnownRequestError &&
+        erro.code === 'P2025'
+      ) {
+        throw new UnprocessableEntityException(ACESSO_DE_INATIVO);
+      }
+      throw erro;
+    }
   }
 
   // Revogar vale também para o membro inativo: só tira o acesso.

@@ -321,7 +321,7 @@ describe('MembrosService', () => {
         select: unknown;
         data: { senhaHash: string };
       }>(prisma.membro.update);
-      expect(args.where).toEqual({ id: ID });
+      expect(args.where).toEqual({ id: ID, ativo: true });
       expect(args.select).toBe(MEMBRO_SELECT_COM_HASH);
       expect(args.data.senhaHash).not.toBe('senha1234');
       await expect(compare('senha1234', args.data.senhaHash)).resolves.toBe(
@@ -359,6 +359,25 @@ describe('MembrosService', () => {
         service.liberarAcesso(ID, { senha: 'senha1234' }),
       ).rejects.toThrow(new UnprocessableEntityException(MENSAGEM));
       expect(prisma.membro.update).not.toHaveBeenCalled();
+    });
+
+    it('membro desativado entre a checagem e a gravação → 422 (P2025)', async () => {
+      prisma.membro.findUnique.mockResolvedValue({ ativo: true });
+      prisma.membro.update.mockRejectedValue(erroPrisma('P2025'));
+
+      await expect(
+        service.liberarAcesso(ID, { senha: 'senha1234' }),
+      ).rejects.toThrow(new UnprocessableEntityException(MENSAGEM));
+    });
+
+    it('repassa os outros erros do Prisma', async () => {
+      const erro = erroPrisma('P2034');
+      prisma.membro.findUnique.mockResolvedValue({ ativo: true });
+      prisma.membro.update.mockRejectedValue(erro);
+
+      await expect(
+        service.liberarAcesso(ID, { senha: 'senha1234' }),
+      ).rejects.toBe(erro);
     });
 
     it('inexistente → 404 sem gravar', async () => {
