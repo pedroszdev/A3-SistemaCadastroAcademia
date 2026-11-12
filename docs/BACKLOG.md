@@ -1581,7 +1581,7 @@ Uma task de código só é marcada como concluída quando:
 
 ## 8. Issues do professor
 
-Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada como resolvida depois que o professor confere as evidências na `main`. Atualizado em 05/11/2026.
+Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada como resolvida depois que o professor confere as evidências na `main`. Atualizado em 12/11/2026.
 
 | Issue | Assunto | Responsável | PRs e commits | Status | Prazo |
 | --- | --- | --- | --- | --- | --- |
