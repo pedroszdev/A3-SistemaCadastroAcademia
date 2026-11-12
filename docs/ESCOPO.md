@@ -134,8 +134,8 @@ Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR abert
 | **RF22** consultar membro | — | unitário (404), matriz de permissões | `membros.service.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ |
 | **RF23** editar membro | — | unitário (CPF fora do update), HTTP (CPF no body → 400) | `membros.service.spec.ts`, `membros.http.spec.ts` | ✅ |
 | **RF24** desativar e reativar | CA12 | unitário (`desativar`, `reativar`, `assertMembroAtivo` → 422), e2e sem token → 401 | `membros.service.spec.ts`, `test/membros.e2e-spec.ts` | ✅ |
-| **RF25** ficha resumida | — | MEM-06 (unitário), tela WEB-G3 | `apps/api/src/membros/` (a criar) | ⏳ |
-| **RF26** acesso do aluno ao portal | — | MEM-07 (unitário + e2e) | `apps/api/src/membros/` (a criar) | ⏳ |
+| **RF25** ficha resumida | — | MEM-06 (unitário, HTTP e matriz de permissões), tela WEB-G3 (Testing Library) | `apps/api/src/membros-resumo/`, `apps/web/src/features/membros/ficha-membro.tsx` | 🔄 PRs #61 e #63 |
+| **RF26** acesso do aluno ao portal | — | MEM-07 (unitário + e2e) | `apps/api/src/membros/` | 🔄 PR #60 (Pedro) |
 | **RF30** criar treino | CA03 | unitário (RN04 → 422, RN05 → 400, data = hoje passa), HTTP (body inválido → 400), matriz de permissões (RECEPCIONISTA → 403) | `apps/api/src/treinos/treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
 | **RF31** listar treinos e treinos do membro | CA06 (escolha do treino) | unitário (filtros, paginação, membro inexistente → 404) | `treinos.service.spec.ts`, `membros-treinos.controller.spec.ts` | ✅ (PR #55) |
 | **RF32** consultar treino | — | unitário (404) | `treinos.service.spec.ts` | ✅ (PR #55) |
@@ -152,10 +152,10 @@ Em 11/11, a MEM-07, a WEB-G6 e a E2E-04 passaram do Gabriel para o Pedro (veja a
 | --- | --- | --- | --- |
 | PR #55 (TRE-02 a TRE-05) | módulo de treinos na API, libera o passo 3 do E2E-02 | Gabriel | ✅ mergeado em 11/11 |
 | MEM-07 | liberar, redefinir e revogar o acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
-| MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | Gabriel | 13/11 |
-| WEB-G1, WEB-G2 | lista e formulário de membros | Gabriel | 14/11 |
-| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 15/11 |
-| WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
+| MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | Gabriel | 🔄 PR #61 (11/11) |
+| WEB-G1, WEB-G2 | lista e formulário de membros | Gabriel | 🔄 PR #63 (11/11) |
+| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 🔄 PRs #63 e #62 (11/11) |
+| WEB-G5 | testes do front de membros e treinos | Gabriel | 🔄 PRs #63 e #62 (11/11) |
 | WEB-G6 | "Meus treinos" do portal do aluno e o componente de acesso da ficha | Pedro | 16/11 |
 | E2E-04 | e2e das validações de membros e treinos | Pedro | 16/11 |
 
@@ -366,10 +366,10 @@ A cobertura de 100% do escopo analisado vale só para o que já está na `main`;
 | --- | --- | --- | --- |
 | Merge do PR #55 (TRE-02 a TRE-05) | módulo de treinos na API (passo 3 do fluxo) | Gabriel | ✅ 11/11 |
 | Merge do E2E-02 (`fluxo-principal.e2e-spec.ts`) | teste de sistema CA01–CA08 com banco de teste | Gabriel | ✅ 11/11 (PR #57) |
-| MEM-06 | ficha do membro (RF25) | Gabriel | 13/11 |
+| MEM-06 | ficha do membro (RF25) | Gabriel | 🔄 PR #61 |
 | MEM-07 | acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
-| WEB-G1 a WEB-G4 | telas de membros e treinos (passos 2 e 3 pela interface) | Gabriel | 14/11 a 15/11 |
-| WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
+| WEB-G1 a WEB-G4 | telas de membros e treinos (passos 2 e 3 pela interface) | Gabriel | 🔄 PRs #62 e #63 |
+| WEB-G5 | testes do front de membros e treinos | Gabriel | 🔄 PRs #63 e #62 (11/11) |
 | WEB-G6 e E2E-04 | "Meus treinos" e e2e de validações | Pedro | 16/11 |
 | E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | 🔄 PR #59 |
 | QA-01 a QA-05 | issues do Sonar zeradas, cobertura consolidada ≥ 75% e quality gate aprovado | Pedro, Gabriel e Yohan | 17/11 a 23/11 (code freeze) |
