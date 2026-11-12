@@ -112,4 +112,4 @@ Datas propostas, a confirmar no check-in do grupo.
 
 | Pendência | Task | Responsável | Data | Como fecha a linha da matriz |
 | --- | --- | --- | --- | --- |
-| Liberar acesso do aluno | MEM-07 | Pedro | 16/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
+| Liberar acesso do aluno | MEM-07 | Pedro | 13/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
