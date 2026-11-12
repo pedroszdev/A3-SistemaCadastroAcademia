@@ -1589,6 +1589,14 @@ Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada
 | [#29](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/29) | Lacunas entre escopo, fluxo principal (CA01–CA08) e evidências | Pedro (coordena); Gabriel e Yohan nos módulos deles | #26 (`b208bd1`, inadimplência), #55, #56, #57, #64 | ✅ entregue em 11/11: escopo completo e RNFs (#56), E2E-02 com CA01–CA08 (#57), módulo de treinos (#55), rastreabilidade com status, cronograma e roteiro da demo (#56); status da rastreabilidade depois dos merges (#64). Fechada em 12/11 pelo Gabriel, com o retorno final na issue. Conferência do professor pendente | 11/11 |
 | [#30](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/30) | Quality gate barrando o merge e escopo das métricas | Yohan (revisão do Pedro) | #31 (`4a3c095`); #34 (prova, não mergear); #36 e #48 (evidências); [`docs/evidencias/quality-gate`](evidencias/quality-gate/README.md) | ✅ fechada em 09/11 pelo Yohan, com o retorno final na issue (ruleset da `main` e escopo das métricas conferidos de novo em 09/11). Conferência do professor pendente | 11/11 |
 
+### Registro da triagem semanal
+
+A cada triagem (toda segunda, até 02/12), uma linha nova: o que estava aberto, o que mudou e o que foi feito. Se o professor reabrir uma issue ou pedir ajuste num comentário, a linha dela na tabela acima volta para 🟡.
+
+| Data | Issues abertas | Novas desde a anterior | O que foi feito |
+| --- | --- | --- | --- |
+| 12/11/2026 | 0 | 0 | #28, #29 e #30 fechadas pelo grupo, sem comentário do professor depois do retorno final. Tabela acima atualizada. Nenhuma das três tem label nem responsável atribuído no GitHub; falta colocar a label `professor` e a do módulo (#28: `auth`; #29: `docs`; #30: `ci` e `sonar`) e atribuir aos responsáveis da tabela |
+
 ### Exceções à regra 1
 
 A regra 1 (seção 2) diz que cada um commita só o próprio código. As exceções ficam registradas aqui, com o motivo:
