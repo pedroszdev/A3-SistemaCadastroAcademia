@@ -483,8 +483,9 @@ describe('Segurança: matriz de permissões (e2e)', () => {
     );
   });
 
-  // RN12: o hash da senha nunca sai da API. O aluno da massa tem senhaHash e
+  // RN12: o hash da senha nunca sai da API. O aluno do beforeAll tem senhaHash e
   // os funcionários também, então as listas de membros e funcionários os incluem.
+  // Os membros da massa não têm senha; neles o teste pega a chave senhaHash.
   describe('senhaHash fora das respostas (RN12)', () => {
     const HASH = /senhaHash|\$2[aby]\$/;
 
@@ -623,10 +624,32 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       await get(tokens[ALUNO], `/me/treinos/${massa.treinoDoAlunoId}`).expect(
         200,
       );
+      await get(
+        tokens[ALUNO],
+        `/me/atividades/${massa.atividadeDoAlunoId}`,
+      ).expect(200);
       await get(tokenOutro, `/me/treinos/${treinoDoOutro.id}`).expect(200);
       await get(tokenOutro, `/me/atividades/${atividadeDoOutro.id}`).expect(
         200,
       );
+
+      // e as listas de cada um só têm os próprios
+      const ids = async (token: string, url: string) => {
+        const corpo = (await get(token, url).expect(200)).body as {
+          data: { id: string }[];
+        };
+        return corpo.data.map((r) => r.id);
+      };
+      expect(await ids(tokens[ALUNO], '/me/treinos')).toEqual([
+        massa.treinoDoAlunoId,
+      ]);
+      expect(await ids(tokens[ALUNO], '/me/atividades')).toEqual([
+        massa.atividadeDoAlunoId,
+      ]);
+      expect(await ids(tokenOutro, '/me/treinos')).toEqual([treinoDoOutro.id]);
+      expect(await ids(tokenOutro, '/me/atividades')).toEqual([
+        atividadeDoOutro.id,
+      ]);
     });
 
     it('corpo inválido com cargo sem permissão → 403, não 400', async () => {
