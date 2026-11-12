@@ -1116,7 +1116,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
   - **Treinos** (Gabriel);
   - **Pagamentos** e **Histórico**, usando os componentes do Yohan (WEB-Y4).
 - Botões desativar/reativar.
-- Encaixar no cabeçalho o `<AcessoDoMembro membroId={id} ativo={membro.ativo} acessoLiberado={membro.acessoLiberado} onAlterado={recarregar} />` do Pedro (WEB-G6). Se a ficha ficar pronta antes, ela pode ser mergeada sem ele e o componente entra depois.
+- Encaixar no cabeçalho o `<AcessoDoMembro membroId={id} ativo={membro.ativo} acessoLiberado={membro.acessoLiberado} onAlterado={recarregar} />` do Pedro (WEB-G6). Se a ficha ficar pronta antes, ela pode ser mergeada sem ele. Nesse caso, depois do merge da WEB-G6, o Gabriel encaixa o componente em um PR curto, porque o arquivo da ficha é dele (regra 1).
 
 **Resultado esperado**
 - Uma tela central que junta os módulos. É ótima para a demo.
