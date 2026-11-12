@@ -522,6 +522,22 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       expect(await prisma.pagamento.count()).toBe(1);
     });
 
+    it('resumo do membro: o INSTRUTOR recebe a situação financeira nula, o ADMIN e a RECEPCIONISTA recebem a situação', async () => {
+      const resumo = linha('get', '/membros/:id/resumo');
+
+      type Resumo = { situacaoFinanceira: { situacao: string } | null };
+
+      const instrutor = await chamar(resumo, tokens[INSTRUTOR]).expect(200);
+      expect((instrutor.body as Resumo).situacaoFinanceira).toBeNull();
+
+      for (const cargo of [ADMIN, RECEPCIONISTA]) {
+        const resposta = await chamar(resumo, tokens[cargo]).expect(200);
+        expect((resposta.body as Resumo).situacaoFinanceira?.situacao).toBe(
+          'EM_DIA',
+        );
+      }
+    });
+
     it('RECEPCIONISTA não registra atividade: 403 e nada gravado', async () => {
       await chamar(linha('post', '/atividades'), tokens[RECEPCIONISTA]).expect(
         403,
