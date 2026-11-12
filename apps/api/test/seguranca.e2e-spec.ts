@@ -352,11 +352,7 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       senhaHash: hashSync(SENHA_PADRAO, 4),
     });
     alunoId = aluno.id;
-    const resposta = await request(app.getHttpServer())
-      .post('/auth/login-aluno')
-      .send({ cpf: aluno.cpf, senha: SENHA_PADRAO })
-      .expect(200);
-    tokens[ALUNO] = (resposta.body as { accessToken: string }).accessToken;
+    tokens[ALUNO] = await logarAluno(aluno.cpf);
   });
 
   // Ordem das FKs: filhos antes do membro e do funcionário.
@@ -401,6 +397,15 @@ describe('Segurança: matriz de permissões (e2e)', () => {
   afterAll(async () => {
     await app.close();
   });
+
+  /** Login de verdade do aluno pelo CPF (RN15); devolve o token. */
+  async function logarAluno(cpf: string): Promise<string> {
+    const resposta = await request(app.getHttpServer())
+      .post('/auth/login-aluno')
+      .send({ cpf, senha: SENHA_PADRAO })
+      .expect(200);
+    return (resposta.body as { accessToken: string }).accessToken;
+  }
 
   /** Monta a requisição da linha, já com o corpo válido, se a rota tiver um. */
   function chamar(linha: Linha, token?: string) {
@@ -461,6 +466,23 @@ describe('Segurança: matriz de permissões (e2e)', () => {
         }
       },
     );
+  });
+
+  // RN12: o hash da senha nunca sai da API. O aluno do beforeAll tem senhaHash e
+  // os funcionários também, então as listas de membros e funcionários os incluem.
+  // Os membros da massa não têm senha; neles o teste pega a chave senhaHash.
+  describe('senhaHash fora das respostas (RN12)', () => {
+    const HASH = /senhaHash|\$2[aby]\$/;
+
+    it.each(
+      MATRIZ.map(
+        (l) => [l.permitidos[0], l.metodo.toUpperCase(), l.rota, l] as const,
+      ),
+    )('%s %s %s → sem senhaHash', async (papel, _metodo, _rota, l) => {
+      const resposta = await chamar(l, tokens[papel]).expect(l.sucesso);
+
+      expect(JSON.stringify(resposta.body)).not.toMatch(HASH);
+    });
   });
 
   describe('contrato da issue #28', () => {
@@ -556,6 +578,63 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       const corpo = lista.body as { data: { id: string }[]; total: number };
       expect(corpo.data.map((t) => t.id)).toEqual([massa.treinoDoAlunoId]);
       expect(corpo.total).toBe(1);
+    });
+
+    it('dois alunos logados: nenhum vê o treino nem a atividade do outro, nos dois sentidos (RN16)', async () => {
+      const outro = await criarMembro(prisma, {
+        senhaHash: hashSync(SENHA_PADRAO, 4),
+      });
+      const tokenOutro = await logarAluno(outro.cpf);
+      const treinoDoOutro = await criarTreino(prisma, outro.id);
+      const atividadeDoOutro = await criarAtividade(prisma, {
+        membroId: outro.id,
+      });
+      const get = (token: string, url: string) =>
+        request(app.getHttpServer())
+          .get(url)
+          .set('Authorization', bearer(token));
+
+      // aluno A → recursos do aluno B, e o contrário
+      await get(tokens[ALUNO], `/me/treinos/${treinoDoOutro.id}`).expect(404);
+      await get(tokens[ALUNO], `/me/atividades/${atividadeDoOutro.id}`).expect(
+        404,
+      );
+      await get(tokenOutro, `/me/treinos/${massa.treinoDoAlunoId}`).expect(404);
+      await get(
+        tokenOutro,
+        `/me/atividades/${massa.atividadeDoAlunoId}`,
+      ).expect(404);
+
+      // cada um continua vendo os próprios
+      await get(tokens[ALUNO], `/me/treinos/${massa.treinoDoAlunoId}`).expect(
+        200,
+      );
+      await get(
+        tokens[ALUNO],
+        `/me/atividades/${massa.atividadeDoAlunoId}`,
+      ).expect(200);
+      await get(tokenOutro, `/me/treinos/${treinoDoOutro.id}`).expect(200);
+      await get(tokenOutro, `/me/atividades/${atividadeDoOutro.id}`).expect(
+        200,
+      );
+
+      // e as listas de cada um só têm os próprios
+      const ids = async (token: string, url: string) => {
+        const corpo = (await get(token, url).expect(200)).body as {
+          data: { id: string }[];
+        };
+        return corpo.data.map((r) => r.id);
+      };
+      expect(await ids(tokens[ALUNO], '/me/treinos')).toEqual([
+        massa.treinoDoAlunoId,
+      ]);
+      expect(await ids(tokens[ALUNO], '/me/atividades')).toEqual([
+        massa.atividadeDoAlunoId,
+      ]);
+      expect(await ids(tokenOutro, '/me/treinos')).toEqual([treinoDoOutro.id]);
+      expect(await ids(tokenOutro, '/me/atividades')).toEqual([
+        atividadeDoOutro.id,
+      ]);
     });
 
     it('corpo inválido com cargo sem permissão → 403, não 400', async () => {
