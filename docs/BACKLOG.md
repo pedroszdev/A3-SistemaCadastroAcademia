@@ -1585,7 +1585,7 @@ Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada
 | Issue | Assunto | Responsável | PRs e commits | Status | Prazo |
 | --- | --- | --- | --- | --- | --- |
 | [#28](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/28) | Matriz de permissões na `main`, validada por HTTP | Pedro | #27 (`b70b666`); PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35); evidência em [`docs/evidencias/permissoes`](evidencias/permissoes/README.md) | 🟡 matriz das rotas existentes coberta, inclusive o ALUNO (#35 em revisão); faltam treinos e as rotas `/me` | 11/11 |
-| [#29](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/29) | Lacunas entre escopo, fluxo principal (CA01–CA08) e evidências | Pedro (coordena); Gabriel e Yohan nos módulos deles | #26 (`b208bd1`, inadimplência) | ⏳ falta o escopo completo, o `fluxo-principal.e2e-spec.ts` (E2E-02) e a rastreabilidade | 11/11 |
+| [#29](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/29) | Lacunas entre escopo, fluxo principal (CA01–CA08) e evidências | Pedro (coordena); Gabriel e Yohan nos módulos deles | #26 (`b208bd1`, inadimplência), #55, #56, #57 | ✅ entregue em 11/11: escopo completo e RNFs (#56), E2E-02 com CA01–CA08 (#57), módulo de treinos (#55), rastreabilidade com status, cronograma e roteiro da demo (#56) | 11/11 |
 | [#30](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/30) | Quality gate barrando o merge e escopo das métricas | Pedro | #31 (`4a3c095`); #34 (prova, não mergear); [`docs/evidencias/quality-gate`](evidencias/quality-gate/README.md) | 🟡 documentado; aguardando a conferência do professor | 11/11 |
 
 ### Exceções à regra 1
