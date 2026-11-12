@@ -35,7 +35,12 @@ type MembroComHash = Prisma.MembroGetPayload<{
   select: typeof MEMBRO_SELECT_COM_HASH;
 }>;
 
-/** O membro como a API devolve: sem o hash, com o acessoLiberado (RN15). */
+/**
+ * O membro como a API devolve: sem o hash, com o acessoLiberado (RN15).
+ * acessoLiberado diz só se o aluno tem senha definida. Desativar não apaga a
+ * senha: o inativo continua com acessoLiberado true, mas não loga (o login e
+ * a jwt.strategy exigem ativo), e ao ser reativado volta a logar com ela.
+ */
 export function paraResposta({ senhaHash, ...membro }: MembroComHash) {
   return { ...membro, acessoLiberado: senhaHash !== null };
 }
