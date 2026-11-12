@@ -252,7 +252,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] WEB-G1 Lista de membros
 - [ ] WEB-G2 Formulário de membro
 - [ ] WEB-G3 Ficha do membro
-- [ ] WEB-G4 Telas de treinos
+- [x] WEB-G4 Telas de treinos — `/treinos` (`features/treinos`): lista do `GET /treinos` paginada, com filtro por tipo (select da RN05) e por membro (reaproveita a `BuscaMembro`, incluindo inativos); formulário de criar (`POST`) e editar (`PATCH`, sem `membroId`) com duração de 1 a 300 min e início não anterior a hoje no fuso de São Paulo (na edição, reenviar a data já salva passa, como na API); excluir com confirmação (`DELETE`, 204). Só ADMIN e INSTRUTOR veem criar, editar e excluir; a RECEPCIONISTA só consulta. Os testes de treinos da WEB-G5 (formulário, tela, `tipos.ts`) já estão feitos
 - [ ] WEB-G5 Testes do front (membros/treinos)
 - [ ] WEB-G6 Portal do aluno: Meus treinos + liberação de acesso
 - [ ] E2E-04 e2e de validações de membros/treinos
