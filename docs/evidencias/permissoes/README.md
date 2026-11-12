@@ -111,6 +111,6 @@ Datas propostas, a confirmar no check-in do grupo.
 | Pendência | Task | Responsável | Data | Como fecha a linha da matriz |
 | --- | --- | --- | --- | --- |
 | Treinos | TRE-03 | Gabriel | 13/11 | linhas de `/treinos` na `MATRIZ` |
-| Liberar acesso do aluno | MEM-07 | Pedro | 16/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
+| Liberar acesso do aluno | MEM-07 | Pedro | 13/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
 | Treinos do aluno | TRE-05 | Gabriel | 16/11 | `/me/treinos` só para ALUNO; aluno A não vê dados do aluno B (RN16, 404) |
 | E2E-05 completo | E2E-05 | Pedro | 16/11 | RN16 (aluno A × aluno B → 404) e aluno → 403 em `POST /treinos` |
