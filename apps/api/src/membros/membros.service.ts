@@ -5,11 +5,14 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import { hash } from 'bcryptjs';
 import { paginacaoPrisma, paginate } from '../common/utils/paginate';
 import { normalizarCpf } from '../common/validators/cpf';
 import type { Prisma } from '../generated/prisma/client';
+import { SALT_ROUNDS } from '../funcionarios/funcionarios.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
+import { LiberarAcessoDto } from './dto/liberar-acesso.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
 import { UpdateMembroDto } from './dto/update-membro.dto';
 
@@ -159,6 +162,35 @@ export class MembrosService {
       await this.prisma.membro.update({
         where: { id },
         data: { ativo: true },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
+  }
+
+  // RN15: libera o acesso do aluno ou redefine a senha. O SALT_ROUNDS é o do
+  // login (auth.service.ts), para o tempo do compare não revelar a conta.
+  async liberarAcesso(id: string, dto: LiberarAcessoDto) {
+    await this.assertMembroAtivo(
+      id,
+      'Membro inativo não pode ter o acesso liberado',
+    );
+    const senhaHash = await hash(dto.senha, SALT_ROUNDS);
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: { senhaHash },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
+  }
+
+  // Revogar vale também para o membro inativo: só tira o acesso.
+  async revogarAcesso(id: string) {
+    await this.findOne(id);
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: { senhaHash: null },
         select: MEMBRO_SELECT_COM_HASH,
       }),
     );

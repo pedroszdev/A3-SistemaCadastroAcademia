@@ -4,6 +4,8 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import { compare, getRounds } from 'bcryptjs';
+import { SALT_ROUNDS } from '../funcionarios/funcionarios.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
@@ -297,6 +299,108 @@ describe('MembrosService', () => {
       prisma.membro.findUnique.mockResolvedValue(null);
 
       await expect(service[metodo](ID)).rejects.toThrow(NotFoundException);
+      expect(prisma.membro.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('liberarAcesso (RN15)', () => {
+    const MENSAGEM = 'Membro inativo não pode ter o acesso liberado';
+
+    it('grava o hash bcrypt da senha com o SALT_ROUNDS do login e devolve sem o hash', async () => {
+      prisma.membro.findUnique.mockResolvedValue({ ativo: true });
+      prisma.membro.update.mockResolvedValue(
+        membro({ senhaHash: 'hash-gravado' }),
+      );
+
+      const resultado = await service.liberarAcesso(ID, {
+        senha: 'senha1234',
+      });
+
+      const args = primeiroArg<{
+        where: unknown;
+        select: unknown;
+        data: { senhaHash: string };
+      }>(prisma.membro.update);
+      expect(args.where).toEqual({ id: ID });
+      expect(args.select).toBe(MEMBRO_SELECT_COM_HASH);
+      expect(args.data.senhaHash).not.toBe('senha1234');
+      await expect(compare('senha1234', args.data.senhaHash)).resolves.toBe(
+        true,
+      );
+      expect(getRounds(args.data.senhaHash)).toBe(SALT_ROUNDS);
+      expect(resultado).toEqual(resposta({ acessoLiberado: true }));
+      expect(resultado).not.toHaveProperty('senhaHash');
+    });
+
+    it('redefinir troca o hash', async () => {
+      prisma.membro.findUnique.mockResolvedValue({ ativo: true });
+      prisma.membro.update.mockResolvedValue(membro());
+
+      await service.liberarAcesso(ID, { senha: 'senha-antiga-1' });
+      await service.liberarAcesso(ID, { senha: 'senha-nova-123' });
+
+      const [[primeira], [segunda]] = prisma.membro.update.mock.calls as [
+        [{ data: { senhaHash: string } }],
+        [{ data: { senhaHash: string } }],
+      ];
+      expect(segunda.data.senhaHash).not.toBe(primeira.data.senhaHash);
+      await expect(
+        compare('senha-nova-123', segunda.data.senhaHash),
+      ).resolves.toBe(true);
+      await expect(
+        compare('senha-antiga-1', segunda.data.senhaHash),
+      ).resolves.toBe(false);
+    });
+
+    it('membro inativo → 422 sem gravar', async () => {
+      prisma.membro.findUnique.mockResolvedValue({ ativo: false });
+
+      await expect(
+        service.liberarAcesso(ID, { senha: 'senha1234' }),
+      ).rejects.toThrow(new UnprocessableEntityException(MENSAGEM));
+      expect(prisma.membro.update).not.toHaveBeenCalled();
+    });
+
+    it('inexistente → 404 sem gravar', async () => {
+      prisma.membro.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.liberarAcesso(ID, { senha: 'senha1234' }),
+      ).rejects.toThrow(new NotFoundException('Membro não encontrado'));
+      expect(prisma.membro.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('revogarAcesso', () => {
+    it('grava senhaHash null e devolve acessoLiberado false', async () => {
+      prisma.membro.findUnique.mockResolvedValue(membro({ senhaHash: 'hash' }));
+      prisma.membro.update.mockResolvedValue(membro());
+
+      await expect(service.revogarAcesso(ID)).resolves.toEqual(resposta());
+      expect(prisma.membro.update).toHaveBeenCalledWith({
+        where: { id: ID },
+        data: { senhaHash: null },
+        select: MEMBRO_SELECT_COM_HASH,
+      });
+    });
+
+    it('revoga também o membro inativo', async () => {
+      prisma.membro.findUnique.mockResolvedValue(
+        membro({ ativo: false, senhaHash: 'hash' }),
+      );
+      prisma.membro.update.mockResolvedValue(membro({ ativo: false }));
+
+      await expect(service.revogarAcesso(ID)).resolves.toEqual(
+        resposta({ ativo: false }),
+      );
+    });
+
+    it('inexistente → 404 sem gravar', async () => {
+      prisma.membro.findUnique.mockResolvedValue(null);
+
+      await expect(service.revogarAcesso(ID)).rejects.toThrow(
+        new NotFoundException('Membro não encontrado'),
+      );
       expect(prisma.membro.update).not.toHaveBeenCalled();
     });
   });
