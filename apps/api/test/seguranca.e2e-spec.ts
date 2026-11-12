@@ -160,6 +160,21 @@ const MATRIZ: Linha[] = [
     permitidos: GESTAO,
     sucesso: 200,
   },
+  {
+    metodo: 'patch',
+    rota: '/membros/:id/acesso',
+    id: (m) => m.membroId,
+    corpo: () => ({ senha: 'senha-do-aluno-123' }),
+    permitidos: GESTAO,
+    sucesso: 200,
+  },
+  {
+    metodo: 'delete',
+    rota: '/membros/:id/acesso',
+    id: (m) => m.membroId,
+    permitidos: GESTAO,
+    sucesso: 200,
+  },
 
   // Treinos: todos consultam; ADMIN e INSTRUTOR criam, editam e excluem
   { metodo: 'get', rota: '/treinos', permitidos: TODOS, sucesso: 200 },
