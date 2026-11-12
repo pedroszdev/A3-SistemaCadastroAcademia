@@ -1595,7 +1595,7 @@ A cada triagem (toda segunda, até 02/12), uma linha nova: o que estava aberto, 
 
 | Data | Issues abertas | Novas desde a anterior | O que foi feito |
 | --- | --- | --- | --- |
-| 12/11/2026 | 0 | 0 | #28, #29 e #30 fechadas pelo grupo, sem comentário do professor depois do retorno final. Tabela acima atualizada. Nenhuma das três tem label nem responsável atribuído no GitHub; falta colocar a label `professor` e a do módulo (#28: `auth`; #29: `docs`; #30: `ci` e `sonar`) e atribuir aos responsáveis da tabela |
+| 12/11/2026 | 0 | 0 | #28, #29 e #30 fechadas pelo grupo, sem comentário do professor depois do retorno final. Tabela acima atualizada com os fechamentos, os PRs e os responsáveis |
 
 ### Exceções à regra 1
 
