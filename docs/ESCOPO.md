@@ -134,7 +134,7 @@ Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR abert
 | **RF22** consultar membro | — | unitário (404), matriz de permissões | `membros.service.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ |
 | **RF23** editar membro | — | unitário (CPF fora do update), HTTP (CPF no body → 400) | `membros.service.spec.ts`, `membros.http.spec.ts` | ✅ |
 | **RF24** desativar e reativar | CA12 | unitário (`desativar`, `reativar`, `assertMembroAtivo` → 422), e2e sem token → 401 | `membros.service.spec.ts`, `test/membros.e2e-spec.ts` | ✅ |
-| **RF25** ficha resumida | — | MEM-06 (unitário, HTTP e matriz de permissões), tela WEB-G3 (Testing Library) | `apps/api/src/membros-resumo/`, `apps/web/src/features/membros/ficha-membro.tsx` | 🔄 PRs #61 e #65 |
+| **RF25** ficha resumida | — | MEM-06 (unitário, HTTP e matriz de permissões), tela WEB-G3 (Testing Library) | `apps/api/src/membros/` e `apps/web/src/features/membros/` (a criar) | ⏳ |
 | **RF26** acesso do aluno ao portal | — | MEM-07 (unitário + e2e) | `apps/api/src/membros/` | 🔄 PR #60 (Pedro) |
 | **RF30** criar treino | CA03 | unitário (RN04 → 422, RN05 → 400, data = hoje passa), HTTP (body inválido → 400), matriz de permissões (RECEPCIONISTA → 403) | `apps/api/src/treinos/treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
 | **RF31** listar treinos e treinos do membro | CA06 (escolha do treino) | unitário (filtros, paginação, membro inexistente → 404) | `treinos.service.spec.ts`, `membros-treinos.controller.spec.ts` | ✅ (PR #55) |
