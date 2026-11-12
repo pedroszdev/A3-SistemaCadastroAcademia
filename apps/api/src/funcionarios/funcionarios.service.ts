@@ -4,8 +4,8 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { hash } from 'bcryptjs';
 import { paginacaoPrisma, paginate } from '../common/utils/paginate';
+import { hashSenha } from '../common/utils/senha';
 import { Cargo } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
@@ -21,8 +21,6 @@ export const FUNCIONARIO_SELECT = {
   ativo: true,
 } as const;
 
-export const SALT_ROUNDS = 10;
-
 @Injectable()
 export class FuncionariosService {
   constructor(private readonly prisma: PrismaService) {}
@@ -36,7 +34,7 @@ export class FuncionariosService {
       throw new ConflictException('Login já cadastrado');
     }
 
-    const senhaHash = await hash(dto.senha, SALT_ROUNDS);
+    const senhaHash = await hashSenha(dto.senha);
     return this.prisma.funcionario.create({
       data: { nome: dto.nome, cargo: dto.cargo, login: dto.login, senhaHash },
       select: FUNCIONARIO_SELECT,
@@ -83,7 +81,7 @@ export class FuncionariosService {
     const data = {
       nome: dto.nome,
       cargo: dto.cargo,
-      ...(dto.senha && { senhaHash: await hash(dto.senha, SALT_ROUNDS) }),
+      ...(dto.senha && { senhaHash: await hashSenha(dto.senha) }),
     };
     return this.prisma.funcionario.update({
       where: { id },
