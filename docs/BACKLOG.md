@@ -1288,7 +1288,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 **Responsável:** Pedro (era do Gabriel até 11/11) · **Sprint:** 3 · **Depende de:** E2E-01
 
 **O que fazer**
-- `test/membros.e2e-spec.ts`: CPF inválido → 400; CPF duplicado → 409; buscar por nome; desativar → criar treino para ele → 422; UUID inválido → 400; inexistente → 404.
+- `test/membros-treinos.e2e-spec.ts` (arquivo novo; o `test/membros.e2e-spec.ts` já existe e é do Gabriel, com os 401 das rotas): CPF inválido → 400; CPF duplicado → 409; buscar por nome; desativar → criar treino para ele → 422; UUID inválido → 400; inexistente → 404.
 
 **Resultado esperado**
 - As RN01–RN05 estão validadas com banco real.
