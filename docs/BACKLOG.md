@@ -4,8 +4,8 @@
 
 | Integrante | Papel (seção 2.9 do relatório) | Módulos |
 | --- | --- | --- |
-| **Pedro** | Líder de equipe + Especialista em DevOps | Infra de qualidade (CI, SonarCloud, testes), Auth (funcionário + aluno), Funcionários, Dashboard, base do front e portal do aluno |
-| **Gabriel** | Desenvolvedor | Membros (CPF, busca, ficha, acesso do aluno), Treinos (+ *Meus treinos* do aluno) |
+| **Pedro** | Líder de equipe + Especialista em DevOps | Infra de qualidade (CI, SonarCloud, testes), Auth (funcionário + aluno), Funcionários, Dashboard, base do front e portal do aluno (+ acesso do aluno e tela *Meus treinos*) |
+| **Gabriel** | Desenvolvedor | Membros (CPF, busca, ficha), Treinos (+ API de *Meus treinos* do aluno) |
 | **Yohan** | Testador | Pagamentos (status, inadimplência), Histórico de Atividades (+ *Meu histórico* do aluno), testes de integração (e2e) |
 
 > Todos programam e todos escrevem testes unitários do próprio código, como o professor exige.
@@ -113,7 +113,7 @@ Esta seção é a fonte da verdade para back, front e testes. Se uma regra mudar
 | **RN12** | Senha guardada só como hash (bcrypt) e nunca devolvida pela API. Login e senha errados ou funcionário inativo recebem a **mesma** mensagem genérica | Pedro | 401 |
 | **RN13** | O login é único. Um funcionário não pode desativar a si mesmo, e o sistema não pode ficar sem nenhum ADMIN ativo | Pedro | 409 / 422 |
 | **RN14** | Todas as rotas exigem JWT, exceto `POST /auth/login`, `POST /auth/login-aluno` e `GET /health`. O token expira em 8h | Pedro | 401 |
-| **RN15** | **Aluno** (membro) faz login com **CPF + senha**. O acesso é liberado pela recepção ou pelo admin, que define a senha inicial. Membro sem acesso liberado ou **inativo** não consegue logar (mesma mensagem genérica da RN12) | Pedro (login) / Gabriel (liberar acesso) | 401 |
+| **RN15** | **Aluno** (membro) faz login com **CPF + senha**. O acesso é liberado pela recepção ou pelo admin, que define a senha inicial. Membro sem acesso liberado ou **inativo** não consegue logar (mesma mensagem genérica da RN12) | Pedro (login e liberar acesso) | 401 |
 | **RN16** | O aluno **só enxerga os próprios dados**: os próprios treinos e o próprio histórico. O `membroId` vem **sempre do token**, nunca da URL ou do body. Pedir um treino ou atividade de outro membro → 404, para não revelar que o recurso existe | Gabriel (treinos) / Yohan (histórico) | 404 |
 | **RN17** | O aluno é **somente leitura**: não cria, edita nem exclui nada, inclusive treinos e atividades próprios | Pedro (RBAC) | 403 |
 
@@ -176,6 +176,8 @@ O módulo **Funcionários** (Pedro, Sprint 1) é a **referência**. Copiem a est
 
 Marquem `[x]` quando a task estiver **pronta segundo a DoD** (seção 7). Use 🟡 para indicar uma task **parcial**, com uma nota do que falta.
 
+> 🔁 **Redistribuição em 11/11:** para caber no prazo da Sprint 3 (16/11), a MEM-07, a WEB-G6, a E2E-04, a DOC-07, a DOC-08 e a DOC-15 passaram do Gabriel para o Pedro. São tasks que se apoiam no que o Pedro já fez (AUTH-04, WEB-05, INF-01, INF-04 e INF-06) e não dependem das telas que o Gabriel ainda vai fazer. Como mudou o responsável, os commits do Pedro nelas não são exceção à regra 1.
+
 ### 5.0 Já concluído antes do backlog (Pedro) — status em 10/10
 
 Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `feat(api): ajusta schema com UUID v7…`), já enviados para a `main`:
@@ -225,10 +227,13 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] WEB-04 Tela do dashboard — cards com os 5 números do `GET /dashboard` para todos os cargos; a lista de inadimplentes (link para `/membros/<id>`) vem da rota nova `GET /dashboard/inadimplentes`, só ADMIN e RECEPCIONISTA, como a situação financeira na matriz 4.2. O link dá 404 até a WEB-G3
 - [x] WEB-05 Login e portal do aluno — `/login` com abas Funcionário e Aluno (CPF com máscara); o aluno entra pelo handler `app/api/sessao/aluno`, que chama o `/auth/login-aluno` e grava o mesmo cookie httpOnly. O `proxy.ts` e os layouts separam as áreas pelo `tipo` do token: aluno só abre `/aluno/**`, funcionário nunca abre. O portal `(aluno)/layout.tsx` mostra o nome (via `GET /auth/me`), o menu *Meus treinos* / *Meu histórico* e o Sair, em coluna única para o celular
 - [ ] E2E-05 e2e de segurança (401/403) — 🟡 **parcial**: `test/seguranca.e2e-spec.ts` cobre a matriz 4.2 das rotas que existem (401, 403 e sucesso por rota e por papel, incluindo o ALUNO; token inválido e expirado; e a checagem de que toda rota declara `@Roles` ou `@Public`), no PR #35 da issue #28. A RN17 (aluno → 403 em toda rota de funcionário) está coberta; acesso revogado e `senhaHash` fora das respostas estão no `auth.e2e-spec.ts` da AUTH-04. A RN16 (aluno A × aluno B → 404) está coberta nas atividades (HIS-05, #46) e nos treinos (TRE-05, #55), e o aluno → 403 em `POST /treinos` entrou na `MATRIZ` com a TRE-03 (#55)
+- [ ] MEM-07 Liberar e redefinir o acesso do aluno (veio do Gabriel em 11/11)
+- [ ] WEB-G6 Portal do aluno: Meus treinos + componente de liberação de acesso (veio do Gabriel em 11/11)
+- [ ] E2E-04 e2e de validações de membros/treinos (veio do Gabriel em 11/11)
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-02 Cobertura consolidada
 - [ ] QA-05 Evidências (prints antes/depois)
-- [ ] DOC-02 Introdução · DOC-05 2.3 · DOC-09 2.7 · DOC-11 2.9 · DOC-14 2.12 · DOC-16 Conclusão
+- [ ] DOC-02 Introdução · DOC-05 2.3 · DOC-07 2.5 · DOC-08 2.6 · DOC-09 2.7 · DOC-11 2.9 · DOC-14 2.12 · DOC-15 2.13 · DOC-16 Conclusão (a DOC-07, a DOC-08 e a DOC-15 vieram do Gabriel em 11/11)
 - [ ] DOC-17 Revisão final e PDF do relatório
 - [ ] APR-02 Roteiro e tempos · APR-03 meus slides · APR-04 Ambiente de demo + vídeo reserva
 - [ ] ENT-01 Checklist final · ENT-02 Montar o .zip · ENT-03 Postar no Ulife
@@ -243,7 +248,6 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] MEM-04 Controller de membros — `@Roles` (listar/ver: ADMIN, RECEPCIONISTA, INSTRUTOR; criar/editar/desativar/reativar: ADMIN, RECEPCIONISTA) commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
 - [x] MEM-05 Testes de membros
 - [ ] MEM-06 Resumo/ficha do membro (API)
-- [ ] MEM-07 Liberar e redefinir o acesso do aluno
 - [x] TRE-01 DTOs de treinos
 - [x] TRE-02 Service de treinos — `create` com RN04 (`assertMembroAtivo`: 404 ou 422) e RN05 (`dataInicio` não anterior a hoje, no fuso de São Paulo: 400); `findAll` com filtro por membro e tipo e paginação; `findOne` (404); `update` revalida a data só quando ela muda, então reenviar a data de um treino que já começou passa; `remove` deixa as atividades com `treinoId = null`
 - [x] TRE-03 Controller de treinos — `GET/POST /treinos`, `GET/PATCH/DELETE /treinos/:id` (o `DELETE` responde 204) e `GET /membros/:id/treinos`. Todos os funcionários consultam; só ADMIN e INSTRUTOR criam, editam e excluem (RECEPCIONISTA → 403). As 6 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
@@ -253,12 +257,10 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] WEB-G2 Formulário de membro — `features/membros/form-membro.tsx`, no padrão do formulário de funcionário. Cria (`POST /membros`) e edita (`PATCH /membros/:id`, sem o CPF no body; o campo fica desabilitado na edição, RN02), com máscaras de CPF e telefone; o body leva CPF e telefone só com números. A validação do cliente (`validacao.ts`) usa as mesmas regras do DTO e o `isCpfValido` copiado para `features/membros/cpf.ts`. O 409 da API aparece como "CPF já cadastrado"
 - [x] WEB-G3 Ficha do membro — `/membros/[id]` (`features/membros/ficha-membro.tsx`), com o `GET /membros/:id/resumo` (MEM-06): cabeçalho com os dados, o badge de situação do cadastro e o de situação financeira (escondido quando `situacaoFinanceira` é `null`, o caso do INSTRUTOR), o treino mais recente e as atividades dos últimos 30 dias. Abas Treinos (lista só de leitura do `GET /membros/:id/treinos`), Pagamentos (`PagamentosDoMembro`) e Histórico (`HistoricoDoMembro`), que chamam `recarregar` do resumo em `onAlterado`. Editar, Desativar e Reativar (com confirmação, `PATCH /membros/:id/desativar` e `/reativar`) só para ADMIN e RECEPCIONISTA. O `AcessoDoMembro` da WEB-G6 ainda não entrou: o lugar dele no cabeçalho está marcado com um comentário
 - [ ] WEB-G4 Telas de treinos
-- [ ] WEB-G5 Testes do front (membros/treinos)
-- [ ] WEB-G6 Portal do aluno: Meus treinos + liberação de acesso
-- [ ] E2E-04 e2e de validações de membros/treinos
+- [ ] WEB-G5 Testes do front (membros/treinos; os testes da WEB-G6 ficam com o Pedro)
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-06 (opcional) Teste de usabilidade
-- [ ] DOC-01 Modelo UNISUL/ABNT · DOC-07 2.5 · DOC-08 2.6 · DOC-10 2.8 · DOC-13 2.11 · DOC-15 2.13
+- [ ] DOC-01 Modelo UNISUL/ABNT · DOC-10 2.8 · DOC-13 2.11
 - [ ] APR-01 Template e capa dos slides · APR-03 meus slides
 - [ ] ENT-03 Postar no Ulife
 
@@ -746,7 +748,9 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### MEM-07 · Liberar e redefinir o acesso do aluno
-**Responsável:** Gabriel · **Sprint:** 2 · **Depende de:** MEM-03, AUTH-04
+**Responsável:** Pedro (era do Gabriel até 11/11) · **Sprint:** 2 · **Depende de:** MEM-03, AUTH-04
+
+> Mexe no `membros.service.ts` (`MEMBRO_SELECT`), no `membros.controller.ts` e na `MATRIZ`, como a MEM-06 do Gabriel. Por isso entra **antes** dela, para não dar conflito. Ela também acrescenta o `acessoLiberado` às respostas de membro (hoje o `MEMBRO_SELECT` não tem esse campo), que a WEB-G1 e a WEB-G2 podem usar.
 
 **O que fazer**
 - `PATCH /membros/:id/acesso { senha }` (senha ≥ 8): grava o `senhaHash` com bcrypt. Serve tanto para liberar o acesso pela primeira vez quanto para redefinir a senha.
@@ -1105,13 +1109,14 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### WEB-G3 · Ficha do membro
-**Responsável:** Gabriel · **Sprint:** 3 · **Depende de:** MEM-06, WEB-Y4
+**Responsável:** Gabriel · **Sprint:** 3 · **Depende de:** MEM-06, WEB-Y4 e o `AcessoDoMembro` da WEB-G6 (só para o acesso do aluno)
 
 **O que fazer**
 - `/membros/[id]` com cabeçalho (dados + badge de situação financeira) e abas:
   - **Treinos** (Gabriel);
   - **Pagamentos** e **Histórico**, usando os componentes do Yohan (WEB-Y4).
 - Botões desativar/reativar.
+- Encaixar no cabeçalho o `<AcessoDoMembro membroId={id} ativo={membro.ativo} acessoLiberado={membro.acessoLiberado} onAlterado={recarregar} />` do Pedro (WEB-G6). Se a ficha ficar pronta antes, ela pode ser mergeada sem ele. Nesse caso, depois do merge da WEB-G6, o Gabriel encaixa o componente em um PR curto, porque o arquivo da ficha é dele (regra 1).
 
 **Resultado esperado**
 - Uma tela central que junta os módulos. É ótima para a demo.
@@ -1131,11 +1136,11 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### WEB-G6 · Portal do aluno: Meus treinos + liberação de acesso
-**Responsável:** Gabriel · **Sprint:** 3 · **Depende de:** TRE-05, MEM-07, WEB-05
+**Responsável:** Pedro (era do Gabriel até 11/11) · **Sprint:** 3 · **Depende de:** TRE-05, MEM-07, WEB-05
 
 **O que fazer**
 - `/aluno/treinos`: cards com os treinos do aluno (tipo, descrição, duração, início), filtro por tipo e detalhe ao clicar. Layout pensado para celular.
-- Na **ficha do membro** (WEB-G3): botão "Liberar acesso" ou "Redefinir senha" (modal com senha e confirmação) e "Revogar acesso", com o badge "Acesso liberado".
+- Componente `AcessoDoMembro` (`features/membros/acesso-do-membro.tsx`), com as props `membroId: string`, `ativo: boolean`, `acessoLiberado: boolean` e `onAlterado?: () => void`: botão "Liberar acesso" ou "Redefinir senha" (modal com senha e confirmação) e "Revogar acesso", com o badge "Acesso liberado". Com `ativo={false}`, os botões dão lugar a um aviso (RF26: membro inativo não recebe acesso; a API da MEM-07 responderia 422). Só ADMIN e RECEPCIONISTA veem os botões. O Gabriel encaixa o componente na ficha (WEB-G3), como os da WEB-Y4.
 - Testes: lista renderiza os cards, filtro chama a API certa, modal valida a senha (mínimo 8 e confirmação igual).
 
 **Resultado esperado**
@@ -1280,10 +1285,10 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### E2E-04 · Validações de membros e treinos
-**Responsável:** Gabriel · **Sprint:** 3 · **Depende de:** E2E-01
+**Responsável:** Pedro (era do Gabriel até 11/11) · **Sprint:** 3 · **Depende de:** E2E-01
 
 **O que fazer**
-- `test/membros.e2e-spec.ts`: CPF inválido → 400; CPF duplicado → 409; buscar por nome; desativar → criar treino para ele → 422; UUID inválido → 400; inexistente → 404.
+- `test/membros-treinos.e2e-spec.ts` (arquivo novo; o `test/membros.e2e-spec.ts` já existe e é do Gabriel, com os 401 das rotas): CPF inválido → 400; CPF duplicado → 409; buscar por nome; desativar → criar treino para ele → 422; UUID inválido → 400; inexistente → 404.
 
 **Resultado esperado**
 - As RN01–RN05 estão validadas com banco real.
@@ -1412,15 +1417,15 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 | **DOC-04** | 2.2 Escopo do teste | 0,2 | Yohan | Tabela de módulos/funcionalidades testados; o que **não** é testado e por quê (ex.: testes visuais, carga em escala) |
 | **DOC-05** | 2.3 Contexto do sistema | 0,2 | Pedro | Arquitetura (diagrama do monorepo: web → API → Postgres), tecnologias, dependências, histórico de mudanças (link do histórico de commits/PRs), documentação (README, ESCOPO) |
 | **DOC-06** | 2.4 Estratégia de testes | 0,2 | Yohan | Unitários (Jest/Vitest com mocks), integração e sistema (e2e com supertest + banco real), regressão (CI em todo PR), segurança (E2E-05), desempenho (justificar se não fizer), usabilidade (QA-06, se feito) |
-| **DOC-07** | 2.5 Ambiente de teste | 0,2 | Gabriel | Máquinas locais (requisitos), Docker/Postgres 17, runner do GitHub Actions (ubuntu, Node 24), como replicar (README + docker-compose) |
-| **DOC-08** | 2.6 Dados de teste | 0,2 | Gabriel | Seed, fábricas do e2e, CPFs **gerados** (não reais), banco limpo a cada execução, LGPD |
+| **DOC-07** | 2.5 Ambiente de teste | 0,2 | Pedro (era do Gabriel até 11/11) | Máquinas locais (requisitos), Docker/Postgres 17, runner do GitHub Actions (ubuntu, Node 24), como replicar (README + docker-compose) |
+| **DOC-08** | 2.6 Dados de teste | 0,2 | Pedro (era do Gabriel até 11/11) | Seed, fábricas do e2e, CPFs **gerados** (não reais), banco limpo a cada execução, LGPD |
 | **DOC-09** | 2.7 Ferramentas de teste | 0,2 | Pedro | Jest, Vitest, Testing Library, supertest, GitHub Actions (automação a cada push/PR), SonarCloud (análise estática), com justificativa e prints |
 | **DOC-10** | 2.8 Cronograma | 0,2 | Gabriel | Tabela de sprints e marcos (seção 3 deste backlog), com datas reais de conclusão |
 | **DOC-11** | 2.9 Responsabilidades | 0,2 | Pedro (todos preenchem as próprias linhas) | Papéis + **tabela de 3 colunas: Aluno, Funcionalidade, Link do(s) arquivo(s) de teste no GitHub** |
 | **DOC-12** | 2.10 Critérios de aceitação | **4,0** | Yohan | Critérios definidos (cobertura ≥ 75%, gate aprovado, 0 issues, testes passando) + **evidências** de que foram atingidos (prints do Sonar, Actions, issues fechadas) |
 | **DOC-13** | 2.11 Gestão de defeitos | 0,2 | Gabriel | Fluxo: issue (template) → label → atribuição → branch → PR com `Closes #` → CI → review → merge; ferramentas: GitHub Issues/PRs + SonarCloud |
 | **DOC-14** | 2.12 Relatórios e métricas | 0,3 | Pedro | Tabela funcionalidade × testes; Sonar **antes × depois** (segurança, confiabilidade, manutenibilidade, duplicação, complexidade); problemas encontrados e como foram corrigidos (de `sonar-correcoes.md`) |
-| **DOC-15** | 2.13 Controle de versão | 0,2 | Gabriel | Link do repositório, uso da `main` protegida, estrutura (LICENSE, README, apps/…/src), convenção Conventional Commits com exemplos reais, estratégia de branches |
+| **DOC-15** | 2.13 Controle de versão | 0,2 | Pedro (era do Gabriel até 11/11) | Link do repositório, uso da `main` protegida, estrutura (LICENSE, README, apps/…/src), convenção Conventional Commits com exemplos reais, estratégia de branches |
 | **DOC-16** | 3 Conclusão | — | Pedro (os 3 revisam) | Resultados, lições aprendidas (cada um contribui com um parágrafo), trabalhos futuros |
 | **DOC-17** | Revisão final e PDF | — | Pedro | Leitura cruzada (cada um revisa uma seção de outro), conferir links, exportar `relatorio.pdf` |
 

@@ -144,17 +144,20 @@ Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR abert
 | **RF35** treinos do aluno | — | unitário e HTTP (`membroId` do token, outro membro → 404, `membroId` na query → 400), e2e RN16 | `treinos.service.spec.ts`, `meus-treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #55 |
 | RF20 a RF35 (validações ponta a ponta) | CA02, CA03 | E2E-04 | `test/membros-treinos.e2e-spec.ts` (a criar) | ⏳ |
 
-**Cronograma do que falta (Gabriel)**
+**Cronograma do que falta (membros e treinos)**
 
-| Task | O que entrega | Data |
-| --- | --- | --- |
-| PR #55 (TRE-02 a TRE-05) | módulo de treinos na API, libera o passo 3 do E2E-02 | merge até 12/11 |
-| MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | 13/11 |
-| MEM-07 | liberar, redefinir e revogar o acesso do aluno (RF26) | 13/11 |
-| WEB-G1, WEB-G2 | lista e formulário de membros | 14/11 |
-| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | 15/11 |
-| WEB-G5, WEB-G6 | testes do front e "Meus treinos" do portal do aluno | 16/11 |
-| E2E-04 | e2e das validações de membros e treinos | 16/11 |
+Em 11/11, a MEM-07, a WEB-G6 e a E2E-04 passaram do Gabriel para o Pedro (veja a seção 5 do backlog).
+
+| Task | O que entrega | Responsável | Data |
+| --- | --- | --- | --- |
+| PR #55 (TRE-02 a TRE-05) | módulo de treinos na API, libera o passo 3 do E2E-02 | Gabriel | merge até 12/11 |
+| MEM-07 | liberar, redefinir e revogar o acesso do aluno (RF26) | Pedro | 13/11 |
+| MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | Gabriel | 13/11 |
+| WEB-G1, WEB-G2 | lista e formulário de membros | Gabriel | 14/11 |
+| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 15/11 |
+| WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
+| WEB-G6 | "Meus treinos" do portal do aluno e o componente de acesso da ficha | Pedro | 16/11 |
+| E2E-04 | e2e das validações de membros e treinos | Pedro | 16/11 |
 
 **Demonstração: membros e treinos (passos 2 e 3 do fluxo)**
 
@@ -240,7 +243,7 @@ Mesma tabela da [seção 4.1 do backlog](BACKLOG.md#41-regras-de-negócio); se u
 | **RN12** | Senha guardada só como hash (bcrypt) e nunca devolvida pela API. Login e senha errados ou funcionário inativo recebem a **mesma** mensagem genérica | Pedro | 401 |
 | **RN13** | O login é único. Um funcionário não pode desativar a si mesmo, e o sistema não pode ficar sem nenhum ADMIN ativo | Pedro | 409 / 422 |
 | **RN14** | Todas as rotas exigem JWT, exceto `POST /auth/login`, `POST /auth/login-aluno` e `GET /health`. O token expira em 8h | Pedro | 401 |
-| **RN15** | **Aluno** (membro) faz login com **CPF + senha**. O acesso é liberado pela recepção ou pelo admin, que define a senha inicial. Membro sem acesso liberado ou **inativo** não consegue logar (mesma mensagem genérica da RN12) | Pedro (login) / Gabriel (liberar acesso) | 401 |
+| **RN15** | **Aluno** (membro) faz login com **CPF + senha**. O acesso é liberado pela recepção ou pelo admin, que define a senha inicial. Membro sem acesso liberado ou **inativo** não consegue logar (mesma mensagem genérica da RN12) | Pedro (login e liberar acesso) | 401 |
 | **RN16** | O aluno **só enxerga os próprios dados**: os próprios treinos e o próprio histórico. O `membroId` vem **sempre do token**, nunca da URL ou do body. Pedir um treino ou atividade de outro membro → 404, para não revelar que o recurso existe | Gabriel (treinos) / Yohan (histórico) | 404 |
 | **RN17** | O aluno é **somente leitura**: não cria, edita nem exclui nada, inclusive treinos e atividades próprios | Pedro (RBAC) | 403 |
 
@@ -363,9 +366,11 @@ A cobertura de 100% do escopo analisado vale só para o que já está na `main`;
 | --- | --- | --- | --- |
 | Merge do PR #55 (TRE-02 a TRE-05) | módulo de treinos na API (passo 3 do fluxo) | Gabriel | 12/11 |
 | Merge do E2E-02 (`fluxo-principal.e2e-spec.ts`) | teste de sistema CA01–CA08 com banco de teste | Gabriel | 12/11, logo depois do #55 |
-| MEM-06 e MEM-07 | ficha do membro e acesso do aluno (RF25, RF26) | Gabriel | 13/11 |
+| MEM-06 | ficha do membro (RF25) | Gabriel | 13/11 |
+| MEM-07 | acesso do aluno (RF26) | Pedro | 13/11 |
 | WEB-G1 a WEB-G4 | telas de membros e treinos (passos 2 e 3 pela interface) | Gabriel | 14/11 a 15/11 |
-| WEB-G5, WEB-G6 e E2E-04 | testes do front, "Meus treinos" e e2e de validações | Gabriel | 16/11 |
+| WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
+| WEB-G6 e E2E-04 | "Meus treinos" e e2e de validações | Pedro | 16/11 |
 | E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | 16/11 |
 | QA-01 a QA-05 | issues do Sonar zeradas, cobertura consolidada ≥ 75% e quality gate aprovado | Pedro, Gabriel e Yohan | 17/11 a 23/11 (code freeze) |
 
@@ -388,4 +393,4 @@ Preparação: `pnpm install`, `docker compose up -d`, `pnpm db:migrate`, `pnpm d
 | Alternativo: inadimplência | CA09–CA11 | Bruno Lima (seed, inadimplente): o registro de atividade mostra "Membro com pagamento em atraso"; depois de pagar, registra | Yohan |
 | Alternativo: portal do aluno | RF35, RN16 | login da aluna Ana Souza: "Minhas atividades" e `/me/treinos` só com os dados dela | Gabriel |
 
-Divisão do trabalho, pelos responsáveis do backlog: Pedro (infraestrutura, CI/Sonar, autenticação, funcionários, dashboard e coordenação do escopo), Gabriel (membros, treinos e portal do aluno: treinos) e Yohan (pagamentos, histórico de atividades, critérios de aceitação e e2e de inadimplência).
+Divisão do trabalho, pelos responsáveis do backlog: Pedro (infraestrutura, CI/Sonar, autenticação, funcionários, dashboard, coordenação do escopo, acesso do aluno e tela "Meus treinos"), Gabriel (membros, treinos e a API dos treinos do aluno) e Yohan (pagamentos, histórico de atividades, critérios de aceitação e e2e de inadimplência).
