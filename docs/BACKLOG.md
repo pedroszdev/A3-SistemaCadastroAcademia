@@ -289,7 +289,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] E2E-02 e2e do fluxo principal — `test/fluxo-principal.e2e-spec.ts` percorre o fluxo da seção 7 do `ESCOPO.md` com banco de teste, um `it` por critério (CA01 a CA08), cada um indicando o que verifica
 - [x] E2E-03 e2e da regra de inadimplência
 - [ ] QA-01 Issues do Sonar no meu código
-- [ ] QA-03 Triagem semanal das issues do professor
+- [ ] 🟡 QA-03 Triagem semanal das issues do professor — contínua até 02/12. A tabela da seção 8 está em dia e a triagem de 12/11 está no registro (0 issues abertas); as próximas são toda segunda, a partir de 16/11
 - [ ] QA-04 Regressão manual pré-entrega
 - [ ] DOC-03 2.1 · DOC-04 2.2 · DOC-06 2.4 · DOC-12 2.10
 - [ ] APR-03 meus slides · APR-05 Ensaio (cronometrista)
