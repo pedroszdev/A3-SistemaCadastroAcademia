@@ -10,6 +10,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { FuncionariosModule } from './funcionarios/funcionarios.module';
 import { HistoricoModule } from './historico/historico.module';
 import { MembrosModule } from './membros/membros.module';
+import { MembrosResumoModule } from './membros-resumo/membros-resumo.module';
 import { PagamentosModule } from './pagamentos/pagamentos.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TreinosModule } from './treinos/treinos.module';
@@ -24,6 +25,7 @@ import { TreinosModule } from './treinos/treinos.module';
     TreinosModule,
     PagamentosModule,
     HistoricoModule,
+    MembrosResumoModule,
     DashboardModule,
   ],
   controllers: [AppController],

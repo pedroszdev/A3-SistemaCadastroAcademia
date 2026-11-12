@@ -247,7 +247,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] MEM-03 Service de membros
 - [x] MEM-04 Controller de membros — `@Roles` (listar/ver: ADMIN, RECEPCIONISTA, INSTRUTOR; criar/editar/desativar/reativar: ADMIN, RECEPCIONISTA) commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
 - [x] MEM-05 Testes de membros
-- [ ] MEM-06 Resumo/ficha do membro (API)
+- [x] MEM-06 Resumo/ficha do membro (API) — `GET /membros/:id/resumo` (módulo `membros-resumo`) devolve o membro, a `situacaoFinanceira` (`PagamentosService.situacaoMembro`), o treino mais recente e `atividadesUltimos30Dias` (de hoje − 29 até hoje, fuso de São Paulo); ADMIN, RECEPCIONISTA e INSTRUTOR leem, e o INSTRUTOR recebe `situacaoFinanceira: null` sem o `PagamentosService` ser chamado; membro inexistente → 404 e id inválido → 400. A rota está na `MATRIZ`
 - [x] TRE-01 DTOs de treinos
 - [x] TRE-02 Service de treinos — `create` com RN04 (`assertMembroAtivo`: 404 ou 422) e RN05 (`dataInicio` não anterior a hoje, no fuso de São Paulo: 400); `findAll` com filtro por membro e tipo e paginação; `findOne` (404); `update` revalida a data só quando ela muda, então reenviar a data de um treino que já começou passa; `remove` deixa as atividades com `treinoId = null`
 - [x] TRE-03 Controller de treinos — `GET/POST /treinos`, `GET/PATCH/DELETE /treinos/:id` (o `DELETE` responde 204) e `GET /membros/:id/treinos`. Todos os funcionários consultam; só ADMIN e INSTRUTOR criam, editam e excluem (RECEPCIONISTA → 403). As 6 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`

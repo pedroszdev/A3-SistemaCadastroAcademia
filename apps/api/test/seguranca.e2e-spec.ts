@@ -230,6 +230,15 @@ const MATRIZ: Linha[] = [
     sucesso: 200,
   },
 
+  // Resumo da ficha: os 3 cargos; a situação financeira vem null para o INSTRUTOR
+  {
+    metodo: 'get',
+    rota: '/membros/:id/resumo',
+    id: (m) => m.membroId,
+    permitidos: TODOS,
+    sucesso: 200,
+  },
+
   // Pagamentos: ADMIN e RECEPCIONISTA
   { metodo: 'get', rota: '/pagamentos', permitidos: GESTAO, sucesso: 200 },
   {
