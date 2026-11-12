@@ -468,8 +468,9 @@ describe('Segurança: matriz de permissões (e2e)', () => {
     );
   });
 
-  // RN12: o hash da senha nunca sai da API. O aluno da massa tem senhaHash e
+  // RN12: o hash da senha nunca sai da API. O aluno do beforeAll tem senhaHash e
   // os funcionários também, então as listas de membros e funcionários os incluem.
+  // Os membros da massa não têm senha; neles o teste pega a chave senhaHash.
   describe('senhaHash fora das respostas (RN12)', () => {
     const HASH = /senhaHash|\$2[aby]\$/;
 
