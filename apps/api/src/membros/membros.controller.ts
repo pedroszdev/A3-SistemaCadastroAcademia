@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -11,6 +12,7 @@ import {
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Cargo } from '../generated/prisma/enums';
 import { CreateMembroDto } from './dto/create-membro.dto';
+import { LiberarAcessoDto } from './dto/liberar-acesso.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
 import { UpdateMembroDto } from './dto/update-membro.dto';
 import { MembrosService } from './membros.service';
@@ -53,5 +55,21 @@ export class MembrosController {
   @Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA)
   reativar(@Param('id', ParseUUIDPipe) id: string) {
     return this.membros.reativar(id);
+  }
+
+  // RN15: liberar e redefinir usam a mesma rota; revogar apaga o hash.
+  @Patch(':id/acesso')
+  @Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA)
+  liberarAcesso(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: LiberarAcessoDto,
+  ) {
+    return this.membros.liberarAcesso(id, dto);
+  }
+
+  @Delete(':id/acesso')
+  @Roles(Cargo.ADMIN, Cargo.RECEPCIONISTA)
+  revogarAcesso(@Param('id', ParseUUIDPipe) id: string) {
+    return this.membros.revogarAcesso(id);
   }
 }

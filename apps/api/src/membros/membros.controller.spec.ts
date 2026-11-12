@@ -14,6 +14,8 @@ describe('MembrosController', () => {
     update: jest.Mock;
     desativar: jest.Mock;
     reativar: jest.Mock;
+    liberarAcesso: jest.Mock;
+    revogarAcesso: jest.Mock;
   };
   let controller: MembrosController;
 
@@ -25,6 +27,8 @@ describe('MembrosController', () => {
       update: jest.fn(),
       desativar: jest.fn(),
       reativar: jest.fn(),
+      liberarAcesso: jest.fn(),
+      revogarAcesso: jest.fn(),
     };
     controller = new MembrosController(service as unknown as MembrosService);
   });
@@ -79,4 +83,21 @@ describe('MembrosController', () => {
       expect(service[metodo]).toHaveBeenCalledWith(ID);
     },
   );
+
+  it('liberarAcesso delega id e dto ao service', async () => {
+    const dto = { senha: 'senha1234' };
+    const retorno = { id: ID };
+    service.liberarAcesso.mockResolvedValue(retorno);
+
+    await expect(controller.liberarAcesso(ID, dto)).resolves.toBe(retorno);
+    expect(service.liberarAcesso).toHaveBeenCalledWith(ID, dto);
+  });
+
+  it('revogarAcesso delega só o id ao service', async () => {
+    const retorno = { id: ID };
+    service.revogarAcesso.mockResolvedValue(retorno);
+
+    await expect(controller.revogarAcesso(ID)).resolves.toBe(retorno);
+    expect(service.revogarAcesso).toHaveBeenCalledWith(ID);
+  });
 });
