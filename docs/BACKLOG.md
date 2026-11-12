@@ -750,7 +750,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 #### MEM-07 · Liberar e redefinir o acesso do aluno
 **Responsável:** Pedro (era do Gabriel até 11/11) · **Sprint:** 2 · **Depende de:** MEM-03, AUTH-04
 
-> Mexe no `membros.service.ts` (`MEMBRO_SELECT`), no `membros.controller.ts` e na `MATRIZ`, como a MEM-06 do Gabriel. Por isso entra **antes** dela, para não dar conflito. A WEB-G1 e a WEB-G2 também já usam o `acessoLiberado` da resposta.
+> Mexe no `membros.service.ts` (`MEMBRO_SELECT`), no `membros.controller.ts` e na `MATRIZ`, como a MEM-06 do Gabriel. Por isso entra **antes** dela, para não dar conflito. Ela também acrescenta o `acessoLiberado` às respostas de membro (hoje o `MEMBRO_SELECT` não tem esse campo), que a WEB-G1 e a WEB-G2 podem usar.
 
 **O que fazer**
 - `PATCH /membros/:id/acesso { senha }` (senha ≥ 8): grava o `senhaHash` com bcrypt. Serve tanto para liberar o acesso pela primeira vez quanto para redefinir a senha.
