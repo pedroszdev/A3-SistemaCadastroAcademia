@@ -750,7 +750,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 #### MEM-07 · Liberar e redefinir o acesso do aluno
 **Responsável:** Pedro (era do Gabriel até 11/11) · **Sprint:** 2 · **Depende de:** MEM-03, AUTH-04
 
-> Mexe no `membros.service.ts` (`MEMBRO_SELECT`), no `membros.controller.ts` e na `MATRIZ`, como a MEM-06 do Gabriel. Por isso entra **antes** dela, para não dar conflito. A WEB-G1 e a WEB-G2 também já usam o `acessoLiberado` da resposta.
+> Mexe no `membros.service.ts` (`MEMBRO_SELECT`), no `membros.controller.ts` e na `MATRIZ`, como a MEM-06 do Gabriel. Por isso entra **antes** dela, para não dar conflito. Ela também acrescenta o `acessoLiberado` às respostas de membro (hoje o `MEMBRO_SELECT` não tem esse campo), que a WEB-G1 e a WEB-G2 podem usar.
 
 **O que fazer**
 - `PATCH /membros/:id/acesso { senha }` (senha ≥ 8): grava o `senhaHash` com bcrypt. Serve tanto para liberar o acesso pela primeira vez quanto para redefinir a senha.
@@ -1116,7 +1116,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
   - **Treinos** (Gabriel);
   - **Pagamentos** e **Histórico**, usando os componentes do Yohan (WEB-Y4).
 - Botões desativar/reativar.
-- Encaixar no cabeçalho o `<AcessoDoMembro membroId={id} ativo={membro.ativo} acessoLiberado={membro.acessoLiberado} onAlterado={recarregar} />` do Pedro (WEB-G6). Se a ficha ficar pronta antes, ela pode ser mergeada sem ele e o componente entra depois.
+- Encaixar no cabeçalho o `<AcessoDoMembro membroId={id} ativo={membro.ativo} acessoLiberado={membro.acessoLiberado} onAlterado={recarregar} />` do Pedro (WEB-G6). Se a ficha ficar pronta antes, ela pode ser mergeada sem ele. Nesse caso, depois do merge da WEB-G6, o Gabriel encaixa o componente em um PR curto, porque o arquivo da ficha é dele (regra 1).
 
 **Resultado esperado**
 - Uma tela central que junta os módulos. É ótima para a demo.
@@ -1140,7 +1140,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 
 **O que fazer**
 - `/aluno/treinos`: cards com os treinos do aluno (tipo, descrição, duração, início), filtro por tipo e detalhe ao clicar. Layout pensado para celular.
-- Componente `AcessoDoMembro` (`features/membros/acesso-do-membro.tsx`), com as props `membroId: string`, `ativo: boolean`, `acessoLiberado: boolean` e `onAlterado?: () => void`: botão "Liberar acesso" ou "Redefinir senha" (modal com senha e confirmação) e "Revogar acesso", com o badge "Acesso liberado". Com `ativo={false}`, os botões dão lugar a um aviso (RN04; a API responderia 422). Só ADMIN e RECEPCIONISTA veem os botões. O Gabriel encaixa o componente na ficha (WEB-G3), como os da WEB-Y4.
+- Componente `AcessoDoMembro` (`features/membros/acesso-do-membro.tsx`), com as props `membroId: string`, `ativo: boolean`, `acessoLiberado: boolean` e `onAlterado?: () => void`: botão "Liberar acesso" ou "Redefinir senha" (modal com senha e confirmação) e "Revogar acesso", com o badge "Acesso liberado". Com `ativo={false}`, os botões dão lugar a um aviso (RF26: membro inativo não recebe acesso; a API da MEM-07 responderia 422). Só ADMIN e RECEPCIONISTA veem os botões. O Gabriel encaixa o componente na ficha (WEB-G3), como os da WEB-Y4.
 - Testes: lista renderiza os cards, filtro chama a API certa, modal valida a senha (mínimo 8 e confirmação igual).
 
 **Resultado esperado**
@@ -1288,7 +1288,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 **Responsável:** Pedro (era do Gabriel até 11/11) · **Sprint:** 3 · **Depende de:** E2E-01
 
 **O que fazer**
-- `test/membros.e2e-spec.ts`: CPF inválido → 400; CPF duplicado → 409; buscar por nome; desativar → criar treino para ele → 422; UUID inválido → 400; inexistente → 404.
+- `test/membros-treinos.e2e-spec.ts` (arquivo novo; o `test/membros.e2e-spec.ts` já existe e é do Gabriel, com os 401 das rotas): CPF inválido → 400; CPF duplicado → 409; buscar por nome; desativar → criar treino para ele → 422; UUID inválido → 400; inexistente → 404.
 
 **Resultado esperado**
 - As RN01–RN05 estão validadas com banco real.
@@ -1586,7 +1586,7 @@ Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada
 | Issue | Assunto | Responsável | PRs e commits | Status | Prazo |
 | --- | --- | --- | --- | --- | --- |
 | [#28](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/28) | Matriz de permissões na `main`, validada por HTTP | Pedro | #27 (`b70b666`); PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35); evidência em [`docs/evidencias/permissoes`](evidencias/permissoes/README.md) | 🟡 matriz das rotas existentes coberta, inclusive o ALUNO (#35 em revisão); faltam treinos e as rotas `/me` | 11/11 |
-| [#29](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/29) | Lacunas entre escopo, fluxo principal (CA01–CA08) e evidências | Pedro (coordena); Gabriel e Yohan nos módulos deles | #26 (`b208bd1`, inadimplência) | ⏳ falta o escopo completo, o `fluxo-principal.e2e-spec.ts` (E2E-02) e a rastreabilidade | 11/11 |
+| [#29](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/29) | Lacunas entre escopo, fluxo principal (CA01–CA08) e evidências | Pedro (coordena); Gabriel e Yohan nos módulos deles | #26 (`b208bd1`, inadimplência), #55, #56, #57 | ✅ entregue em 11/11: escopo completo e RNFs (#56), E2E-02 com CA01–CA08 (#57), módulo de treinos (#55), rastreabilidade com status, cronograma e roteiro da demo (#56) | 11/11 |
 | [#30](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/30) | Quality gate barrando o merge e escopo das métricas | Pedro | #31 (`4a3c095`); #34 (prova, não mergear); [`docs/evidencias/quality-gate`](evidencias/quality-gate/README.md) | 🟡 documentado; aguardando a conferência do professor | 11/11 |
 
 ### Exceções à regra 1

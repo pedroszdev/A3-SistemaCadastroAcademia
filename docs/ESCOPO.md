@@ -134,14 +134,14 @@ Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR abert
 | **RF22** consultar membro | — | unitário (404), matriz de permissões | `membros.service.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ |
 | **RF23** editar membro | — | unitário (CPF fora do update), HTTP (CPF no body → 400) | `membros.service.spec.ts`, `membros.http.spec.ts` | ✅ |
 | **RF24** desativar e reativar | CA12 | unitário (`desativar`, `reativar`, `assertMembroAtivo` → 422), e2e sem token → 401 | `membros.service.spec.ts`, `test/membros.e2e-spec.ts` | ✅ |
-| **RF25** ficha resumida | — | MEM-06 (unitário), tela WEB-G3 | `apps/api/src/membros/` (a criar) | ⏳ |
-| **RF26** acesso do aluno ao portal | — | MEM-07: unitário (liberar, redefinir, revogar, inativo → 422, 404, sem `senhaHash`), HTTP (senha < 8 → 400), e2e (recepção libera, aluno loga, revogado não loga), matriz de permissões | `membros.service.spec.ts`, `membros.http.spec.ts`, `test/membros.e2e-spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 |
-| **RF30** criar treino | CA03 | unitário (RN04 → 422, RN05 → 400, data = hoje passa), HTTP (body inválido → 400), matriz de permissões (RECEPCIONISTA → 403) | `apps/api/src/treinos/treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #55 |
-| **RF31** listar treinos e treinos do membro | CA06 (escolha do treino) | unitário (filtros, paginação, membro inexistente → 404) | `treinos.service.spec.ts`, `membros-treinos.controller.spec.ts` | 🔄 PR #55 |
-| **RF32** consultar treino | — | unitário (404) | `treinos.service.spec.ts` | 🔄 PR #55 |
-| **RF33** editar treino | — | unitário (só revalida a data se ela vier) | `treinos.service.spec.ts` | 🔄 PR #55 |
-| **RF34** excluir treino | — | unitário (404), HTTP (204), matriz de permissões | `treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #55 |
-| **RF35** treinos do aluno | — | unitário e HTTP (`membroId` do token, outro membro → 404, `membroId` na query → 400), e2e RN16 | `treinos.service.spec.ts`, `meus-treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #55 |
+| **RF25** ficha resumida | — | MEM-06 (unitário, HTTP e matriz de permissões), tela WEB-G3 (Testing Library) | `apps/api/src/membros/` e `apps/web/src/features/membros/` (a criar) | ⏳ |
+| **RF26** acesso do aluno ao portal | — | MEM-07: unitário (liberar, redefinir, revogar, inativo → 422, 404, sem `senhaHash`), HTTP (senha < 8 → 400), e2e (recepção libera, aluno loga, revogado não loga), matriz de permissões | `membros.service.spec.ts`, `membros.http.spec.ts`, `test/membros.e2e-spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #60 (Pedro) |
+| **RF30** criar treino | CA03 | unitário (RN04 → 422, RN05 → 400, data = hoje passa), HTTP (body inválido → 400), matriz de permissões (RECEPCIONISTA → 403) | `apps/api/src/treinos/treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
+| **RF31** listar treinos e treinos do membro | CA06 (escolha do treino) | unitário (filtros, paginação, membro inexistente → 404) | `treinos.service.spec.ts`, `membros-treinos.controller.spec.ts` | ✅ (PR #55) |
+| **RF32** consultar treino | — | unitário (404) | `treinos.service.spec.ts` | ✅ (PR #55) |
+| **RF33** editar treino | — | unitário (a data só é revalidada quando muda) | `treinos.service.spec.ts` | ✅ (PR #55) |
+| **RF34** excluir treino | — | unitário (404), HTTP (204), matriz de permissões | `treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
+| **RF35** treinos do aluno | — | unitário e HTTP (`membroId` do token, outro membro → 404, `membroId` na query → 400), e2e RN16 | `treinos.service.spec.ts`, `meus-treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
 | RF20 a RF35 (validações ponta a ponta) | CA02, CA03 | E2E-04 | `test/membros-treinos.e2e-spec.ts` (a criar) | ⏳ |
 
 **Cronograma do que falta (membros e treinos)**
@@ -150,11 +150,11 @@ Em 11/11, a MEM-07, a WEB-G6 e a E2E-04 passaram do Gabriel para o Pedro (veja a
 
 | Task | O que entrega | Responsável | Data |
 | --- | --- | --- | --- |
-| PR #55 (TRE-02 a TRE-05) | módulo de treinos na API, libera o passo 3 do E2E-02 | Gabriel | merge até 12/11 |
-| MEM-07 | liberar, redefinir e revogar o acesso do aluno (RF26) | Pedro | 13/11 |
+| PR #55 (TRE-02 a TRE-05) | módulo de treinos na API, libera o passo 3 do E2E-02 | Gabriel | ✅ mergeado em 11/11 |
+| MEM-07 | liberar, redefinir e revogar o acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
 | MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | Gabriel | 13/11 |
 | WEB-G1, WEB-G2 | lista e formulário de membros | Gabriel | 14/11 |
-| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 15/11 |
+| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 14/11 a 15/11 |
 | WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 | "Meus treinos" do portal do aluno e o componente de acesso da ficha | Pedro | 16/11 |
 | E2E-04 | e2e das validações de membros e treinos | Pedro | 16/11 |
@@ -212,7 +212,7 @@ Cada requisito tem uma meta com número e uma forma de verificar. Só entram met
 | --- | --- | --- | --- |
 | **RNF01** | Cobertura de testes | Cobertura **≥ 80%** (mínimo da A3: **75%**) na API e no front | Jest e Vitest geram o `lcov.info` no CI e o SonarCloud calcula a cobertura (badge no README); a última medição registrada foi 99,4% em 09/11/2026 |
 | **RNF02** | Quality gate do SonarCloud | Gate **Sonar way** aprovado: código novo com cobertura **≥ 80%**, duplicação **≤ 3%**, ratings de confiabilidade, segurança e manutenibilidade **A** e **100%** dos security hotspots revisados | O passo do Sonar no CI usa `sonar.qualitygate.wait=true`; gate reprovado deixa o CI vermelho |
-| **RNF03** | Integração contínua obrigatória para o merge | **0** PRs mergeados com o check "Lint, build e testes" vermelho; **1** aprovação de outro integrante; merge sem squash | Proteção da `main` (ruleset versionado em `.github/rulesets/main.json`); o CI roda lint, build, testes unitários, e2e com Postgres e Sonar |
+| **RNF03** | Integração contínua obrigatória para o merge | **0** PRs mergeados com o check "Lint, build e testes" vermelho; **1** aprovação de outro integrante; merge sem squash | Proteção da `main` (ruleset versionado em `.github/rulesets/main.json`; em 11/11 a regra ativa no GitHub está com 0 aprovações obrigatórias e precisa ser reaplicada a partir desse arquivo); o CI roda lint, build, testes unitários, e2e com Postgres e Sonar |
 | **RNF04** | Senhas | Hash **bcrypt com 10 rounds**; senha de **8 a 72 bytes**; **0** respostas da API com `senhaHash` | Testes unitários de funcionários e auth; `auth.e2e-spec.ts` confere que o hash não sai nas respostas |
 | **RNF05** | Sessão | Token JWT (HS256) que expira em **8 h**; `JWT_SECRET` com **≥ 32** caracteres (senão a API não sobe) | Testes unitários de `expiracao-token` e `segredo-jwt`; `seguranca.e2e-spec.ts` cobre token inválido e expirado → 401 |
 | **RNF06** | Controle de acesso | **100%** das rotas com `@Roles` ou `@Public`; matriz de permissões (401, 403 e sucesso por cargo) testada por HTTP | `test/seguranca.e2e-spec.ts` roda no CI; o teste "cobertura da matriz" falha se uma rota ficar de fora. Evidência em `docs/evidencias/permissoes/README.md` |
@@ -344,14 +344,14 @@ Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR abert
 
 | Critério | RFs | RNs | Teste | Arquivo | Status |
 | --- | --- | --- | --- | --- | --- |
-| **CA01** | RF01, RF03 | RN14 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
-| **CA02** | RF20, RF21 | RN01, RN02 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
-| **CA03** | RF30 | RN04, RN05 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 (depende do PR #55) |
-| **CA04** | RF40 | RN06, RN07 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
-| **CA05** | RF43 | RN08 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
-| **CA06** | RF50 | RN04, RN09, RN10, RN11 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
-| **CA07** | RF52 | — | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
-| **CA08** | RF60 | — | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | 🔄 |
+| **CA01** | RF01, RF03 | RN14 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | ✅ (PR #57) |
+| **CA02** | RF20, RF21 | RN01, RN02 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | ✅ (PR #57) |
+| **CA03** | RF30 | RN04, RN05 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | ✅ (PR #57) |
+| **CA04** | RF40 | RN06, RN07 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | ✅ (PR #57) |
+| **CA05** | RF43 | RN08 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | ✅ (PR #57) |
+| **CA06** | RF50 | RN04, RN09, RN10, RN11 | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | ✅ (PR #57) |
+| **CA07** | RF52 | — | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | ✅ (PR #57) |
+| **CA08** | RF60 | — | E2E-02 | `apps/api/test/fluxo-principal.e2e-spec.ts` | ✅ (PR #57) |
 | **CA09** | RF50 | RN09 | E2E-03 | `apps/api/test/inadimplencia.e2e-spec.ts` | ✅ (PR #26) |
 | **CA10** | RF50 | RN09 | E2E-03 | `apps/api/test/inadimplencia.e2e-spec.ts` | ✅ (PR #26) |
 | **CA11** | RF43, RF50 | RN09 | E2E-03 | `apps/api/test/inadimplencia.e2e-spec.ts` | ✅ (PR #26) |
@@ -364,14 +364,14 @@ A cobertura de 100% do escopo analisado vale só para o que já está na `main`;
 
 | Entrega | O que libera | Responsável | Data |
 | --- | --- | --- | --- |
-| Merge do PR #55 (TRE-02 a TRE-05) | módulo de treinos na API (passo 3 do fluxo) | Gabriel | 12/11 |
-| Merge do E2E-02 (`fluxo-principal.e2e-spec.ts`) | teste de sistema CA01–CA08 com banco de teste | Gabriel | 12/11, logo depois do #55 |
+| Merge do PR #55 (TRE-02 a TRE-05) | módulo de treinos na API (passo 3 do fluxo) | Gabriel | ✅ 11/11 |
+| Merge do E2E-02 (`fluxo-principal.e2e-spec.ts`) | teste de sistema CA01–CA08 com banco de teste | Gabriel | ✅ 11/11 (PR #57) |
 | MEM-06 | ficha do membro (RF25) | Gabriel | 13/11 |
-| MEM-07 | acesso do aluno (RF26) | Pedro | 13/11 |
+| MEM-07 | acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
 | WEB-G1 a WEB-G4 | telas de membros e treinos (passos 2 e 3 pela interface) | Gabriel | 14/11 a 15/11 |
 | WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 e E2E-04 | "Meus treinos" e e2e de validações | Pedro | 16/11 |
-| E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | 16/11 |
+| E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | 🔄 PR #59 |
 | QA-01 a QA-05 | issues do Sonar zeradas, cobertura consolidada ≥ 75% e quality gate aprovado | Pedro, Gabriel e Yohan | 17/11 a 23/11 (code freeze) |
 
 As telas de login, pagamentos, histórico e dashboard já estão na `main`; as únicas telas que faltam para percorrer o fluxo pela interface são as de membros e treinos.
