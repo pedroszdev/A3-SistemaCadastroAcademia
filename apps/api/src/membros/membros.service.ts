@@ -23,6 +23,21 @@ export const MEMBRO_SELECT = {
   dataCadastro: true,
 } as const;
 
+// RN12: o hash só é lido para virar o acessoLiberado e não sai do service.
+export const MEMBRO_SELECT_COM_HASH = {
+  ...MEMBRO_SELECT,
+  senhaHash: true,
+} as const;
+
+type MembroComHash = Prisma.MembroGetPayload<{
+  select: typeof MEMBRO_SELECT_COM_HASH;
+}>;
+
+/** O membro como a API devolve: sem o hash, com o acessoLiberado (RN15). */
+export function paraResposta({ senhaHash, ...membro }: MembroComHash) {
+  return { ...membro, acessoLiberado: senhaHash !== null };
+}
+
 const SO_DIGITOS = /^\d+$/;
 const ESPACOS = /\s/g;
 
@@ -53,15 +68,17 @@ export class MembrosService {
     }
 
     try {
-      return await this.prisma.membro.create({
-        data: {
-          nome: dto.nome,
-          cpf: dto.cpf,
-          telefone: dto.telefone,
-          endereco: dto.endereco,
-        },
-        select: MEMBRO_SELECT,
-      });
+      return paraResposta(
+        await this.prisma.membro.create({
+          data: {
+            nome: dto.nome,
+            cpf: dto.cpf,
+            telefone: dto.telefone,
+            endereco: dto.endereco,
+          },
+          select: MEMBRO_SELECT_COM_HASH,
+        }),
+      );
     } catch (erro) {
       // Outro cadastro com o mesmo CPF pode entrar entre a consulta e o insert;
       // o índice único recusa, e a resposta continua a mesma da RN02.
@@ -83,54 +100,68 @@ export class MembrosService {
     const [data, total] = await Promise.all([
       this.prisma.membro.findMany({
         where,
-        select: MEMBRO_SELECT,
+        select: MEMBRO_SELECT_COM_HASH,
         // id desempata nomes iguais, para a paginação não repetir nem pular
         orderBy: [{ nome: 'asc' }, { id: 'asc' }],
         ...paginacaoPrisma(query),
       }),
       this.prisma.membro.count({ where }),
     ]);
-    return paginate(data, total, query);
+    return paginate(
+      data.map((m) => paraResposta(m)),
+      total,
+      query,
+    );
   }
 
   async findOne(id: string) {
     const membro = await this.prisma.membro.findUnique({
       where: { id },
-      select: MEMBRO_SELECT,
+      select: MEMBRO_SELECT_COM_HASH,
     });
     if (!membro) {
       throw new NotFoundException('Membro não encontrado');
     }
-    return membro;
+    return paraResposta(membro);
   }
 
   // RN02: o CPF fica de fora; o DTO já recusa a tentativa de alterá-lo.
   async update(id: string, dto: UpdateMembroDto) {
     await this.findOne(id);
-    return this.prisma.membro.update({
-      where: { id },
-      data: { nome: dto.nome, telefone: dto.telefone, endereco: dto.endereco },
-      select: MEMBRO_SELECT,
-    });
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: {
+          nome: dto.nome,
+          telefone: dto.telefone,
+          endereco: dto.endereco,
+        },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
   }
 
   // RN03: membro não é excluído, só desativado e reativado.
   async desativar(id: string) {
     await this.findOne(id);
-    return this.prisma.membro.update({
-      where: { id },
-      data: { ativo: false },
-      select: MEMBRO_SELECT,
-    });
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: { ativo: false },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
   }
 
   async reativar(id: string) {
     await this.findOne(id);
-    return this.prisma.membro.update({
-      where: { id },
-      data: { ativo: true },
-      select: MEMBRO_SELECT,
-    });
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: { ativo: true },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
   }
 
   /**

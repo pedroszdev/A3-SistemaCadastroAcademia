@@ -8,11 +8,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
 import { UpdateMembroDto } from './dto/update-membro.dto';
-import { MEMBRO_SELECT, MembrosService, filtroBusca } from './membros.service';
+import {
+  MEMBRO_SELECT_COM_HASH,
+  MembrosService,
+  filtroBusca,
+} from './membros.service';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 
-// CPF gerado para testes, não pertence a ninguém.
+// A linha do banco; CPF gerado para testes, não pertence a ninguém.
 const membro = (extra: Record<string, unknown> = {}) => ({
   id: ID,
   nome: 'Ana Pereira',
@@ -21,6 +25,20 @@ const membro = (extra: Record<string, unknown> = {}) => ({
   endereco: 'Rua das Flores, 100',
   ativo: true,
   dataCadastro: new Date('2026-10-01T12:00:00.000Z'),
+  senhaHash: null,
+  ...extra,
+});
+
+// O que o service devolve: sem o hash, com o acessoLiberado.
+const resposta = (extra: Record<string, unknown> = {}) => ({
+  id: ID,
+  nome: 'Ana Pereira',
+  cpf: '52998224725',
+  telefone: '48999991234',
+  endereco: 'Rua das Flores, 100',
+  ativo: true,
+  dataCadastro: new Date('2026-10-01T12:00:00.000Z'),
+  acessoLiberado: false,
   ...extra,
 });
 
@@ -90,14 +108,14 @@ describe('MembrosService', () => {
       prisma.membro.findUnique.mockResolvedValue(null);
       prisma.membro.create.mockResolvedValue(membro());
 
-      await expect(service.create(dto)).resolves.toEqual(membro());
+      await expect(service.create(dto)).resolves.toEqual(resposta());
       expect(prisma.membro.findUnique).toHaveBeenCalledWith({
         where: { cpf: '52998224725' },
         select: { id: true },
       });
       expect(prisma.membro.create).toHaveBeenCalledWith({
         data: { ...dto },
-        select: MEMBRO_SELECT,
+        select: MEMBRO_SELECT_COM_HASH,
       });
     });
 
@@ -138,14 +156,14 @@ describe('MembrosService', () => {
       const query = { page: 3, pageSize: 20 } as QueryMembroDto;
 
       await expect(service.findAll(query)).resolves.toEqual({
-        data: [membro()],
+        data: [resposta()],
         total: 41,
         page: 3,
         pageSize: 20,
       });
       expect(prisma.membro.findMany).toHaveBeenCalledWith({
         where: { ativo: undefined },
-        select: MEMBRO_SELECT,
+        select: MEMBRO_SELECT_COM_HASH,
         orderBy: [{ nome: 'asc' }, { id: 'asc' }],
         skip: 40,
         take: 20,
@@ -197,11 +215,22 @@ describe('MembrosService', () => {
     it('devolve o membro', async () => {
       prisma.membro.findUnique.mockResolvedValue(membro());
 
-      await expect(service.findOne(ID)).resolves.toEqual(membro());
+      await expect(service.findOne(ID)).resolves.toEqual(resposta());
       expect(prisma.membro.findUnique).toHaveBeenCalledWith({
         where: { id: ID },
-        select: MEMBRO_SELECT,
+        select: MEMBRO_SELECT_COM_HASH,
       });
+    });
+
+    it('acessoLiberado vem do senhaHash, que não sai do service (RN12, RN15)', async () => {
+      prisma.membro.findUnique.mockResolvedValue(
+        membro({ senhaHash: '$2b$10$hashficticio' }),
+      );
+
+      const resultado = await service.findOne(ID);
+
+      expect(resultado).toEqual(resposta({ acessoLiberado: true }));
+      expect(resultado).not.toHaveProperty('senhaHash');
     });
 
     it('lança 404 quando não existe', async () => {
@@ -220,17 +249,18 @@ describe('MembrosService', () => {
       const dto = { nome: 'Ana Paula' } as UpdateMembroDto;
 
       await expect(service.update(ID, dto)).resolves.toEqual(
-        membro({ nome: 'Ana Paula' }),
+        resposta({ nome: 'Ana Paula' }),
       );
       expect(prisma.membro.update).toHaveBeenCalledWith({
         where: { id: ID },
         data: { nome: 'Ana Paula', telefone: undefined, endereco: undefined },
-        select: MEMBRO_SELECT,
+        select: MEMBRO_SELECT_COM_HASH,
       });
     });
 
     it('não repassa o CPF ao Prisma (RN02)', async () => {
       prisma.membro.findUnique.mockResolvedValue(membro());
+      prisma.membro.update.mockResolvedValue(membro());
       const dto = { cpf: '11144477735' } as unknown as UpdateMembroDto;
 
       await service.update(ID, dto);
@@ -255,11 +285,11 @@ describe('MembrosService', () => {
       prisma.membro.findUnique.mockResolvedValue(membro({ ativo: !ativo }));
       prisma.membro.update.mockResolvedValue(membro({ ativo }));
 
-      await expect(service[metodo](ID)).resolves.toEqual(membro({ ativo }));
+      await expect(service[metodo](ID)).resolves.toEqual(resposta({ ativo }));
       expect(prisma.membro.update).toHaveBeenCalledWith({
         where: { id: ID },
         data: { ativo },
-        select: MEMBRO_SELECT,
+        select: MEMBRO_SELECT_COM_HASH,
       });
     });
 
