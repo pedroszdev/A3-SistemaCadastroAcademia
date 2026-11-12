@@ -5,11 +5,10 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
-import { hash } from 'bcryptjs';
 import { paginacaoPrisma, paginate } from '../common/utils/paginate';
+import { hashSenha } from '../common/utils/senha';
 import { normalizarCpf } from '../common/validators/cpf';
 import type { Prisma } from '../generated/prisma/client';
-import { SALT_ROUNDS } from '../funcionarios/funcionarios.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
 import { LiberarAcessoDto } from './dto/liberar-acesso.dto';
@@ -167,14 +166,15 @@ export class MembrosService {
     );
   }
 
-  // RN15: libera o acesso do aluno ou redefine a senha. O SALT_ROUNDS é o do
-  // login (auth.service.ts), para o tempo do compare não revelar a conta.
+  // RN15: libera o acesso do aluno ou redefine a senha. O hashSenha usa o
+  // SALT_ROUNDS do login (auth.service.ts), para o tempo do compare não revelar
+  // a conta.
   async liberarAcesso(id: string, dto: LiberarAcessoDto) {
     await this.assertMembroAtivo(
       id,
       'Membro inativo não pode ter o acesso liberado',
     );
-    const senhaHash = await hash(dto.senha, SALT_ROUNDS);
+    const senhaHash = await hashSenha(dto.senha);
     return paraResposta(
       await this.prisma.membro.update({
         where: { id },

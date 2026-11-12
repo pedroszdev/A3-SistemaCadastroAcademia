@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { compare, getRounds } from 'bcryptjs';
-import { SALT_ROUNDS } from '../funcionarios/funcionarios.service';
+import { SALT_ROUNDS } from '../common/utils/senha';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
