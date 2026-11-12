@@ -6,10 +6,12 @@ import {
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { paginacaoPrisma, paginate } from '../common/utils/paginate';
+import { hashSenha } from '../common/utils/senha';
 import { normalizarCpf } from '../common/validators/cpf';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
+import { LiberarAcessoDto } from './dto/liberar-acesso.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
 import { UpdateMembroDto } from './dto/update-membro.dto';
 
@@ -23,8 +25,29 @@ export const MEMBRO_SELECT = {
   dataCadastro: true,
 } as const;
 
+// RN12: o hash só é lido para virar o acessoLiberado e não sai do service.
+export const MEMBRO_SELECT_COM_HASH = {
+  ...MEMBRO_SELECT,
+  senhaHash: true,
+} as const;
+
+type MembroComHash = Prisma.MembroGetPayload<{
+  select: typeof MEMBRO_SELECT_COM_HASH;
+}>;
+
+/**
+ * O membro como a API devolve: sem o hash, com o acessoLiberado (RN15).
+ * acessoLiberado diz só se o aluno tem senha definida. Desativar não apaga a
+ * senha: o inativo continua com acessoLiberado true, mas não loga (o login e
+ * a jwt.strategy exigem ativo), e ao ser reativado volta a logar com ela.
+ */
+export function paraResposta({ senhaHash, ...membro }: MembroComHash) {
+  return { ...membro, acessoLiberado: senhaHash !== null };
+}
+
 const SO_DIGITOS = /^\d+$/;
 const ESPACOS = /\s/g;
+const ACESSO_DE_INATIVO = 'Membro inativo não pode ter o acesso liberado';
 
 // Busca só com números (com ou sem a máscara ou espaços) procura pelo início
 // do CPF; qualquer outra coisa procura no nome, sem diferenciar maiúsculas.
@@ -53,15 +76,17 @@ export class MembrosService {
     }
 
     try {
-      return await this.prisma.membro.create({
-        data: {
-          nome: dto.nome,
-          cpf: dto.cpf,
-          telefone: dto.telefone,
-          endereco: dto.endereco,
-        },
-        select: MEMBRO_SELECT,
-      });
+      return paraResposta(
+        await this.prisma.membro.create({
+          data: {
+            nome: dto.nome,
+            cpf: dto.cpf,
+            telefone: dto.telefone,
+            endereco: dto.endereco,
+          },
+          select: MEMBRO_SELECT_COM_HASH,
+        }),
+      );
     } catch (erro) {
       // Outro cadastro com o mesmo CPF pode entrar entre a consulta e o insert;
       // o índice único recusa, e a resposta continua a mesma da RN02.
@@ -83,54 +108,107 @@ export class MembrosService {
     const [data, total] = await Promise.all([
       this.prisma.membro.findMany({
         where,
-        select: MEMBRO_SELECT,
+        select: MEMBRO_SELECT_COM_HASH,
         // id desempata nomes iguais, para a paginação não repetir nem pular
         orderBy: [{ nome: 'asc' }, { id: 'asc' }],
         ...paginacaoPrisma(query),
       }),
       this.prisma.membro.count({ where }),
     ]);
-    return paginate(data, total, query);
+    return paginate(
+      data.map((m) => paraResposta(m)),
+      total,
+      query,
+    );
   }
 
   async findOne(id: string) {
     const membro = await this.prisma.membro.findUnique({
       where: { id },
-      select: MEMBRO_SELECT,
+      select: MEMBRO_SELECT_COM_HASH,
     });
     if (!membro) {
       throw new NotFoundException('Membro não encontrado');
     }
-    return membro;
+    return paraResposta(membro);
   }
 
   // RN02: o CPF fica de fora; o DTO já recusa a tentativa de alterá-lo.
   async update(id: string, dto: UpdateMembroDto) {
     await this.findOne(id);
-    return this.prisma.membro.update({
-      where: { id },
-      data: { nome: dto.nome, telefone: dto.telefone, endereco: dto.endereco },
-      select: MEMBRO_SELECT,
-    });
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: {
+          nome: dto.nome,
+          telefone: dto.telefone,
+          endereco: dto.endereco,
+        },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
   }
 
   // RN03: membro não é excluído, só desativado e reativado.
   async desativar(id: string) {
     await this.findOne(id);
-    return this.prisma.membro.update({
-      where: { id },
-      data: { ativo: false },
-      select: MEMBRO_SELECT,
-    });
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: { ativo: false },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
   }
 
   async reativar(id: string) {
     await this.findOne(id);
-    return this.prisma.membro.update({
-      where: { id },
-      data: { ativo: true },
-      select: MEMBRO_SELECT,
-    });
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: { ativo: true },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
+  }
+
+  // RN15: libera o acesso do aluno ou redefine a senha. O hashSenha usa o
+  // SALT_ROUNDS do login (auth.service.ts), para o tempo do compare não revelar
+  // a conta.
+  async liberarAcesso(id: string, dto: LiberarAcessoDto) {
+    await this.assertMembroAtivo(id, ACESSO_DE_INATIVO);
+    const senhaHash = await hashSenha(dto.senha);
+    try {
+      return paraResposta(
+        await this.prisma.membro.update({
+          // ativo no where: se o membro foi desativado depois da checagem, o
+          // update não acha a linha e nada é gravado.
+          where: { id, ativo: true },
+          data: { senhaHash },
+          select: MEMBRO_SELECT_COM_HASH,
+        }),
+      );
+    } catch (erro) {
+      if (
+        erro instanceof PrismaClientKnownRequestError &&
+        erro.code === 'P2025'
+      ) {
+        throw new UnprocessableEntityException(ACESSO_DE_INATIVO);
+      }
+      throw erro;
+    }
+  }
+
+  // Revogar vale também para o membro inativo: só tira o acesso.
+  async revogarAcesso(id: string) {
+    await this.findOne(id);
+    return paraResposta(
+      await this.prisma.membro.update({
+        where: { id },
+        data: { senhaHash: null },
+        select: MEMBRO_SELECT_COM_HASH,
+      }),
+    );
   }
 
   /**

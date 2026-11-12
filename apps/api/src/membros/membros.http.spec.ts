@@ -26,6 +26,8 @@ describe('MembrosController (HTTP)', () => {
     update: jest.fn(),
     desativar: jest.fn(),
     reativar: jest.fn(),
+    liberarAcesso: jest.fn(),
+    revogarAcesso: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -102,6 +104,23 @@ describe('MembrosController (HTTP)', () => {
       expect(service.reativar).toHaveBeenCalledWith(ID);
       expect(service.desativar).not.toHaveBeenCalled();
     });
+
+    it('PATCH /membros/:id/acesso chama liberarAcesso', async () => {
+      await http()
+        .patch(`/membros/${ID}/acesso`)
+        .send({ senha: 'senha1234' })
+        .expect(200);
+
+      expect(service.liberarAcesso).toHaveBeenCalledWith(ID, {
+        senha: 'senha1234',
+      });
+    });
+
+    it('DELETE /membros/:id/acesso chama revogarAcesso', async () => {
+      await http().delete(`/membros/${ID}/acesso`).expect(200);
+
+      expect(service.revogarAcesso).toHaveBeenCalledWith(ID);
+    });
   });
 
   describe('id inválido', () => {
@@ -110,6 +129,8 @@ describe('MembrosController (HTTP)', () => {
       ['patch', '/membros/abc'],
       ['patch', '/membros/abc/desativar'],
       ['patch', '/membros/abc/reativar'],
+      ['patch', '/membros/abc/acesso'],
+      ['delete', '/membros/abc/acesso'],
     ] as const)('%s %s → 400', async (metodo, rota) => {
       await http()[metodo](rota).expect(400);
 
@@ -117,6 +138,8 @@ describe('MembrosController (HTTP)', () => {
       expect(service.update).not.toHaveBeenCalled();
       expect(service.desativar).not.toHaveBeenCalled();
       expect(service.reativar).not.toHaveBeenCalled();
+      expect(service.liberarAcesso).not.toHaveBeenCalled();
+      expect(service.revogarAcesso).not.toHaveBeenCalled();
     });
   });
 
@@ -149,6 +172,33 @@ describe('MembrosController (HTTP)', () => {
         'cpf não pode ser alterado',
       );
       expect(service.update).not.toHaveBeenCalled();
+    });
+
+    it('PATCH /acesso com senha curta → 400, sem liberarAcesso', async () => {
+      await http()
+        .patch(`/membros/${ID}/acesso`)
+        .send({ senha: '1234567' })
+        .expect(400);
+
+      expect(service.liberarAcesso).not.toHaveBeenCalled();
+    });
+
+    it('PATCH /acesso com campo extra → 400, sem liberarAcesso', async () => {
+      await http()
+        .patch(`/membros/${ID}/acesso`)
+        .send({ senha: 'senha1234', ativo: true })
+        .expect(400);
+
+      expect(service.liberarAcesso).not.toHaveBeenCalled();
+    });
+
+    it('PATCH /membros/abc/acesso com senha válida → 400 pelo UUID, sem liberarAcesso', async () => {
+      await http()
+        .patch('/membros/abc/acesso')
+        .send({ senha: 'senha1234' })
+        .expect(400);
+
+      expect(service.liberarAcesso).not.toHaveBeenCalled();
     });
   });
 });

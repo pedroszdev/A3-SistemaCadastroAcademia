@@ -2,11 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare, hashSync } from 'bcryptjs';
-import {
-  FUNCIONARIO_SELECT,
-  SALT_ROUNDS,
-} from '../funcionarios/funcionarios.service';
+import { SALT_ROUNDS } from '../common/utils/senha';
 import { isCpfValido } from '../common/validators/cpf';
+import { FUNCIONARIO_SELECT } from '../funcionarios/funcionarios.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginAlunoDto } from './dto/login-aluno.dto';
 import { LoginDto } from './dto/login.dto';

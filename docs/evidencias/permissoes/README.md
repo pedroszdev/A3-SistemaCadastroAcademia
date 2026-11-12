@@ -34,7 +34,7 @@ Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/
 | Funcionários (CRUD) | `GET/POST /funcionarios`, `GET/PATCH /funcionarios/:id`, `PATCH /funcionarios/:id/desativar` e `/reativar` | ✅ | ❌ | ❌ | ❌ | PR [#27](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/27), merge `b70b666` | ✅ |
 | Membros — listar/ver | `GET /membros`, `GET /membros/:id` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(membros)`), merge `4c21808` | ✅ |
 | Membros — criar/editar/desativar | `POST /membros`, `PATCH /membros/:id`, `PATCH /membros/:id/desativar` e `/reativar` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(membros)`), merge `4c21808` | ✅ |
-| Membros — liberar/redefinir acesso do aluno | ainda não existe | ✅ | ✅ | ❌ | ❌ | MEM-07 (Pedro) | ⏳ |
+| Membros — liberar/redefinir acesso do aluno | `PATCH /membros/:id/acesso`, `DELETE /membros/:id/acesso` | ✅ | ✅ | ❌ | ❌ | MEM-07 (Pedro) | 🔄 |
 | Treinos — listar/ver (todos) | `GET /treinos`, `GET /treinos/:id`, `GET /membros/:id/treinos` | ✅ | ✅ | ✅ | ❌ | PR [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55) (TRE-03/TRE-05), merge `f7b06b3` | ✅ |
 | Treinos — criar/editar/excluir | `POST /treinos`, `PATCH /treinos/:id`, `DELETE /treinos/:id` | ✅ | ❌ | ✅ | ❌ | PR [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55) (TRE-03/TRE-05), merge `f7b06b3` | ✅ |
 | Treinos — os próprios (`/me/treinos`) | `GET /me/treinos`, `GET /me/treinos/:id` | ❌ | ❌ | ❌ | ✅ | PR [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55) (TRE-03/TRE-05), merge `f7b06b3` | ✅ |
@@ -59,7 +59,7 @@ O login do aluno (AUTH-04) entrou na `main` com o PR #32 (`e9240a7`). O `RolesGu
 | ALUNO é somente leitura (RN17) | `contrato da issue #28 › ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)` |
 | RN16: aluno A × aluno B → 404 | `contrato da issue #28 › ALUNO não vê a atividade...`, `... não vê o treino...` e `... dois alunos logados: nenhum vê o treino nem a atividade do outro, nos dois sentidos (RN16)` |
 | `senhaHash` nunca na resposta (RN12) | `senhaHash fora das respostas (RN12)` (um caso por rota da `MATRIZ`) e, no `auth.e2e-spec.ts`, o login e o `/auth/me` |
-| 401 sem autenticação | `sem token → 401` (as 36 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
+| 401 sem autenticação | `sem token → 401` (as 38 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
 
 ## 3. Como reproduzir
 
@@ -80,7 +80,7 @@ Tests:       237 passed, 237 total      # todos os e2e da API (10 suítes)
 Tests:       678 passed, 678 total      # unitários da API, 100% de cobertura
 ```
 
-No `f921ce2`, a suíte de segurança tinha 152 casos: 28 de 401, 112 por papel (28 rotas × 4 papéis), 6 do contrato da issue, 3 de token e 3 de cobertura da matriz. Com as 8 rotas de treinos do PR [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55), passa a ter 194 casos: 36 de 401, 144 por papel (36 rotas × 4 papéis), 8 do contrato da issue, 3 de token e 3 de cobertura da matriz. Na branch `test/e2e-05-seguranca`, com o caso do RN16 com dois alunos logados e os 36 casos de `senhaHash fora das respostas (RN12)`, são 231 casos nessa suíte, e a suíte e2e inteira tem 325 testes em 11 suítes (medido localmente no banco `academia_test`). Os PRs que fecharam as linhas da matriz entraram na `main` com estes merges: #27 (`b70b666`), #32 (`e9240a7`), #33 (`6565f38`), #35 (`4c21808`), #40 (`0950cb8`), #46 (`f921ce2`) e #55 (`f7b06b3`).
+No `f921ce2`, a suíte de segurança tinha 152 casos: 28 de 401, 112 por papel (28 rotas × 4 papéis), 6 do contrato da issue, 3 de token e 3 de cobertura da matriz. Com as 8 rotas de treinos do PR [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55), passa a ter 194 casos: 36 de 401, 144 por papel (36 rotas × 4 papéis), 8 do contrato da issue, 3 de token e 3 de cobertura da matriz. Na branch `test/e2e-05-seguranca`, com o caso do RN16 com dois alunos logados e os 36 casos de `senhaHash fora das respostas (RN12)`, são 231 casos nessa suíte, e a suíte e2e inteira tem 325 testes em 11 suítes (medido localmente no banco `academia_test`). Na branch `feat/membros-acesso-aluno`, com as 2 rotas novas do acesso do aluno (2 de 401, 8 por papel e 2 de `senhaHash`), são 243 casos nessa suíte, e a suíte e2e inteira tem 343 testes em 11 suítes (medido localmente no banco `academia_test`). Os PRs que fecharam as linhas da matriz entraram na `main` com estes merges: #27 (`b70b666`), #32 (`e9240a7`), #33 (`6565f38`), #35 (`4c21808`), #40 (`0950cb8`), #46 (`f921ce2`) e #55 (`f7b06b3`).
 
 Na branch `feat/rbac-matriz`, em 06/11/2026, antes do merge do #35, eram 131 casos (24 rotas). Depois entraram o `GET /dashboard/inadimplentes` do #40 (136 casos e 25 rotas em `5823a81`) e as três rotas `/me/atividades` do #46, com o caso do RN16 no contrato da issue.
 
@@ -108,8 +108,4 @@ No CI, o mesmo arquivo roda no passo de e2e do job `Lint, build e testes`, que a
 
 ## 4. O que falta e quando
 
-Datas propostas, a confirmar no check-in do grupo.
-
-| Pendência | Task | Responsável | Data | Como fecha a linha da matriz |
-| --- | --- | --- | --- | --- |
-| Liberar acesso do aluno | MEM-07 | Pedro | 13/11 | linha na `MATRIZ` (ADMIN e RECEPCIONISTA) |
+Toda linha da matriz 4.2 tem rota e teste; a última, a do acesso do aluno, fica 🔄 até o merge da MEM-07.
