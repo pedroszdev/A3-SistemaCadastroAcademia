@@ -152,10 +152,10 @@ Em 11/11, a MEM-07, a WEB-G6 e a E2E-04 passaram do Gabriel para o Pedro (veja a
 | --- | --- | --- | --- |
 | PR #55 (TRE-02 a TRE-05) | módulo de treinos na API, libera o passo 3 do E2E-02 | Gabriel | ✅ mergeado em 11/11 |
 | MEM-07 | liberar, redefinir e revogar o acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
-| MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | Gabriel | 🔄 PR #61 (11/11) |
-| WEB-G1, WEB-G2 | lista e formulário de membros | Gabriel | 🔄 PR #65 (11/11) |
-| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 🔄 PRs #65 e #66 (11/11) |
-| WEB-G5 | testes do front de membros e treinos | Gabriel | 🔄 PRs #65 e #66 (11/11) |
+| MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | Gabriel | 13/11 |
+| WEB-G1, WEB-G2 | lista e formulário de membros | Gabriel | 14/11 |
+| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 14/11 a 15/11 |
+| WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 | "Meus treinos" do portal do aluno e o componente de acesso da ficha | Pedro | 16/11 |
 | E2E-04 | e2e das validações de membros e treinos | Pedro | 16/11 |
 
@@ -366,10 +366,10 @@ A cobertura de 100% do escopo analisado vale só para o que já está na `main`;
 | --- | --- | --- | --- |
 | Merge do PR #55 (TRE-02 a TRE-05) | módulo de treinos na API (passo 3 do fluxo) | Gabriel | ✅ 11/11 |
 | Merge do E2E-02 (`fluxo-principal.e2e-spec.ts`) | teste de sistema CA01–CA08 com banco de teste | Gabriel | ✅ 11/11 (PR #57) |
-| MEM-06 | ficha do membro (RF25) | Gabriel | 🔄 PR #61 |
+| MEM-06 | ficha do membro (RF25) | Gabriel | 13/11 |
 | MEM-07 | acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
-| WEB-G1 a WEB-G4 | telas de membros e treinos (passos 2 e 3 pela interface) | Gabriel | 🔄 PRs #66 e #65 |
-| WEB-G5 | testes do front de membros e treinos | Gabriel | 🔄 PRs #65 e #66 (11/11) |
+| WEB-G1 a WEB-G4 | telas de membros e treinos (passos 2 e 3 pela interface) | Gabriel | 14/11 a 15/11 |
+| WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 e E2E-04 | "Meus treinos" e e2e de validações | Pedro | 16/11 |
 | E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | 🔄 PR #59 |
 | QA-01 a QA-05 | issues do Sonar zeradas, cobertura consolidada ≥ 75% e quality gate aprovado | Pedro, Gabriel e Yohan | 17/11 a 23/11 (code freeze) |
