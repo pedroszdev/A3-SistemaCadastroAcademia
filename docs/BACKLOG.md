@@ -1140,7 +1140,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 
 **O que fazer**
 - `/aluno/treinos`: cards com os treinos do aluno (tipo, descrição, duração, início), filtro por tipo e detalhe ao clicar. Layout pensado para celular.
-- Componente `AcessoDoMembro` (`features/membros/acesso-do-membro.tsx`), com as props `membroId: string`, `ativo: boolean`, `acessoLiberado: boolean` e `onAlterado?: () => void`: botão "Liberar acesso" ou "Redefinir senha" (modal com senha e confirmação) e "Revogar acesso", com o badge "Acesso liberado". Com `ativo={false}`, os botões dão lugar a um aviso (RF26: membro inativo não recebe acesso; a API da MEM-07 responderia 422). Só ADMIN e RECEPCIONISTA veem os botões. O Gabriel encaixa o componente na ficha (WEB-G3), como os da WEB-Y4.
+- Componente `AcessoDoMembro` (`features/membros/acesso-do-membro.tsx`), com as props `membroId: string`, `ativo: boolean`, `acessoLiberado: boolean` e `onAlterado?: () => void`: botão "Liberar acesso" ou "Redefinir senha" (modal com senha e confirmação) e "Revogar acesso", com o badge "Acesso liberado". Com `ativo={false}`, "Liberar acesso" e "Redefinir senha" dão lugar a um aviso (RF26: membro inativo não recebe acesso; a API da MEM-07 responderia 422), mas "Revogar acesso" continua quando `acessoLiberado` é `true`: desativar não apaga a senha, o inativo voltaria a logar ao ser reativado, e a API revoga inativo. Só ADMIN e RECEPCIONISTA veem os botões. O Gabriel encaixa o componente na ficha (WEB-G3), como os da WEB-Y4.
 - Testes: lista renderiza os cards, filtro chama a API certa, modal valida a senha (mínimo 8 e confirmação igual).
 
 **Resultado esperado**
