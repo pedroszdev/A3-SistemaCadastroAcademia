@@ -40,7 +40,7 @@ Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/
 | Treinos — os próprios (`/me/treinos`) | `GET /me/treinos`, `GET /me/treinos/:id` | ❌ | ❌ | ❌ | ✅ | PR [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55) (TRE-03/TRE-05), merge `f7b06b3` | ✅ |
 | Pagamentos — tudo | `GET/POST /pagamentos`, `GET /pagamentos/:id`, `PATCH /pagamentos/:id/pagar` e `/cancelar` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`), merge `4c21808` | ✅ |
 | Situação financeira (RF45) | `GET /membros/:id/situacao` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`), merge `4c21808` | ✅ |
-| Ficha resumida (RF25) | `GET /membros/:id/resumo` | ✅ | ✅ | ❌ | ❌ | MEM-06 (Yohan) | 🔄 |
+| Ficha resumida (RF25) | `GET /membros/:id/resumo` | ✅ | ✅ | ❌ | ❌ | PR [#70](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/70) (MEM-06) | 🔄 |
 | Histórico — listar/ver (todos) | `GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`), merge `4c21808` | ✅ |
 | Histórico — registrar | `POST /atividades` | ✅ | ❌ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`), merge `4c21808` | ✅ |
 | Histórico — o próprio (`/me/atividades`) | `GET /me/atividades`, `GET /me/atividades/resumo`, `GET /me/atividades/:id` | ❌ | ❌ | ❌ | ✅ | PR [#46](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/46) (HIS-05), merge `f921ce2` | ✅ |
