@@ -129,10 +129,10 @@ Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR abert
 
 | RF | CA | Teste | Arquivo | Status |
 | --- | --- | --- | --- | --- |
-| **RF20** cadastrar membro | CA02 | unitário (create, CPF duplicado → 409), HTTP (CPF e telefone só com dígitos, CPF inválido → 400), matriz de permissões | `apps/api/src/membros/membros.service.spec.ts`, `membros.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ |
+| **RF20** cadastrar membro | CA02 | unitário (create, CPF duplicado → 409), HTTP (CPF e telefone só com dígitos, CPF inválido → 400), matriz de permissões; tela WEB-G2 (Testing Library: máscaras, validação com as mensagens da API, CPF do `cpf.ts`, 409 no campo CPF, "Acesso restrito" para o INSTRUTOR) | `apps/api/src/membros/membros.service.spec.ts`, `membros.http.spec.ts`, `test/seguranca.e2e-spec.ts`, `apps/web/src/features/membros/form-membro.test.tsx`, `cpf.test.ts`, `validacao.test.ts`, `cadastro-membro.test.tsx` | ✅ (tela: 🔄 PR da WEB-G2) |
 | **RF21** listar membros | CA02 | unitário (busca por nome/CPF, filtro ativo, paginação), matriz de permissões; tela WEB-G1 (Testing Library: máscaras, badge, busca com debounce, filtro de situação, paginação, "Novo membro" só para ADMIN e RECEPCIONISTA) | `membros.service.spec.ts`, `test/seguranca.e2e-spec.ts`, `apps/web/src/features/membros/tela-membros.test.tsx` | ✅ (tela: PR #71) |
 | **RF22** consultar membro | — | unitário (404), matriz de permissões | `membros.service.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ |
-| **RF23** editar membro | — | unitário (CPF fora do update), HTTP (CPF no body → 400) | `membros.service.spec.ts`, `membros.http.spec.ts` | ✅ |
+| **RF23** editar membro | — | unitário (CPF fora do update), HTTP (CPF no body → 400); tela WEB-G2 (CPF desabilitado, `PATCH` sem `cpf`, membro inexistente) | `membros.service.spec.ts`, `membros.http.spec.ts`, `apps/web/src/features/membros/form-membro.test.tsx`, `cadastro-membro.test.tsx` | ✅ (tela: 🔄 PR da WEB-G2) |
 | **RF24** desativar e reativar | CA12 | unitário (`desativar`, `reativar`, `assertMembroAtivo` → 422), e2e sem token → 401 | `membros.service.spec.ts`, `test/membros.e2e-spec.ts` | ✅ |
 | **RF25** ficha resumida | — | MEM-06 (unitário, HTTP e matriz de permissões), tela WEB-G3 (Testing Library) | `apps/api/src/membros/` e `apps/web/src/features/membros/` (a criar) | ⏳ |
 | **RF26** acesso do aluno ao portal | — | MEM-07: unitário (liberar, redefinir, revogar, inativo → 422, 404, sem `senhaHash`), HTTP (senha < 8 → 400), e2e (recepção libera, aluno loga, revogado não loga), matriz de permissões | `membros.service.spec.ts`, `membros.http.spec.ts`, `test/membros.e2e-spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #60 (Pedro) |
@@ -154,7 +154,7 @@ Em 11/11, a MEM-07, a WEB-G6 e a E2E-04 passaram do Gabriel para o Pedro (veja a
 | MEM-07 | liberar, redefinir e revogar o acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
 | MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | Gabriel | 13/11 |
 | WEB-G1 | lista de membros | Yohan | ✅ 14/11 (PR #71) |
-| WEB-G2 | formulário de membros | Gabriel | 14/11 |
+| WEB-G2 | formulário de membros | Yohan | ✅ 14/11 (🔄 PR da WEB-G2) |
 | WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 14/11 a 15/11 |
 | WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 | "Meus treinos" do portal do aluno e o componente de acesso da ficha | Pedro | 16/11 |
@@ -370,7 +370,8 @@ A cobertura de 100% do escopo analisado vale só para o que já está na `main`;
 | MEM-06 | ficha do membro (RF25) | Gabriel | 13/11 |
 | MEM-07 | acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
 | WEB-G1 | lista de membros (consulta pela interface) | Yohan | ✅ 14/11 (PR #71) |
-| WEB-G2 a WEB-G4 | formulário e ficha de membros e telas de treinos (passos 2 e 3 pela interface) | Gabriel | 14/11 a 15/11 |
+| WEB-G2 | formulário de membros (passo 2 pela interface) | Yohan | ✅ 14/11 (🔄 PR da WEB-G2) |
+| WEB-G3, WEB-G4 | ficha de membros e telas de treinos (passo 3 pela interface) | Gabriel | 14/11 a 15/11 |
 | WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 e E2E-04 | "Meus treinos" e e2e de validações | Pedro | 16/11 |
 | E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | ✅ 11/11 (PR #59) |
