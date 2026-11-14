@@ -26,3 +26,30 @@ export function listarMembros(filtro: FiltroMembros) {
   params.set("pageSize", String(TAMANHO_PAGINA));
   return api<PaginaMembros>(`/membros?${params}`);
 }
+
+export type DadosCriarMembro = {
+  nome: string;
+  cpf: string;
+  telefone: string;
+  endereco: string;
+};
+
+export type DadosAtualizarMembro = Omit<DadosCriarMembro, "cpf">;
+
+export function buscarMembro(id: string) {
+  return api<Membro>(`/membros/${encodeURIComponent(id)}`);
+}
+
+export function criarMembro(dados: DadosCriarMembro) {
+  return api<Membro>("/membros", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
+}
+
+export function atualizarMembro(id: string, dados: DadosAtualizarMembro) {
+  return api<Membro>(`/membros/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(dados),
+  });
+}
