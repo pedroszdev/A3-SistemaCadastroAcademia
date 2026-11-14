@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { listarMembros } from "./api";
+import { atualizarMembro, buscarMembro, criarMembro, listarMembros } from "./api";
 
 const fetchMock = vi.fn<typeof fetch>();
 
 function ultimaUrl() {
   return fetchMock.mock.calls[0][0];
+}
+
+function ultimoInit() {
+  return fetchMock.mock.calls[0][1];
 }
 
 describe("api de membros", () => {
@@ -42,5 +46,37 @@ describe("api de membros", () => {
     await listarMembros({ busca: "joão & maria", page: 1 });
 
     expect(ultimaUrl()).toBe("/api/membros?busca=jo%C3%A3o+%26+maria&page=1&pageSize=20");
+  });
+
+  it("busca o membro por id codificando o caminho", async () => {
+    await buscarMembro("a/b");
+
+    expect(ultimaUrl()).toBe("/api/membros/a%2Fb");
+    expect(ultimoInit()?.method).toBeUndefined();
+  });
+
+  it("cria o membro com POST e o corpo em JSON", async () => {
+    const dados = {
+      nome: "Ana Souza",
+      cpf: "52998224725",
+      telefone: "48999990000",
+      endereco: "Rua Fictícia, 100",
+    };
+
+    await criarMembro(dados);
+
+    expect(ultimaUrl()).toBe("/api/membros");
+    expect(ultimoInit()?.method).toBe("POST");
+    expect(JSON.parse(String(ultimoInit()?.body))).toEqual(dados);
+  });
+
+  it("atualiza o membro com PATCH e sem cpf no corpo", async () => {
+    const dados = { nome: "Ana Souza", telefone: "48999990000", endereco: "Rua Fictícia, 100" };
+
+    await atualizarMembro("m1", dados);
+
+    expect(ultimaUrl()).toBe("/api/membros/m1");
+    expect(ultimoInit()?.method).toBe("PATCH");
+    expect(JSON.parse(String(ultimoInit()?.body))).toEqual(dados);
   });
 });
