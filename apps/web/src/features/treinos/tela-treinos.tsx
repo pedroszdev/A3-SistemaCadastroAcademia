@@ -76,6 +76,17 @@ export function TelaTreinos() {
   const colunas: Coluna<Treino>[] = [
     { chave: "membro", titulo: "Membro", celula: (t) => t.membro.nome },
     { chave: "tipo", titulo: "Tipo", celula: (t) => t.tipo },
+    // Única forma de a RECEPCIONISTA ler a descrição: ela não abre a edição. O texto longo
+    // (até 500 caracteres) é cortado na tela e fica inteiro no title.
+    {
+      chave: "descricao",
+      titulo: "Descrição",
+      celula: (t) => (
+        <span className="block max-w-xs truncate" title={t.descricao}>
+          {t.descricao}
+        </span>
+      ),
+    },
     { chave: "duracao", titulo: "Duração", celula: (t) => `${t.duracao} min` },
     { chave: "inicio", titulo: "Início", celula: (t) => formatarData(t.dataInicio) },
     // RECEPCIONISTA só consulta: sem os botões, a coluna não tem o que mostrar.

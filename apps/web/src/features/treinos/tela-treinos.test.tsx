@@ -221,6 +221,20 @@ describe("TelaTreinos", () => {
       expect(screen.getByText("Beltrana Souza")).toBeInTheDocument();
     });
 
+    it("recepcionista lê a descrição do treino na lista, sem abrir a edição", async () => {
+      const descricao = `Supino, remada e agachamento.${" Aquecimento de 10 min.".repeat(10)}`;
+      vi.mocked(listarTreinos).mockResolvedValue(
+        pagina([treino("t3", "Ciclano Lima", { descricao })]),
+      );
+      renderizar(recepcionista);
+      await screen.findByText("Ciclano Lima");
+
+      expect(screen.getByRole("columnheader", { name: "Descrição" })).toBeInTheDocument();
+      // A célula corta o texto longo na tela; o title guarda o texto inteiro.
+      const celula = within(linhaDe("Ciclano Lima")).getByText(descricao);
+      expect(celula).toHaveAttribute("title", descricao);
+    });
+
     it.each([
       ["INSTRUTOR", instrutor],
       ["ADMIN", admin],
