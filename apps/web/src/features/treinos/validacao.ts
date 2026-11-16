@@ -1,5 +1,4 @@
-import { tamanho } from "@/features/funcionarios/validacao";
-import { hojeEmSaoPaulo } from "@/lib/format";
+import { hojeEmSaoPaulo, tamanho } from "@/lib/format";
 import { FORMATO_DATA, validarMinutos } from "@/lib/validacao";
 import { ehTipoTreino, MENSAGEM_TIPO_TREINO } from "./tipos";
 
