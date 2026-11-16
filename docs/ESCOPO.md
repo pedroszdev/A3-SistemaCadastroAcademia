@@ -142,7 +142,7 @@ Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR abert
 | **RF33** editar treino | — | unitário (a data só é revalidada quando muda); tela WEB-G4 (Testing Library: edição sem `membroId`, data já salva no passado passa) | `treinos.service.spec.ts`, `apps/web/src/features/treinos/form-treino.test.tsx` | ✅ (PR #55; tela: PR #73) |
 | **RF34** excluir treino | — | unitário (404), HTTP (204), matriz de permissões; tela WEB-G4 (Testing Library: confirmação antes do `DELETE`, erro da API) | `treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts`, `apps/web/src/features/treinos/tela-treinos.test.tsx` | ✅ (PR #55; tela: PR #73) |
 | **RF35** treinos do aluno | — | unitário e HTTP (`membroId` do token, outro membro → 404, `membroId` na query → 400), e2e RN16 | `treinos.service.spec.ts`, `meus-treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
-| RF20 a RF35 (validações ponta a ponta) | CA02, CA03 | E2E-04: RN01 a RN05 com banco real (CPF inválido → 400, repetido → 409, `PATCH` do CPF → 400, busca por nome e CPF, desativar sem excluir, treino para inativo → 422, duração, tipo e data do treino → 400, UUID inválido → 400, inexistente → 404) | `test/membros-treinos.e2e-spec.ts` | ✅ 16/11 |
+| RF20 a RF35 (validações ponta a ponta) | CA02, CA03 | E2E-04: RN01 a RN05 com banco real (CPF inválido → 400, repetido → 409, `PATCH` do CPF → 400, busca por nome e CPF, desativar sem excluir, treino para inativo → 422, duração, tipo e data do treino → 400, UUID inválido → 400, inexistente → 404) | `test/membros-treinos.e2e-spec.ts` | ✅ 16/11 (PR #75) |
 
 **Cronograma do que falta (membros e treinos)**
 
@@ -159,7 +159,7 @@ Em 11/11, a MEM-07, a WEB-G6 e a E2E-04 passaram do Gabriel para o Pedro. Em 13/
 | WEB-G4 | telas de treinos | Gabriel | ✅ 16/11 (PR #73) |
 | WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 | "Meus treinos" do portal do aluno e o componente de acesso da ficha | Pedro | 16/11 |
-| E2E-04 | e2e das validações de membros e treinos | Pedro | ✅ 16/11 |
+| E2E-04 | e2e das validações de membros e treinos | Pedro | ✅ 16/11 (PR #75) |
 
 **Demonstração: membros e treinos (passos 2 e 3 do fluxo)**
 
