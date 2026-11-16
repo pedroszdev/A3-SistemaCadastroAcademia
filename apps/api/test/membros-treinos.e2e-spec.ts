@@ -308,7 +308,16 @@ describe('Membros e treinos: RN01 a RN05 (e2e)', () => {
 
     it('RN05 · dataInicio de hoje → 201', async () => {
       await noMesmoDia(async () => {
-        await postTreino(dadosTreino(membroId)).expect(201);
+        const dataInicio = diaIso(hoje());
+
+        const resposta = await postTreino(
+          dadosTreino(membroId, { dataInicio }),
+        ).expect(201);
+
+        expect(resposta.body).toMatchObject({
+          membroId,
+          dataInicio: expect.stringContaining(dataInicio) as unknown,
+        });
       });
     });
   });
