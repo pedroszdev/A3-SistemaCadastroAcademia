@@ -10,7 +10,7 @@ import { type ErrosMembro, validarMembro } from "./validacao";
 
 type FormMembroProps = {
   membro?: Membro;
-  onSalvo: (membro: Membro) => void;
+  onSalvo: () => void;
   onCancelar: () => void;
 };
 
@@ -44,10 +44,12 @@ export function FormMembro({ membro, onSalvo, onCancelar }: FormMembroProps) {
       endereco: valores.endereco.trim(),
     };
     try {
-      const salvo = membro
-        ? await atualizarMembro(membro.id, campos)
-        : await criarMembro({ ...campos, cpf: apenasDigitos(cpf) });
-      onSalvo(salvo);
+      if (membro) {
+        await atualizarMembro(membro.id, campos);
+      } else {
+        await criarMembro({ ...campos, cpf: apenasDigitos(cpf) });
+      }
+      onSalvo();
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
         setErros({ cpf: e.message });

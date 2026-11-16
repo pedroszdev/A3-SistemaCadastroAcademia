@@ -57,7 +57,7 @@ describe("FormMembro", () => {
       telefone: "48999990000",
       endereco: "Rua Fictícia, 100",
     });
-    expect(onSalvo).toHaveBeenCalledWith(existente);
+    expect(onSalvo).toHaveBeenCalled();
   });
 
   it("mostra os erros de cada campo sem chamar a API", async () => {
@@ -72,6 +72,22 @@ describe("FormMembro", () => {
     expect(screen.getByText("endereco deve ter entre 5 e 200 caracteres")).toBeInTheDocument();
     expect(criarMembro).not.toHaveBeenCalled();
     expect(onSalvo).not.toHaveBeenCalled();
+  });
+
+  it("recusa o telefone colado com o +55 em vez de cortar os dígitos", async () => {
+    const usuario = userEvent.setup();
+    render(<FormMembro onSalvo={onSalvo} onCancelar={onCancelar} />);
+
+    await usuario.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await usuario.type(screen.getByLabelText("CPF"), "52998224725");
+    await usuario.click(screen.getByLabelText("Telefone"));
+    await usuario.paste("+55 (48) 99999-1234");
+    await usuario.type(screen.getByLabelText("Endereço"), "Rua Fictícia, 100");
+    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByLabelText("Telefone")).toHaveValue("(55) 48999-991234");
+    expect(screen.getByText("telefone deve ter 10 ou 11 dígitos, com o DDD")).toBeInTheDocument();
+    expect(criarMembro).not.toHaveBeenCalled();
   });
 
   it("recusa o CPF com dígito verificador errado", async () => {
@@ -109,7 +125,7 @@ describe("FormMembro", () => {
       endereco: "Rua Fictícia, 100",
     });
     expect(criarMembro).not.toHaveBeenCalled();
-    expect(onSalvo).toHaveBeenCalledWith(existente);
+    expect(onSalvo).toHaveBeenCalled();
   });
 
   it("mostra o 409 da API no campo CPF e reabilita o botão", async () => {
