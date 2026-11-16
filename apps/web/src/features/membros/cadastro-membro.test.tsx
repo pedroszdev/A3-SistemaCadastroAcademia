@@ -122,7 +122,7 @@ describe("EditarMembro", () => {
     expect(buscarMembro).toHaveBeenCalledWith("m1");
   });
 
-  it("salva, mostra o aviso e vai para a ficha", async () => {
+  it("salva, mostra o aviso e volta para a lista", async () => {
     vi.mocked(atualizarMembro).mockResolvedValue(ana);
     const usuario = userEvent.setup();
     renderizar(<EditarMembro id="m1" />, admin);
@@ -137,15 +137,15 @@ describe("EditarMembro", () => {
       endereco: "Av. Fictícia, 200",
     });
     expect(await screen.findByText("Membro atualizado.")).toBeInTheDocument();
-    expect(push).toHaveBeenCalledWith("/membros/m1");
+    expect(push).toHaveBeenCalledWith("/membros");
   });
 
-  it("volta para a ficha ao cancelar", async () => {
+  it("volta para a lista ao cancelar", async () => {
     renderizar(<EditarMembro id="m1" />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Cancelar" }));
 
-    expect(push).toHaveBeenCalledWith("/membros/m1");
+    expect(push).toHaveBeenCalledWith("/membros");
   });
 
   it("mostra Membro não encontrado no 404", async () => {
@@ -156,12 +156,41 @@ describe("EditarMembro", () => {
     expect(screen.queryByLabelText("Nome")).toBeNull();
   });
 
+  it("mostra Membro não encontrado no 400 do id que não é UUID", async () => {
+    vi.mocked(buscarMembro).mockRejectedValue(
+      new ApiError(400, "Validation failed (uuid is expected)"),
+    );
+    renderizar(<EditarMembro id="abc" />);
+
+    expect(await screen.findByText("Membro não encontrado")).toBeInTheDocument();
+    expect(screen.queryByText("Validation failed (uuid is expected)")).toBeNull();
+  });
+
   it("mostra a mensagem de qualquer outro erro", async () => {
     vi.mocked(buscarMembro).mockRejectedValue(new ApiError(500, "Falha ao carregar"));
     renderizar(<EditarMembro id="m1" />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Falha ao carregar");
     expect(screen.queryByLabelText("Nome")).toBeNull();
+  });
+
+  it("tenta carregar de novo depois do erro", async () => {
+    vi.mocked(buscarMembro).mockRejectedValueOnce(new ApiError(500, "Falha ao carregar"));
+    renderizar(<EditarMembro id="m1" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Tentar de novo" }));
+
+    expect(await screen.findByLabelText("Nome")).toHaveValue("Ana Souza");
+    expect(buscarMembro).toHaveBeenCalledTimes(2);
+  });
+
+  it("volta para a lista depois do erro", async () => {
+    vi.mocked(buscarMembro).mockRejectedValue(new ApiError(500, "Falha ao carregar"));
+    renderizar(<EditarMembro id="m1" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Voltar" }));
+
+    expect(push).toHaveBeenCalledWith("/membros");
   });
 
   it("mostra Acesso restrito ao INSTRUTOR sem chamar a API", () => {

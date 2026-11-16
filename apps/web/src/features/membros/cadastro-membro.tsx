@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { useUsuario } from "@/features/auth/usuario";
@@ -55,7 +56,9 @@ function CarregarMembro({ id }: { id: string }) {
   const router = useRouter();
   const { mostrar } = useToast();
   const [carga, setCarga] = useState<Carga>({ tipo: "carregando" });
-  const ficha = `/membros/${encodeURIComponent(id)}`;
+  const [tentativa, setTentativa] = useState(0);
+  // Volta para a lista: a ficha /membros/<id> só existe com a WEB-G3.
+  const voltar = () => router.push("/membros");
 
   useEffect(() => {
     let ativo = true;
@@ -65,8 +68,10 @@ function CarregarMembro({ id }: { id: string }) {
       },
       (e: unknown) => {
         if (!ativo) return;
+        // O id que não é UUID dá 400 no ParseUUIDPipe da API: para quem abriu o
+        // link, é o mesmo que um membro inexistente.
         setCarga(
-          e instanceof ApiError && e.status === 404
+          e instanceof ApiError && (e.status === 404 || e.status === 400)
             ? { tipo: "nao-encontrado" }
             : { tipo: "erro", mensagem: (e as Error).message },
         );
@@ -75,7 +80,7 @@ function CarregarMembro({ id }: { id: string }) {
     return () => {
       ativo = false;
     };
-  }, [id]);
+  }, [id, tentativa]);
 
   switch (carga.tipo) {
     case "carregando":
@@ -84,9 +89,24 @@ function CarregarMembro({ id }: { id: string }) {
       return <EmptyState titulo="Membro não encontrado" />;
     case "erro":
       return (
-        <p role="alert" className="text-sm text-red-600">
-          {carga.mensagem}
-        </p>
+        <div className="flex flex-col items-start gap-3">
+          <p role="alert" className="text-sm text-red-600">
+            {carga.mensagem}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setCarga({ tipo: "carregando" });
+                setTentativa((n) => n + 1);
+              }}
+            >
+              Tentar de novo
+            </Button>
+            <Button variante="secundario" onClick={voltar}>
+              Voltar
+            </Button>
+          </div>
+        </div>
       );
     case "carregado":
       return (
@@ -94,9 +114,9 @@ function CarregarMembro({ id }: { id: string }) {
           membro={carga.membro}
           onSalvo={() => {
             mostrar("Membro atualizado.");
-            router.push(ficha);
+            voltar();
           }}
-          onCancelar={() => router.push(ficha)}
+          onCancelar={voltar}
         />
       );
   }
