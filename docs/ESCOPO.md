@@ -136,11 +136,11 @@ Status em 11/11/2026: ✅ implementado (na `main`) · 🔄 em revisão (PR abert
 | **RF24** desativar e reativar | CA12 | unitário (`desativar`, `reativar`, `assertMembroAtivo` → 422), e2e sem token → 401 | `membros.service.spec.ts`, `test/membros.e2e-spec.ts` | ✅ |
 | **RF25** ficha resumida | — | unitário (composição dos 4 services, janela de 30 dias no fuso de São Paulo, sem treino → `null`, membro inexistente → 404 sem consultar o resto), HTTP (id que não é UUID → 400, 404), matriz de permissões; a tela WEB-G3 (Testing Library) ainda não existe | `membros-resumo.service.spec.ts`, `membros-resumo.controller.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ API (PR #70); WEB-G3 ⏳ |
 | **RF26** acesso do aluno ao portal | — | MEM-07: unitário (liberar, redefinir, revogar, inativo → 422, 404, sem `senhaHash`), HTTP (senha < 8 → 400), e2e (recepção libera, aluno loga, revogado não loga), matriz de permissões | `membros.service.spec.ts`, `membros.http.spec.ts`, `test/membros.e2e-spec.ts`, `test/seguranca.e2e-spec.ts` | 🔄 PR #60 (Pedro) |
-| **RF30** criar treino | CA03 | unitário (RN04 → 422, RN05 → 400, data = hoje passa), HTTP (body inválido → 400), matriz de permissões (RECEPCIONISTA → 403) | `apps/api/src/treinos/treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
-| **RF31** listar treinos e treinos do membro | CA06 (escolha do treino) | unitário (filtros, paginação, membro inexistente → 404) | `treinos.service.spec.ts`, `membros-treinos.controller.spec.ts` | ✅ (PR #55) |
+| **RF30** criar treino | CA03 | unitário (RN04 → 422, RN05 → 400, data = hoje passa), HTTP (body inválido → 400), matriz de permissões (RECEPCIONISTA → 403); tela WEB-G4 (Testing Library: duração de 1 a 300, data no passado, 422 e 400 da API, "Novo treino" só para ADMIN e INSTRUTOR) | `apps/api/src/treinos/treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts`, `apps/web/src/features/treinos/form-treino.test.tsx`, `tela-treinos.test.tsx` | ✅ (PR #55; tela: PR #73) |
+| **RF31** listar treinos e treinos do membro | CA06 (escolha do treino) | unitário (filtros, paginação, membro inexistente → 404); tela WEB-G4 (Testing Library: filtros `?tipo=` e `?membroId=`, paginação, descrição na lista para a RECEPCIONISTA) | `treinos.service.spec.ts`, `membros-treinos.controller.spec.ts`, `apps/web/src/features/treinos/tela-treinos.test.tsx` | ✅ (PR #55; tela: PR #73) |
 | **RF32** consultar treino | — | unitário (404) | `treinos.service.spec.ts` | ✅ (PR #55) |
-| **RF33** editar treino | — | unitário (a data só é revalidada quando muda) | `treinos.service.spec.ts` | ✅ (PR #55) |
-| **RF34** excluir treino | — | unitário (404), HTTP (204), matriz de permissões | `treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
+| **RF33** editar treino | — | unitário (a data só é revalidada quando muda); tela WEB-G4 (Testing Library: edição sem `membroId`, data já salva no passado passa) | `treinos.service.spec.ts`, `apps/web/src/features/treinos/form-treino.test.tsx` | ✅ (PR #55; tela: PR #73) |
+| **RF34** excluir treino | — | unitário (404), HTTP (204), matriz de permissões; tela WEB-G4 (Testing Library: confirmação antes do `DELETE`, erro da API) | `treinos.service.spec.ts`, `treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts`, `apps/web/src/features/treinos/tela-treinos.test.tsx` | ✅ (PR #55; tela: PR #73) |
 | **RF35** treinos do aluno | — | unitário e HTTP (`membroId` do token, outro membro → 404, `membroId` na query → 400), e2e RN16 | `treinos.service.spec.ts`, `meus-treinos.http.spec.ts`, `test/seguranca.e2e-spec.ts` | ✅ (PR #55) |
 | RF20 a RF35 (validações ponta a ponta) | CA02, CA03 | E2E-04 | `test/membros-treinos.e2e-spec.ts` (a criar) | ⏳ |
 
@@ -155,14 +155,15 @@ Em 11/11, a MEM-07, a WEB-G6 e a E2E-04 passaram do Gabriel para o Pedro. Em 13/
 | MEM-06 | `GET /membros/:id/resumo` (ficha, RF25) | Yohan | ✅ 13/11 (PR #70) |
 | WEB-G1 | lista de membros | Yohan | ✅ 14/11 (PR #71) |
 | WEB-G2 | formulário de membros | Gabriel | 14/11 |
-| WEB-G3, WEB-G4 | ficha do membro e telas de treinos | Gabriel | 14/11 a 15/11 |
+| WEB-G3 | ficha do membro | Gabriel | 15/11 |
+| WEB-G4 | telas de treinos | Gabriel | ✅ 16/11 (PR #73) |
 | WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 | "Meus treinos" do portal do aluno e o componente de acesso da ficha | Pedro | 16/11 |
 | E2E-04 | e2e das validações de membros e treinos | Pedro | 16/11 |
 
 **Demonstração: membros e treinos (passos 2 e 3 do fluxo)**
 
-Antes: `pnpm db:seed` e `pnpm dev` (API em `:3000`). Todos os dados são fictícios; a senha dos logins do seed é `senha1234`. Enquanto as telas WEB-G1 a G4 não entram, a demonstração é pela API:
+Antes: `pnpm db:seed` e `pnpm dev` (API em `:3000`). Todos os dados são fictícios; a senha dos logins do seed é `senha1234`. A lista de membros (WEB-G1) e as telas de treinos (WEB-G4) já estão na interface; o roteiro abaixo usa a API porque o cadastro de membro (WEB-G2) ainda não entrou e porque a tela de treinos barra antes da API a data no passado e o membro inativo (RN04 e RN05):
 
 1. Login da recepção (`recepcao`) e do instrutor (`instrutor`) em `POST /auth/login` e guardar os dois tokens.
 2. **CA02:** com o token da recepção, `GET /membros?busca=Diego` mostra o Diego Rocha ativo; `POST /membros` com um CPF fictício válido cadastra um membro novo, que já começa ativo.
@@ -370,7 +371,8 @@ A cobertura de 100% do escopo analisado vale só para o que já está na `main`;
 | MEM-06 | ficha do membro (RF25) | Yohan | ✅ 13/11 (PR #70) |
 | MEM-07 | acesso do aluno (RF26) | Pedro | 🔄 PR #60 |
 | WEB-G1 | lista de membros (consulta pela interface) | Yohan | ✅ 14/11 (PR #71) |
-| WEB-G2 a WEB-G4 | formulário e ficha de membros e telas de treinos (passos 2 e 3 pela interface) | Gabriel | 14/11 a 15/11 |
+| WEB-G2, WEB-G3 | formulário e ficha de membros (passo 2 pela interface) | Gabriel | 14/11 a 15/11 |
+| WEB-G4 | telas de treinos (passo 3 pela interface) | Gabriel | ✅ 16/11 (PR #73) |
 | WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
 | WEB-G6 e E2E-04 | "Meus treinos" e e2e de validações | Pedro | 16/11 |
 | E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | ✅ 11/11 (PR #59) |
