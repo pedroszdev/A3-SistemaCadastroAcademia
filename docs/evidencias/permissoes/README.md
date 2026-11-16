@@ -40,6 +40,7 @@ Todos os testes estão em [`apps/api/test/seguranca.e2e-spec.ts`](../../../apps/
 | Treinos — os próprios (`/me/treinos`) | `GET /me/treinos`, `GET /me/treinos/:id` | ❌ | ❌ | ❌ | ✅ | PR [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55) (TRE-03/TRE-05), merge `f7b06b3` | ✅ |
 | Pagamentos — tudo | `GET/POST /pagamentos`, `GET /pagamentos/:id`, `PATCH /pagamentos/:id/pagar` e `/cancelar` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`), merge `4c21808` | ✅ |
 | Situação financeira (RF45) | `GET /membros/:id/situacao` | ✅ | ✅ | ❌ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(pagamentos)`), merge `4c21808` | ✅ |
+| Ficha resumida (RF25) | `GET /membros/:id/resumo` | ✅ | ✅ | ❌ | ❌ | PR [#70](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/70) (MEM-06) | 🔄 |
 | Histórico — listar/ver (todos) | `GET /atividades`, `GET /atividades/:id`, `GET /membros/:id/atividades` | ✅ | ✅ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`), merge `4c21808` | ✅ |
 | Histórico — registrar | `POST /atividades` | ✅ | ❌ | ✅ | ❌ | PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35) (`feat(historico)`), merge `4c21808` | ✅ |
 | Histórico — o próprio (`/me/atividades`) | `GET /me/atividades`, `GET /me/atividades/resumo`, `GET /me/atividades/:id` | ❌ | ❌ | ❌ | ✅ | PR [#46](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/46) (HIS-05), merge `f921ce2` | ✅ |
@@ -59,7 +60,7 @@ O login do aluno (AUTH-04) entrou na `main` com o PR #32 (`e9240a7`). O `RolesGu
 | ALUNO é somente leitura (RN17) | `contrato da issue #28 › ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)` |
 | RN16: aluno A × aluno B → 404 | `contrato da issue #28 › ALUNO não vê a atividade...`, `... não vê o treino...` e `... dois alunos logados: nenhum vê o treino nem a atividade do outro, nos dois sentidos (RN16)` |
 | `senhaHash` nunca na resposta (RN12) | `senhaHash fora das respostas (RN12)` (um caso por rota da `MATRIZ`) e, no `auth.e2e-spec.ts`, o login e o `/auth/me` |
-| 401 sem autenticação | `sem token → 401` (as 38 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
+| 401 sem autenticação | `sem token → 401` (as 39 rotas) e `token › malformado / assinado com outro segredo / expirado → 401` |
 
 ## 3. Como reproduzir
 
