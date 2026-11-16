@@ -230,6 +230,15 @@ const MATRIZ: Linha[] = [
     sucesso: 200,
   },
 
+  // Ficha resumida (RF25): traz a situação financeira, segue pagamentos
+  {
+    metodo: 'get',
+    rota: '/membros/:id/resumo',
+    id: (m) => m.membroId,
+    permitidos: GESTAO,
+    sucesso: 200,
+  },
+
   // Pagamentos: ADMIN e RECEPCIONISTA
   { metodo: 'get', rota: '/pagamentos', permitidos: GESTAO, sucesso: 200 },
   {
