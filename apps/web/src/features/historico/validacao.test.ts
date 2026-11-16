@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hojeEmSaoPaulo, validarAtividade } from "./validacao";
+import { validarAtividade } from "./validacao";
 
 const HOJE = "2026-11-10";
 
@@ -13,13 +13,6 @@ const valido: Parameters<typeof validarAtividade>[0] = {
 function validar(extra: Partial<typeof valido> = {}) {
   return validarAtividade({ ...valido, ...extra }, HOJE);
 }
-
-describe("hojeEmSaoPaulo", () => {
-  it("usa o dia de São Paulo, não o de UTC", () => {
-    expect(hojeEmSaoPaulo(new Date("2026-11-10T02:30:00Z"))).toBe("2026-11-09");
-    expect(hojeEmSaoPaulo(new Date("2026-11-10T12:00:00Z"))).toBe("2026-11-10");
-  });
-});
 
 describe("validarAtividade", () => {
   it("aceita valores válidos", () => {

@@ -4,9 +4,9 @@ import { type FormEvent, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { RodapeFormulario } from "@/components/ui/rodape-formulario";
 import { Select } from "@/components/ui/select";
-import { hojeEmSaoPaulo } from "@/features/historico/validacao";
 import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
+import { hojeEmSaoPaulo } from "@/lib/format";
 import { atualizarTreino, criarTreino, type Treino } from "./api";
 import { ehTipoTreino, OPCOES_TIPO_TREINO } from "./tipos";
 import { DURACAO_MAXIMA, DURACAO_MINIMA, type ErrosTreino, validarTreino } from "./validacao";
@@ -94,12 +94,14 @@ export function FormTreino({ treino, onSalvo, onCancelar, onEnviando }: FormTrei
         opcoes={OPCOES_TIPO_TREINO}
         value={tipo}
         onChange={(e) => setTipo(e.target.value)}
+        disabled={enviando}
         erro={erros.tipo}
       />
       <Input
         rotulo="Descrição"
         value={descricao}
         onChange={(e) => setDescricao(e.target.value)}
+        disabled={enviando}
         erro={erros.descricao}
       />
       <Input
@@ -111,6 +113,7 @@ export function FormTreino({ treino, onSalvo, onCancelar, onEnviando }: FormTrei
         step={1}
         value={duracao}
         onChange={(e) => setDuracao(e.target.value)}
+        disabled={enviando}
         erro={erros.duracao}
       />
       <Input
@@ -119,6 +122,7 @@ export function FormTreino({ treino, onSalvo, onCancelar, onEnviando }: FormTrei
         min={treino ? undefined : hoje}
         value={dataInicio}
         onChange={(e) => setDataInicio(e.target.value)}
+        disabled={enviando}
         erro={erros.dataInicio}
       />
       <RodapeFormulario erro={erroApi} enviando={enviando} onCancelar={onCancelar} />

@@ -56,10 +56,9 @@ export function TelaTreinos() {
 
   async function aoConfirmar() {
     if (!confirmar) return;
-    const alvo = confirmar;
     setProcessando(true);
     try {
-      await excluirTreino(alvo.id);
+      await excluirTreino(confirmar.id);
       mostrar("Treino excluído.");
       recarregar();
     } catch (e) {
@@ -68,9 +67,14 @@ export function TelaTreinos() {
       recarregar();
     } finally {
       setProcessando(false);
-      // Só fecha se a confirmação aberta ainda é a deste pedido.
-      setConfirmar((atual) => (atual === alvo ? null : atual));
+      setConfirmar(null);
     }
+  }
+
+  // Durante o DELETE a confirmação não fecha: senão dava para reabri-la e o fim do pedido
+  // antigo fecharia a nova.
+  function fecharConfirmacao() {
+    if (!processando) setConfirmar(null);
   }
 
   const colunas: Coluna<Treino>[] = [
@@ -168,10 +172,10 @@ export function TelaTreinos() {
       <Dialog
         aberto={confirmar !== null}
         titulo="Excluir treino"
-        onFechar={() => setConfirmar(null)}
+        onFechar={fecharConfirmacao}
         acoes={
           <>
-            <Button variante="secundario" onClick={() => setConfirmar(null)}>
+            <Button variante="secundario" disabled={processando} onClick={fecharConfirmacao}>
               Cancelar
             </Button>
             <Button variante="perigo" disabled={processando} onClick={aoConfirmar}>

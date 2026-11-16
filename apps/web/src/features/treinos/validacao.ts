@@ -1,5 +1,6 @@
 import { tamanho } from "@/features/funcionarios/validacao";
-import { hojeEmSaoPaulo } from "@/features/historico/validacao";
+import { hojeEmSaoPaulo } from "@/lib/format";
+import { FORMATO_DATA, validarMinutos } from "@/lib/validacao";
 import { ehTipoTreino, MENSAGEM_TIPO_TREINO } from "./tipos";
 
 export type ErrosTreino = Partial<
@@ -24,18 +25,6 @@ type Contexto = {
   salvo?: { dataInicio: string };
 };
 
-const FORMATO_DATA = /^\d{4}-\d{2}-\d{2}$/;
-
-function validarDuracao(texto: string): string | undefined {
-  const duracao = Number(texto);
-  if (texto.trim() === "" || !Number.isInteger(duracao)) {
-    return "duracao deve ser um número inteiro de minutos";
-  }
-  if (duracao < DURACAO_MINIMA) return `duracao deve ser no mínimo ${DURACAO_MINIMA} minuto`;
-  if (duracao > DURACAO_MAXIMA) return `duracao deve ser no máximo ${DURACAO_MAXIMA} minutos`;
-  return undefined;
-}
-
 // Mensagens iguais às da API (create-treino.dto.ts e treinos.service.ts) onde ela tem uma.
 export function validarTreino(
   valores: Valores,
@@ -51,7 +40,7 @@ export function validarTreino(
     erros.descricao = "descricao deve ter entre 3 e 500 caracteres";
   }
 
-  const erroDuracao = validarDuracao(valores.duracao);
+  const erroDuracao = validarMinutos("duracao", valores.duracao, DURACAO_MINIMA, DURACAO_MAXIMA);
   if (erroDuracao) erros.duracao = erroDuracao;
 
   if (!FORMATO_DATA.test(valores.dataInicio)) {

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
@@ -322,6 +322,29 @@ describe("TelaTreinos", () => {
       await waitFor(() => expect(screen.queryByText("Fulano Silva")).toBeNull());
       expect(screen.queryByRole("dialog")).toBeNull();
       expect(listarTreinos).toHaveBeenCalledTimes(2);
+    });
+
+    it("não deixa fechar a confirmação enquanto exclui", async () => {
+      let concluir: () => void = () => {};
+      vi.mocked(excluirTreino).mockReturnValue(
+        new Promise<void>((resolve) => {
+          concluir = resolve;
+        }),
+      );
+      const usuario = userEvent.setup();
+      renderizar();
+      await screen.findByText("Fulano Silva");
+
+      await usuario.click(excluirFulano());
+      const dialogo = screen.getByRole("dialog");
+      await usuario.click(within(dialogo).getByRole("button", { name: "Confirmar" }));
+
+      expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
+      await usuario.keyboard("{Escape}");
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+      await act(async () => concluir());
+      expect(screen.queryByRole("dialog")).toBeNull();
     });
 
     it("mostra a mensagem da API quando a exclusão falha e fecha a confirmação", async () => {

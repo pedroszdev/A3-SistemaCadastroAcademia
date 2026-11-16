@@ -1,9 +1,8 @@
 import { api } from "@/lib/api";
+import { CARGOS_INSTRUCAO, temCargo } from "@/lib/menu";
 import type { UsuarioDoToken } from "@/lib/sessao";
-import type { Pagina } from "@/lib/use-lista-paginada";
+import { type Pagina, TAMANHO_PAGINA } from "@/lib/use-lista-paginada";
 import type { TipoTreino } from "./tipos";
-
-export const TAMANHO_PAGINA = 20;
 
 // Espelha TREINO_SELECT (apps/api/src/treinos/treinos.service.ts).
 export type Treino = {
@@ -66,7 +65,5 @@ export function excluirTreino(id: string) {
 // Espelha a matriz 4.2: todos os funcionários consultam, só ADMIN e INSTRUTOR criam, editam
 // e excluem. Quem barra de verdade é a API.
 export function podeEditarTreino(usuario: UsuarioDoToken): boolean {
-  return (
-    usuario.tipo === "FUNCIONARIO" && (usuario.cargo === "ADMIN" || usuario.cargo === "INSTRUTOR")
-  );
+  return temCargo(usuario, CARGOS_INSTRUCAO);
 }

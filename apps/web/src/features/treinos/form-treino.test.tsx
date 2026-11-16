@@ -264,6 +264,10 @@ describe("FormTreino", () => {
 
       expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
       expect(criarTreino).toHaveBeenCalledTimes(1);
+      // Os campos travam: o que está na tela é o que foi enviado.
+      for (const rotulo of ["Tipo", "Descrição", "Duração (min)", "Início"]) {
+        expect(screen.getByLabelText(rotulo)).toBeDisabled();
+      }
 
       await act(async () => concluir(salvo));
       expect(onSalvo).toHaveBeenCalledTimes(1);

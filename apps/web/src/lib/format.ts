@@ -19,6 +19,19 @@ export function formatarMoeda(valor: number): string {
   return MOEDA.format(valor);
 }
 
+const DIA_EM_SAO_PAULO = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+// Mesmo "hoje" da API (fuso da academia), em AAAA-MM-DD. Quem chama lê o relógio fora do
+// render (regra react-hooks/purity), por isso o parâmetro.
+export function hojeEmSaoPaulo(agora: Date = new Date()): string {
+  return DIA_EM_SAO_PAULO.format(agora);
+}
+
 export function formatarData(valor: string | Date): string {
   const data = new Date(valor);
   return Number.isNaN(data.getTime()) ? "" : DATA.format(data);
