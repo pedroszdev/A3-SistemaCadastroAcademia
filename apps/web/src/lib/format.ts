@@ -15,6 +15,15 @@ export function apenasDigitos(valor: string): string {
   return valor.replaceAll(/\D/g, "");
 }
 
+// Mesma contagem do isLength do validator, que o Length e o MinLength da API usam:
+// um emoji (par surrogate) vale 1, não 2, e o seletor de variação (o ️ de "❤️")
+// não conta.
+export function tamanho(texto: string): number {
+  const pares = texto.match(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g)?.length ?? 0;
+  const variacoes = texto.match(/[^️︎][️︎]/g)?.length ?? 0;
+  return texto.length - pares - variacoes;
+}
+
 export function formatarMoeda(valor: number): string {
   return MOEDA.format(valor);
 }

@@ -1,4 +1,4 @@
-import { tamanho } from "@/features/funcionarios/validacao";
+import { tamanho } from "@/lib/format";
 
 export type ErrosAtividade = Partial<
   Record<"membro" | "atividade" | "data" | "tempoExecucao", string>

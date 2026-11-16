@@ -1,5 +1,4 @@
-import { tamanho } from "@/features/funcionarios/validacao";
-import { apenasDigitos } from "@/lib/format";
+import { apenasDigitos, tamanho } from "@/lib/format";
 import { isCpfValido } from "./cpf";
 
 export type ModoFormMembro = "criar" | "editar";
