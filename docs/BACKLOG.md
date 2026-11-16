@@ -236,7 +236,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] WEB-G6 Portal do aluno: Meus treinos + componente de liberação de acesso (veio do Gabriel em 11/11)
 - [ ] E2E-04 e2e de validações de membros/treinos (veio do Gabriel em 11/11)
 - [ ] QA-01 Issues do Sonar no meu código
-- [ ] QA-02 Cobertura consolidada
+- [x] QA-02 Cobertura consolidada — 99,2% no Sonar na `main` de 16/11 (`83565f4`), com 100% de linhas e 97,7% de condições, e nenhum módulo abaixo de 80%. Das exclusões, saíram os DTOs (têm a lógica do `@Transform` e já tinham testes; a API continua com 100%); ficaram `main.ts`, `*.module.ts`, `layout.tsx`, `*.config.*` e os gerados, que não têm lógica. Números por módulo e o motivo de cada exclusão em `docs/evidencias/cobertura/README.md`
 - [ ] QA-05 Evidências (prints antes/depois)
 - [ ] DOC-02 Introdução · DOC-05 2.3 · DOC-07 2.5 · DOC-08 2.6 · DOC-09 2.7 · DOC-11 2.9 · DOC-14 2.12 · DOC-15 2.13 · DOC-16 Conclusão (a DOC-07, a DOC-08 e a DOC-15 vieram do Gabriel em 11/11)
 - [ ] DOC-17 Revisão final e PDF do relatório
