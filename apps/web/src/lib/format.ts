@@ -41,8 +41,10 @@ export function mascaraCpf(valor: string): string {
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
+// Não corta em 11 dígitos: um número colado com o +55 ficaria com outros dígitos
+// e passaria na validação. Assim, os dígitos a mais aparecem e a validação recusa.
 export function mascaraTelefone(valor: string): string {
-  const d = apenasDigitos(valor).slice(0, 11);
+  const d = apenasDigitos(valor);
   if (d.length === 0) return "";
   if (d.length <= 2) return `(${d}`;
   const ddd = d.slice(0, 2);

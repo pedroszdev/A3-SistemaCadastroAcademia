@@ -68,7 +68,11 @@ describe("mascaraTelefone", () => {
     expect(mascaraTelefone(entrada)).toBe(esperado);
   });
 
-  it("ignora letras e corta em 11 dígitos", () => {
-    expect(mascaraTelefone("(48) 99999-1234 x99")).toBe("(48) 99999-1234");
+  it("ignora letras", () => {
+    expect(mascaraTelefone("(48) 99999-1234 x")).toBe("(48) 99999-1234");
+  });
+
+  it("mantém os dígitos além de 11, para a validação recusar", () => {
+    expect(mascaraTelefone("+55 (48) 99999-1234")).toBe("(55) 48999-991234");
   });
 });
