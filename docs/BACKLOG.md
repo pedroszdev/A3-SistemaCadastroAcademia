@@ -125,6 +125,7 @@ Esta seção é a fonte da verdade para back, front e testes. Se uma regra mudar
 | Membros — listar/ver | ✅ | ✅ | ✅ | ❌ |
 | Membros — criar/editar/desativar | ✅ | ✅ | ❌ | ❌ |
 | Membros — liberar/redefinir acesso do aluno | ✅ | ✅ | ❌ | ❌ |
+| Membros — ficha resumida (com a situação financeira) | ✅ | ✅ | ❌ | ❌ |
 | Treinos — listar/ver (todos) | ✅ | ✅ | ✅ | ❌ |
 | Treinos — ver **os próprios** (`/me/treinos`) | — | — | — | ✅ |
 | Treinos — criar/editar/excluir | ✅ | ❌ | ✅ | ❌ |
@@ -177,6 +178,10 @@ O módulo **Funcionários** (Pedro, Sprint 1) é a **referência**. Copiem a est
 Marquem `[x]` quando a task estiver **pronta segundo a DoD** (seção 7). Use 🟡 para indicar uma task **parcial**, com uma nota do que falta.
 
 > 🔁 **Redistribuição em 11/11:** para caber no prazo da Sprint 3 (16/11), a MEM-07, a WEB-G6, a E2E-04, a DOC-07, a DOC-08 e a DOC-15 passaram do Gabriel para o Pedro. São tasks que se apoiam no que o Pedro já fez (AUTH-04, WEB-05, INF-01, INF-04 e INF-06) e não dependem das telas que o Gabriel ainda vai fazer. Como mudou o responsável, os commits do Pedro nelas não são exceção à regra 1.
+
+> 🔁 **Redistribuição em 13/11:** a MEM-06 passou do Gabriel para o Yohan, para a ficha (WEB-G3) não esperar pela API. Como mudou o responsável, os commits do Yohan nela não são exceção à regra 1.
+
+> 🔁 **Redistribuição em 14/11:** a WEB-G1 passou do Gabriel para o Yohan, para a lista de membros entrar antes do fim da Sprint 3 (16/11). Como mudou o responsável, os commits do Yohan nela não são exceção à regra 1.
 
 ### 5.0 Já concluído antes do backlog (Pedro) — status em 10/10
 
@@ -247,13 +252,11 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] MEM-03 Service de membros
 - [x] MEM-04 Controller de membros — `@Roles` (listar/ver: ADMIN, RECEPCIONISTA, INSTRUTOR; criar/editar/desativar/reativar: ADMIN, RECEPCIONISTA) commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
 - [x] MEM-05 Testes de membros
-- [ ] MEM-06 Resumo/ficha do membro (API)
 - [x] TRE-01 DTOs de treinos
 - [x] TRE-02 Service de treinos — `create` com RN04 (`assertMembroAtivo`: 404 ou 422) e RN05 (`dataInicio` não anterior a hoje, no fuso de São Paulo: 400); `findAll` com filtro por membro e tipo e paginação; `findOne` (404); `update` revalida a data só quando ela muda, então reenviar a data de um treino que já começou passa; `remove` deixa as atividades com `treinoId = null`
 - [x] TRE-03 Controller de treinos — `GET/POST /treinos`, `GET/PATCH/DELETE /treinos/:id` (o `DELETE` responde 204) e `GET /membros/:id/treinos`. Todos os funcionários consultam; só ADMIN e INSTRUTOR criam, editam e excluem (RECEPCIONISTA → 403). As 6 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
 - [x] TRE-04 Testes de treinos — service, controllers e HTTP (pipes, validação e status), com 100% de cobertura em `src/treinos`. A data atual fica fixa com `jest.useFakeTimers().setSystemTime`
 - [x] TRE-05 Treinos do aluno (`/me/treinos`) — `GET /me/treinos` (tipo e paginação, mais recentes primeiro) e `GET /me/treinos/:id`, só para o ALUNO. O `membroId` vem do token e fica no `where`, então o treino de outro membro dá 404 e `membroId` na query dá 400 (RN16). As 2 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
-- [ ] WEB-G1 Lista de membros
 - [ ] WEB-G2 Formulário de membro
 - [ ] WEB-G3 Ficha do membro (encaixa o `AcessoDoMembro` da WEB-G6)
 - [x] WEB-G4 Telas de treinos — `/treinos` (`features/treinos`): lista do `GET /treinos` paginada, com filtro por tipo (select da RN05) e por membro (reaproveita a `BuscaMembro`, incluindo inativos); formulário de criar (`POST`) e editar (`PATCH`, sem `membroId`) com duração de 1 a 300 min e início não anterior a hoje no fuso de São Paulo (na edição, reenviar a data já salva passa, como na API); excluir com confirmação (`DELETE`, 204). Só ADMIN e INSTRUTOR veem criar, editar e excluir; a RECEPCIONISTA só consulta. Os testes de treinos da WEB-G5 (formulário, tela, `tipos.ts`) já estão feitos
@@ -279,12 +282,14 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] HIS-03 Controller de histórico — `@Roles` (registrar: ADMIN, INSTRUTOR; consultar: ADMIN, RECEPCIONISTA, INSTRUTOR) commitado pelo Pedro no PR #35 (issue #28) (exceção à regra 1, veja a [seção 8](#8-issues-do-professor)); o teste está em `test/seguranca.e2e-spec.ts`
 - [x] HIS-04 Testes de histórico
 - [x] HIS-05 Histórico do aluno (`/me/atividades`) — `GET /me/atividades` (período e paginação), `GET /me/atividades/resumo` e `GET /me/atividades/:id`, só para o ALUNO. O `membroId` vem do token e fica no `where`, então a atividade de outro membro dá 404 (RN16). Do funcionário, a resposta traz só o nome. As 3 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
+- [x] MEM-06 Resumo/ficha do membro (API) (veio do Gabriel em 13/11) — `GET /membros/:id/resumo`, só para ADMIN e RECEPCIONISTA (INSTRUTOR e ALUNO → 403), porque traz a situação financeira. Responde `{ membro, situacaoFinanceira, treinoMaisRecente, atividadesUltimos30Dias }`, juntando o `MembrosService.findOne`, o `PagamentosService.situacaoMembro`, o primeiro treino do `TreinosService.findAll` (`null` se não houver) e o total do `HistoricoService.resumoMembro` nos últimos 30 dias (hoje e os 29 anteriores, no fuso de São Paulo), sem recalcular regra. Membro inexistente dá 404 antes de consultar o resto. A rota está na `MATRIZ` do `test/seguranca.e2e-spec.ts`
 - [x] WEB-Y1 Tela de pagamentos — `/pagamentos`, só para ADMIN e RECEPCIONISTA (o INSTRUTOR vê "Acesso restrito" e a tela nem chama a API). Lista paginada do `GET /pagamentos` com filtro de status e de período de vencimento, colunas membro, valor, vencimento, data do pagamento e status, e o `StatusBadge` com os dias de atraso ("Atrasado · 12 dias"). Nas linhas pendentes e atrasadas, "Registrar pagamento" (data opcional; em branco vale hoje) e "Cancelar", cada um com confirmação; o 409 da API aparece num toast e a lista recarrega
 - [x] WEB-Y2 Formulário de pagamento — o botão "Novo pagamento" em `/pagamentos` abre o formulário: busca do membro por nome ou CPF (só os ativos, RN04, via `GET /membros?busca=`), valor com máscara BRL e vencimento. A validação usa as mesmas mensagens da API (membro, valor de 0,01 a 10.000, vencimento) e os erros do `POST /pagamentos` (membro inativo, vencimento com mais de 90 dias) aparecem no próprio formulário. O 409 ao pagar já aparece num toast desde a WEB-Y1
 - [x] WEB-Y3 Tela de histórico — `/atividades`, para os três cargos. Lista paginada do `GET /atividades` com filtro de membro (busca por nome ou CPF, inativos incluídos), de período e, só para o ADMIN, de funcionário (o `GET /funcionarios` é só dele), com as colunas data, membro, atividade, tempo, treino e funcionário. "Registrar atividade" só para ADMIN e INSTRUTOR: membro ativo, atividade, data (até hoje, no fuso de São Paulo), tempo e treino opcional do membro escolhido (`GET /membros/:id/treinos`, da TRE-03; sem a rota, o campo fica em "Nenhum treino disponível" e o registro segue sem treino). RN09: o aviso destacado "Membro com pagamento em atraso" bloqueia o Salvar. O ADMIN vê o aviso ao escolher o membro (`GET /membros/:id/situacao`). O INSTRUTOR, que não consulta a situação, vê o aviso quando o `POST` responde 422. A lista paginada (`useListaPaginada`, `TabelaPaginada`) e o rodapé do formulário (`RodapeFormulario`) foram extraídos e servem a pagamentos e histórico
 - [x] WEB-Y4 Componentes para a ficha do membro — `PagamentosDoMembro` (`features/pagamentos/pagamentos-do-membro.tsx`) e `HistoricoDoMembro` (`features/historico/historico-do-membro.tsx`), cada um com as props `membroId: string`, `ativo: boolean` e `onAlterado?: () => void`. São as telas `/pagamentos` e `/atividades` presas ao membro: a lista vem filtrada pelo membro (`GET /pagamentos?membroId=` e `GET /membros/:id/atividades`, que responde 404 se o membro não existe), sem a coluna nem o filtro de membro, e mantém os outros filtros e as ações (pagar, cancelar, novo pagamento, registrar atividade). Com `ativo={false}`, "Novo pagamento" e "Registrar atividade" dão lugar a um aviso (RN04; a API responderia 422). O `onAlterado` é chamado depois de lançar, pagar, cancelar ou registrar, para a ficha atualizar o badge e o resumo. O formulário abre com o membro fixo, sem a busca, e o de atividade já carrega os treinos e a situação dele (aviso da RN09). As permissões são as mesmas das telas: pagamentos só para ADMIN e RECEPCIONISTA (o INSTRUTOR vê "Acesso restrito" e a API nem é chamada) e "Registrar atividade" só para ADMIN e INSTRUTOR. Trocar o `membroId` recarrega a lista. Na ficha (WEB-G3), basta `<PagamentosDoMembro membroId={id} ativo={membro.ativo} onAlterado={recarregarResumo} />` e `<HistoricoDoMembro membroId={id} ativo={membro.ativo} onAlterado={recarregarResumo} />` nas abas
 - [x] WEB-Y5 Testes do front (pagamentos/histórico) — `features/pagamentos` e `features/historico` acima de 80% de cobertura (Vitest). Cobertos: o `StatusBadge` de cada status, o formulário de pagamento com valor inválido, a ação pagar (PATCH `/pagamentos/:id/pagar` e a linha recarregada como "Pago", sem ações), o aviso de inadimplência no formulário de atividade (ADMIN pela situação, INSTRUTOR pelo 422) e as respostas atrasadas da busca de membro e do formulário de atividade (treinos e situação do membro anterior). Os testes dos componentes da ficha (`PagamentosDoMembro` e `HistoricoDoMembro`) entraram com eles no PR da WEB-Y4 (#54)
 - [x] WEB-Y6 Portal do aluno: Meu histórico — `/aluno/historico` com os cards de atividades e minutos do período e o filtro rápido 7 dias, 30 dias (padrão) ou mês atual, com o "hoje" no fuso de São Paulo, como na API. Abaixo vem a lista das atividades (data, atividade, tempo, treino vinculado), da mais recente para a mais antiga, com "Carregar mais" de 20 em 20 e o estado vazio "Nenhuma atividade no período". Consome `GET /me/atividades` e `GET /me/atividades/resumo` (HIS-05) pelo repasse `/api`
+- [x] WEB-G1 Lista de membros (veio do Gabriel em 14/11) — `/membros`, para os três cargos. Lista paginada do `GET /membros` (20 por página, em ordem de nome) com a busca por nome ou CPF, que espera 300 ms sem digitar e volta para a página 1, e o filtro de situação (todas, ativos, inativos). Colunas nome, CPF e telefone com máscara, o badge Ativo/Inativo e o link "Ver ficha" para `/membros/<id>`. "Novo membro" (link para `/membros/novo`) só para ADMIN e RECEPCIONISTA, pelo `podeGerenciarMembros` (`features/membros/permissoes.ts`), que a WEB-G2 e a WEB-G3 reaproveitam. As duas rotas dão 404 até a WEB-G2 e a WEB-G3 entrarem
 - [x] E2E-01 Utilitários de e2e (banco limpo, login)
 - [x] E2E-02 e2e do fluxo principal — `test/fluxo-principal.e2e-spec.ts` percorre o fluxo da seção 7 do `ESCOPO.md` com banco de teste, um `it` por critério (CA01 a CA08), cada um indicando o que verifica
 - [x] E2E-03 e2e da regra de inadimplência
@@ -736,7 +741,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### MEM-06 · Membros: resumo para a ficha
-**Responsável:** Gabriel · **Sprint:** 2 (fim) · **Depende de:** MEM-03, PAG-04 (Yohan)
+**Responsável:** Yohan (era do Gabriel até 13/11) · **Sprint:** 2 (fim) · **Depende de:** MEM-03, PAG-04 (Yohan)
 
 **O que fazer**
 - `GET /membros/:id/resumo` → dados do membro + `situacaoFinanceira` (do `PagamentosService.situacaoMembro` do Yohan) + treino mais recente + total de atividades nos últimos 30 dias.
@@ -1083,7 +1088,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 ---
 
 #### WEB-G1 · Lista de membros
-**Responsável:** Gabriel · **Sprint:** 3 · **Depende de:** MEM-04, WEB-01
+**Responsável:** Yohan (era do Gabriel até 14/11) · **Sprint:** 3 · **Depende de:** MEM-04, WEB-01
 
 **O que fazer**
 - Busca por nome/CPF com debounce, filtro ativo/inativo, paginação.
