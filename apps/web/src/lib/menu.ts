@@ -11,10 +11,17 @@ const TODOS: readonly Cargo[] = ["ADMIN", "RECEPCIONISTA", "INSTRUTOR"];
 // Matriz 4.2: pagamentos e situação financeira são só do ADMIN e da RECEPCIONISTA.
 export const CARGOS_FINANCEIRO: readonly Cargo[] = ["ADMIN", "RECEPCIONISTA"];
 
-// Quem gere pagamentos e vê a situação financeira dos membros. Espelha a matriz 4.2;
-// quem barra de verdade é a API.
+// Matriz 4.2: criar, editar e excluir treinos e registrar atividades são do ADMIN e do INSTRUTOR.
+export const CARGOS_INSTRUCAO: readonly Cargo[] = ["ADMIN", "INSTRUTOR"];
+
+// Espelha a matriz 4.2 só para a interface; quem barra de verdade é a API.
+export function temCargo(usuario: UsuarioDoToken, cargos: readonly Cargo[]): boolean {
+  return usuario.tipo === "FUNCIONARIO" && cargos.includes(usuario.cargo);
+}
+
+// Quem gere pagamentos e vê a situação financeira dos membros.
 export function temAcessoFinanceiro(usuario: UsuarioDoToken): boolean {
-  return usuario.tipo === "FUNCIONARIO" && CARGOS_FINANCEIRO.includes(usuario.cargo);
+  return temCargo(usuario, CARGOS_FINANCEIRO);
 }
 
 export const ITENS_MENU: readonly ItemMenu[] = [

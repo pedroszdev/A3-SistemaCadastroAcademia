@@ -1,7 +1,5 @@
 import { api } from "@/lib/api";
-import type { Pagina } from "@/lib/use-lista-paginada";
-
-export const TAMANHO_PAGINA = 20;
+import { type Pagina, TAMANHO_PAGINA } from "@/lib/use-lista-paginada";
 
 export type Membro = {
   id: string;

@@ -8,7 +8,7 @@ import { useUsuario } from "@/features/auth/usuario";
 import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
 import { ApiError } from "@/lib/api";
-import { formatarData } from "@/lib/format";
+import { formatarData, hojeEmSaoPaulo } from "@/lib/format";
 import { temAcessoFinanceiro } from "@/lib/menu";
 import {
   consultarSituacao,
@@ -19,7 +19,7 @@ import {
   type TreinoDoMembro,
 } from "./api";
 import { AvisoInadimplencia } from "./aviso-inadimplencia";
-import { type ErrosAtividade, hojeEmSaoPaulo, validarAtividade } from "./validacao";
+import { type ErrosAtividade, validarAtividade } from "./validacao";
 
 type FormAtividadeProps = {
   // Na ficha do membro (WEB-Y4) o membro já vem fixo e a busca some.

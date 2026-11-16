@@ -1,7 +1,6 @@
 import { api } from "@/lib/api";
-import type { Pagina } from "@/lib/use-lista-paginada";
+import { type Pagina, TAMANHO_PAGINA } from "@/lib/use-lista-paginada";
 
-export const TAMANHO_PAGINA = 20;
 export const TAMANHO_BUSCA_MEMBROS = 10;
 
 export type StatusPagamento = "PENDENTE" | "PAGO" | "ATRASADO" | "CANCELADO";

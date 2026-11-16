@@ -14,7 +14,7 @@ import {
   type TreinoDoMembro,
 } from "./api";
 import { FormAtividade } from "./form-atividade";
-import { hojeEmSaoPaulo } from "./validacao";
+import { hojeEmSaoPaulo } from "@/lib/format";
 
 vi.mock("@/features/pagamentos/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/pagamentos/api")>()),

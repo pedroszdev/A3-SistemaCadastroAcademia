@@ -258,7 +258,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] TRE-04 Testes de treinos — service, controllers e HTTP (pipes, validação e status), com 100% de cobertura em `src/treinos`. A data atual fica fixa com `jest.useFakeTimers().setSystemTime`
 - [x] TRE-05 Treinos do aluno (`/me/treinos`) — `GET /me/treinos` (tipo e paginação, mais recentes primeiro) e `GET /me/treinos/:id`, só para o ALUNO. O `membroId` vem do token e fica no `where`, então o treino de outro membro dá 404 e `membroId` na query dá 400 (RN16). As 2 rotas estão na `MATRIZ` do `test/seguranca.e2e-spec.ts`
 - [ ] WEB-G3 Ficha do membro (encaixa o `AcessoDoMembro` da WEB-G6)
-- [ ] WEB-G4 Telas de treinos
+- [x] WEB-G4 Telas de treinos — `/treinos` (`features/treinos`): lista do `GET /treinos` paginada, com a descrição na coluna (cortada, inteira no `title`) e filtro por tipo (select da RN05) e por membro (reaproveita a `BuscaMembro`, incluindo inativos); formulário de criar (`POST`) e editar (`PATCH`, sem `membroId`) com duração de 1 a 300 min e início não anterior a hoje no fuso de São Paulo (na edição, reenviar a data já salva passa, como na API); excluir com confirmação (`DELETE`, 204). Só ADMIN e INSTRUTOR veem criar, editar e excluir; a RECEPCIONISTA só consulta. Os testes de treinos da WEB-G5 (formulário, tela, `tipos.ts`) já estão feitos
 - [ ] WEB-G5 Testes do front (membros/treinos; os testes da WEB-G6 ficam com o Pedro)
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-06 (opcional) Teste de usabilidade

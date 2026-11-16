@@ -1,7 +1,6 @@
 import { api } from "@/lib/api";
+import { TAMANHO_PAGINA } from "@/lib/use-lista-paginada";
 import type { Intervalo } from "./periodo";
-
-export const TAMANHO_PAGINA = 20;
 
 // Espelha ATIVIDADE_DO_ALUNO_SELECT (apps/api/src/historico/historico.service.ts).
 export type AtividadeDoAluno = {

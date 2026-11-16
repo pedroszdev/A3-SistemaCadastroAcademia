@@ -1,9 +1,8 @@
 import { listarFuncionarios } from "@/features/funcionarios/api";
 import { api, ApiError } from "@/lib/api";
+import { CARGOS_INSTRUCAO, temCargo } from "@/lib/menu";
 import type { UsuarioDoToken } from "@/lib/sessao";
-import type { Pagina } from "@/lib/use-lista-paginada";
-
-export const TAMANHO_PAGINA = 20;
+import { type Pagina, TAMANHO_PAGINA } from "@/lib/use-lista-paginada";
 
 // Mesma string do assertMembroAdimplente (apps/api/src/pagamentos/pagamentos.service.ts).
 export const MENSAGEM_INADIMPLENTE = "Membro com pagamento em atraso";
@@ -117,11 +116,8 @@ export async function listarFuncionariosParaFiltro(): Promise<{ id: string; nome
   );
 }
 
-// Espelha a matriz 4.2; quem barra de verdade é a API.
 export function podeRegistrarAtividade(usuario: UsuarioDoToken): boolean {
-  return (
-    usuario.tipo === "FUNCIONARIO" && (usuario.cargo === "ADMIN" || usuario.cargo === "INSTRUTOR")
-  );
+  return temCargo(usuario, CARGOS_INSTRUCAO);
 }
 
 export function podeFiltrarPorFuncionario(usuario: UsuarioDoToken): boolean {

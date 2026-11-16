@@ -1,5 +1,8 @@
 import { useEffect, useEffectEvent, useState } from "react";
 
+// Igual ao pageSize padrão do PaginationQueryDto da API.
+export const TAMANHO_PAGINA = 20;
+
 export type Pagina<T> = { data: T[]; total: number; page: number; pageSize: number };
 
 // `carregar` pode ser uma função nova a cada render (ex.: inline, fixando um membroId):
