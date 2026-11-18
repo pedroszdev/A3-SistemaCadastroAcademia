@@ -305,7 +305,7 @@ function CabecalhoDaFicha({ id, dados, recarregar }: ConteudoDaFichaProps) {
         {confirmar === "reativar" ? (
           <p>
             Reativar {membro.nome}? O membro volta a poder receber pagamentos, registrar atividades
-            e ter acesso ao portal.
+            e, se o acesso estiver liberado, entrar no portal.
           </p>
         ) : (
           <p>

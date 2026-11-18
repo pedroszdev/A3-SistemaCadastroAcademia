@@ -307,6 +307,8 @@ describe("FichaMembro", () => {
 
       await userEvent.click(botao("Reativar")!);
       const dialogo = screen.getByRole("dialog", { name: "Reativar membro" });
+      // Reativar não libera o acesso: a API só volta o ativo para true.
+      expect(dialogo).toHaveTextContent("se o acesso estiver liberado, entrar no portal");
       await userEvent.click(within(dialogo).getByRole("button", { name: "Confirmar" }));
 
       expect(reativarMembro).toHaveBeenCalledWith("m1");
