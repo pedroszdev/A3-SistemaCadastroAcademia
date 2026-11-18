@@ -1,5 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { atualizarMembro, buscarMembro, criarMembro, listarMembros } from "./api";
+import {
+  atualizarMembro,
+  buscarMembro,
+  consultarResumo,
+  criarMembro,
+  desativarMembro,
+  listarMembros,
+  reativarMembro,
+} from "./api";
 
 const fetchMock = vi.fn<typeof fetch>();
 
@@ -78,5 +86,28 @@ describe("api de membros", () => {
     expect(ultimaUrl()).toBe("/api/membros/m1");
     expect(ultimoInit()?.method).toBe("PATCH");
     expect(JSON.parse(String(ultimoInit()?.body))).toEqual(dados);
+  });
+
+  it("consulta o resumo do membro codificando o caminho", async () => {
+    await consultarResumo("a/b");
+
+    expect(ultimaUrl()).toBe("/api/membros/a%2Fb/resumo");
+    expect(ultimoInit()?.method).toBeUndefined();
+  });
+
+  it("desativa o membro com PATCH e sem corpo", async () => {
+    await desativarMembro("m1");
+
+    expect(ultimaUrl()).toBe("/api/membros/m1/desativar");
+    expect(ultimoInit()?.method).toBe("PATCH");
+    expect(ultimoInit()?.body).toBeUndefined();
+  });
+
+  it("reativa o membro com PATCH e sem corpo", async () => {
+    await reativarMembro("a/b");
+
+    expect(ultimaUrl()).toBe("/api/membros/a%2Fb/reativar");
+    expect(ultimoInit()?.method).toBe("PATCH");
+    expect(ultimoInit()?.body).toBeUndefined();
   });
 });
