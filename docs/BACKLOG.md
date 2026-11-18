@@ -295,7 +295,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] E2E-03 e2e da regra de inadimplência
 - [x] QA-01 Issues do Sonar no meu código — 0 issues e 0 hotspots nos meus módulos (pagamentos, histórico, telas WEB-Y e e2e) na análise da `main` de 12/11 (`c72e73d`), sem correção a fazer. O quality gate está aprovado (bugs 0, vulnerabilidades 0, duplicação 0%, cobertura 99,4%)
 - [ ] 🟡 QA-03 Triagem semanal das issues do professor — contínua até 02/12. A tabela da seção 8 está em dia e a triagem de 12/11 está no registro (0 issues abertas); as próximas são toda segunda, a partir de 16/11
-- [ ] QA-04 Regressão manual pré-entrega
+- [ ] 🟡 QA-04 Regressão manual pré-entrega — o roteiro está em `docs/testes/regressao.md`: 29 passos com o banco do seed, cobrindo todas as telas, as visões ADMIN, RECEPCIONISTA e INSTRUTOR, o portal do aluno (no celular também) e a sessão, cada passo com o resultado esperado e a regra que confere. A primeira execução foi em 18/11, na `main` em `c59cc21` (já com a ficha, PR #79): 29 de 29 passaram, 0 bugs e nenhuma issue aberta. As observações que não são bug estão registradas no próprio arquivo. Falta a rodada final na `main` depois do code freeze (23/11)
 - [ ] DOC-03 2.1 · DOC-04 2.2 · DOC-06 2.4 · DOC-12 2.10
 - [ ] APR-03 meus slides · APR-05 Ensaio (cronometrista)
 - [ ] ENT-03 Postar no Ulife
