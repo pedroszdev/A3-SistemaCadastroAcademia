@@ -1,3 +1,5 @@
+import type { Treino } from "@/features/treinos/api";
+import type { SituacaoFinanceira } from "@/features/historico/api";
 import { api } from "@/lib/api";
 import { type Pagina, TAMANHO_PAGINA } from "@/lib/use-lista-paginada";
 
@@ -50,4 +52,28 @@ export function atualizarMembro(id: string, dados: DadosAtualizarMembro) {
     method: "PATCH",
     body: JSON.stringify(dados),
   });
+}
+
+// A situação financeira (RN09) tem a mesma forma do GET /membros/:id/situacao do histórico.
+export type { SituacaoFinanceira };
+
+// Espelha MembrosResumoService.resumo. Só ADMIN e RECEPCIONISTA consultam (403 para o INSTRUTOR).
+export type ResumoMembro = {
+  membro: Membro;
+  situacaoFinanceira: SituacaoFinanceira;
+  treinoMaisRecente: Treino | null;
+  atividadesUltimos30Dias: number;
+};
+
+export function consultarResumo(id: string) {
+  return api<ResumoMembro>(`/membros/${encodeURIComponent(id)}/resumo`);
+}
+
+// A API não lê corpo nas duas rotas (RN03: membro não é excluído).
+export function desativarMembro(id: string) {
+  return api<Membro>(`/membros/${encodeURIComponent(id)}/desativar`, { method: "PATCH" });
+}
+
+export function reativarMembro(id: string) {
+  return api<Membro>(`/membros/${encodeURIComponent(id)}/reativar`, { method: "PATCH" });
 }
