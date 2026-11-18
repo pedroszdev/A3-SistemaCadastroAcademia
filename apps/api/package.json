@@ -97,8 +97,7 @@
       "/node_modules/",
       "/generated/",
       "main\\.ts$",
-      "\\.module\\.ts$",
-      "/dto/"
+      "\\.module\\.ts$"
     ],
     "coverageDirectory": "../coverage",
     "coverageReporters": [
