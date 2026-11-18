@@ -237,7 +237,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [ ] E2E-04 e2e de validações de membros/treinos (veio do Gabriel em 11/11)
 - [ ] QA-01 Issues do Sonar no meu código
 - [ ] QA-02 Cobertura consolidada
-- [ ] QA-05 Evidências (prints antes/depois)
+- [ ] 🟡 QA-05 Evidências (prints antes/depois) — `docs/evidencias/README.md` é o índice: liga cada pasta ao que comprova, à seção do relatório e ao slide. Já estão lá o Sonar "antes", os prints do Actions (PR verde, PR barrado e execução vermelha), os prints do relatório de cobertura da API e do web e os prints das issues #28, #29 e #30 fechadas, com os PRs de cada uma (`docs/evidencias/issues`). Falta o Sonar "depois" no code freeze (23/11) e o print da #69 fechada
 - [ ] DOC-02 Introdução · DOC-05 2.3 · DOC-07 2.5 · DOC-08 2.6 · DOC-09 2.7 · DOC-11 2.9 · DOC-14 2.12 · DOC-15 2.13 · DOC-16 Conclusão (a DOC-07, a DOC-08 e a DOC-15 vieram do Gabriel em 11/11)
 - [ ] DOC-17 Revisão final e PDF do relatório
 - [ ] APR-02 Roteiro e tempos · APR-03 meus slides · APR-04 Ambiente de demo + vídeo reserva
