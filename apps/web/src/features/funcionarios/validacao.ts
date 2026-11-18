@@ -11,7 +11,7 @@ type Valores = { nome: string; login: string; cargo: string; senha: string };
 
 const MAX_BYTES_SENHA = 72;
 
-function validarSenha(senha: string): string | undefined {
+export function validarSenha(senha: string): string | undefined {
   if (tamanho(senha) < 8) return "senha deve ter no mínimo 8 caracteres";
   if (new TextEncoder().encode(senha).length > MAX_BYTES_SENHA) {
     return "senha deve ter no máximo 72 bytes";
