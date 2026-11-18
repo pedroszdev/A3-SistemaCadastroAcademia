@@ -74,3 +74,14 @@ Os números do seed são relativos à data da execução: o Bruno sempre aparece
 | --- | --- | --- | --- | --- |
 | 22 | Menu, dashboard e telas | Entrar. Conferir o menu e o dashboard. Abrir `/pagamentos`, `/funcionarios` e `/membros/novo` pela URL. Abrir `/membros` e `/treinos` | Menu só com Dashboard, Membros, Treinos e Histórico. Dashboard com os cards, sem a lista de inadimplentes. As três URLs mostram "Acesso restrito". Membros sem "Novo membro". Treinos com "Novo treino", "Editar" e "Excluir" | Matriz 4.2 |
 | 23 | Ficha e inadimplente | Abrir a ficha do Bruno Lima. Em `/atividades`, registrar uma atividade de hoje para ele | Ficha sem situação financeira, sem a contagem de atividades, sem Editar e Desativar, sem os botões de acesso e sem a aba Pagamentos. Atividade: o aviso "Membro com pagamento em atraso" só aparece depois do Salvar (a API responde 422) e o Salvar fica desabilitado | RN09, matriz 4.2 |
+
+### Portal do aluno e sessão
+
+| # | Tela | Passos | Resultado esperado | Regra |
+| --- | --- | --- | --- | --- |
+| 24 | Sem sessão | Sair. Abrir `/membros` e `/aluno/treinos` pela URL | As duas voltam para o `/login` | RN14 |
+| 25 | Login do aluno | Aba Aluno: CPF da Carla. Depois, CPF da Ana com senha errada. Depois, o Teste Regressão com `aluno1234` | Carla (sem acesso) e senha errada: a mesma mensagem, "CPF ou senha inválidos.". Teste Regressão: entra no portal com o próprio nome, porque o acesso foi liberado no passo 9 | RN12, RN15 |
+| 26 | Meus treinos | Sair e entrar como Ana Souza. Abrir "Meus treinos". Filtrar Cardio. Voltar para todos e clicar no card de Musculação | Só os 2 treinos da Ana, do mais recente para o mais antigo. Cardio: só 1. O card abre o detalhe com a descrição inteira | RN16, WEB-G6 |
+| 27 | Meu histórico | Abrir "Meu histórico". Trocar o período para 7 dias e Mês atual | Cards de atividades e minutos do período, e a lista só com as atividades da Ana, incluindo a "Leg press" do passo 17. Os números mudam com o período | RN16, WEB-Y6 |
+| 28 | Isolamento das áreas | Como Ana, abrir `/dashboard` e `/membros` pela URL. Sair, entrar como `instrutor` e abrir `/aluno/treinos` | O aluno volta para `/aluno` e o funcionário para `/dashboard`. Nenhum vê a área do outro | RN17, WEB-05 |
+| 29 | Celular | Como Ana, abrir o portal numa largura de celular (390 px, pelo modo responsivo do navegador) | "Meus treinos" e "Meu histórico" em coluna única, sem rolagem horizontal | WEB-05 |
