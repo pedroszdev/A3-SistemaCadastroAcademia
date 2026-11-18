@@ -93,7 +93,10 @@ describe('Membros (e2e)', () => {
       await liberar(membro.id, 'senha-nova-123').expect(200);
 
       await loginAluno(membro.cpf, 'senha-antiga-1').expect(401);
-      await loginAluno(membro.cpf, 'senha-nova-123').expect(200);
+      const login = await loginAluno(membro.cpf, 'senha-nova-123').expect(200);
+      expect((login.body as { accessToken: string }).accessToken).toEqual(
+        expect.any(String),
+      );
     });
 
     it('revogar: o login e o token do aluno param de valer', async () => {
