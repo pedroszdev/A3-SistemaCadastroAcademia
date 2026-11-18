@@ -60,3 +60,17 @@ Os números do seed são relativos à data da execução: o Bruno sempre aparece
 | 17 | Histórico: registro | Trocar para a Ana Souza. Data de amanhã e tempo 601. Corrigir para hoje e 40 min, atividade "Leg press", treino Cardio. Salvar. Filtrar o funcionário por Administrador | O campo Treino lista só os treinos da Ana. Amanhã e 601: "data não pode ser uma data futura" e "tempoExecucao deve ser no máximo 600 minutos". Correto: "Atividade registrada." e a linha no topo com o funcionário Administrador. O filtro mostra só as atividades do Administrador | RN10, RN11 |
 | 18 | Funcionários | Em `/funcionarios`, "Novo funcionário" com login `admin`. Depois, `recepcao.regressao`. Depois, nome "Recepção Regressão", login `recepcaoregressao`, Recepcionista. Editar o cargo para Instrutor. Desativar | `admin`: "Login já cadastrado". Com ponto: "login deve ter apenas letras e números". Cadastro: aparece Ativo. Na edição o login fica travado. Desativar: Inativo, com "Reativar" | RN03, RN13 |
 | 19 | Funcionários: a si mesmo | "Desativar" na linha do Administrador e confirmar | Aviso "Você não pode desativar o próprio usuário", e o admin continua Ativo | RN13 |
+
+### Visão RECEPCIONISTA (login `recepcao`)
+
+| # | Tela | Passos | Resultado esperado | Regra |
+| --- | --- | --- | --- | --- |
+| 20 | Menu, dashboard e telas | Entrar. Conferir o menu e o dashboard. Abrir `/funcionarios` pela URL. Abrir `/membros`, `/pagamentos`, `/treinos` e `/atividades` | Menu sem Funcionários. Dashboard com a lista de inadimplentes. `/funcionarios`: "Acesso restrito". Membros com "Novo membro" e Pagamentos com "Novo pagamento". Treinos sem "Novo treino", "Editar" e "Excluir". Histórico sem "Registrar atividade" | Matriz 4.2 |
+| 21 | Ficha | Abrir a ficha do Bruno Lima | Igual à do ADMIN: Inadimplente, Editar, Desativar, acesso do aluno e as três abas | Matriz 4.2 |
+
+### Visão INSTRUTOR (login `instrutor`)
+
+| # | Tela | Passos | Resultado esperado | Regra |
+| --- | --- | --- | --- | --- |
+| 22 | Menu, dashboard e telas | Entrar. Conferir o menu e o dashboard. Abrir `/pagamentos`, `/funcionarios` e `/membros/novo` pela URL. Abrir `/membros` e `/treinos` | Menu só com Dashboard, Membros, Treinos e Histórico. Dashboard com os cards, sem a lista de inadimplentes. As três URLs mostram "Acesso restrito". Membros sem "Novo membro". Treinos com "Novo treino", "Editar" e "Excluir" | Matriz 4.2 |
+| 23 | Ficha e inadimplente | Abrir a ficha do Bruno Lima. Em `/atividades`, registrar uma atividade de hoje para ele | Ficha sem situação financeira, sem a contagem de atividades, sem Editar e Desativar, sem os botões de acesso e sem a aba Pagamentos. Atividade: o aviso "Membro com pagamento em atraso" só aparece depois do Salvar (a API responde 422) e o Salvar fica desabilitado | RN09, matriz 4.2 |
