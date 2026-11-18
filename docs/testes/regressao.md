@@ -85,3 +85,19 @@ Os números do seed são relativos à data da execução: o Bruno sempre aparece
 | 27 | Meu histórico | Abrir "Meu histórico". Trocar o período para 7 dias e Mês atual | Cards de atividades e minutos do período, e a lista só com as atividades da Ana, incluindo a "Leg press" do passo 17. Os números mudam com o período | RN16, WEB-Y6 |
 | 28 | Isolamento das áreas | Como Ana, abrir `/dashboard` e `/membros` pela URL. Sair, entrar como `instrutor` e abrir `/aluno/treinos` | O aluno volta para `/aluno` e o funcionário para `/dashboard`. Nenhum vê a área do outro | RN17, WEB-05 |
 | 29 | Celular | Como Ana, abrir o portal numa largura de celular (390 px, pelo modo responsivo do navegador) | "Meus treinos" e "Meu histórico" em coluna única, sem rolagem horizontal | WEB-05 |
+
+## 3. Execuções
+
+Na rodada final, depois do code freeze, refazer o roteiro inteiro na `main` final e acrescentar uma linha aqui.
+
+| Data | Commit da `main` | Ambiente | Passos | Bugs | Executado por |
+| --- | --- | --- | --- | --- | --- |
+| 18/11/2026 | `c59cc21` (depois do PR #79, com a ficha) | Local, `pnpm dev`, PostgreSQL 17 no Docker, Google Chrome, banco do seed | 29 de 29 ✅ | 0 | Yohan Nascimento da Costa (Testador) |
+
+### Observações da execução de 18/11
+
+Nenhuma das observações abaixo é bug, porque o comportamento bate com as regras e com o que o backlog descreve. Elas ficam registradas para quem quiser melhorar e para a rodada final.
+
+- **Passo 14:** o 409 do vencimento repetido chega com a mensagem genérica do filtro de erros do Prisma ("Já existe um registro com esses dados."). A regra funciona, mas uma mensagem como "Este membro já tem uma cobrança com esse vencimento" seria mais clara.
+- **Passo 8:** depois de editar, a tela volta para a lista de membros, e não para a ficha. É o comportamento descrito na WEB-G2, que deixou a troca do destino como opcional para a WEB-G3.
+- **Só no modo de desenvolvimento:** o selo "1 Insight" do Next.js fica no canto inferior esquerdo, por cima do botão "Sair" do menu. O console também mostra o aviso `instant-shell-url-data` ao abrir `/membros/<id>` e `/membros/<id>/editar`. Nada disso aparece no build de produção, e as telas funcionam normalmente.
