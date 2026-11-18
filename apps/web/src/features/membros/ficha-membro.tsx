@@ -15,6 +15,7 @@ import { PagamentosDoMembro } from "@/features/pagamentos/pagamentos-do-membro";
 import { listarTreinos, type Treino } from "@/features/treinos/api";
 import { ApiError } from "@/lib/api";
 import { formatarData, mascaraCpf, mascaraTelefone } from "@/lib/format";
+import { temAcessoFinanceiro } from "@/lib/menu";
 import { useListaPaginada } from "@/lib/use-lista-paginada";
 import { AcessoDoMembro } from "./acesso-do-membro";
 import {
@@ -52,6 +53,9 @@ type Confirmacao = "desativar" | "reativar";
 
 const ABAS = ["Treinos", "Pagamentos", "Histórico"] as const;
 type Aba = (typeof ABAS)[number];
+
+// Pagamentos é só do ADMIN e da RECEPCIONISTA (matriz 4.2): para o INSTRUTOR a aba nem aparece.
+const ABAS_SEM_FINANCEIRO: readonly Aba[] = ABAS.filter((aba) => aba !== "Pagamentos");
 
 async function carregarFicha(id: string, comResumo: boolean): Promise<DadosDaFicha> {
   if (comResumo) {
@@ -154,12 +158,14 @@ function FichaCarregada({ id }: { id: string }) {
 type ConteudoDaFichaProps = { id: string; dados: DadosDaFicha; recarregar: () => void };
 
 function ConteudoDaFicha({ id, dados, recarregar }: ConteudoDaFichaProps) {
+  const abas = temAcessoFinanceiro(useUsuario()) ? ABAS : ABAS_SEM_FINANCEIRO;
   const [aba, setAba] = useState<Aba>("Treinos");
 
   return (
     <div className="flex flex-col gap-6">
       <CabecalhoDaFicha id={id} dados={dados} recarregar={recarregar} />
       <Abas
+        abas={abas}
         aba={aba}
         onMudar={setAba}
         painel={
@@ -321,10 +327,15 @@ function Dado({ rotulo, valor }: { rotulo: string; valor: string }) {
   );
 }
 
-type AbasProps = { aba: Aba; onMudar: (aba: Aba) => void; painel: ReactNode };
+type AbasProps = {
+  abas: readonly Aba[];
+  aba: Aba;
+  onMudar: (aba: Aba) => void;
+  painel: ReactNode;
+};
 
 // WAI-ARIA tabs: só a aba ativa entra na ordem de Tab; as setas trocam de aba e levam o foco.
-function Abas({ aba, onMudar, painel }: AbasProps) {
+function Abas({ abas, aba, onMudar, painel }: AbasProps) {
   const prefixo = useId();
   const botoes = useRef<Array<HTMLButtonElement | null>>([]);
   const idDaAba = (nome: Aba) => `${prefixo}-aba-${nome}`;
@@ -334,8 +345,8 @@ function Abas({ aba, onMudar, painel }: AbasProps) {
     const passo = PASSO_DA_SETA[evento.key];
     if (passo === undefined) return;
     evento.preventDefault();
-    const proximo = (indice + passo + ABAS.length) % ABAS.length;
-    onMudar(ABAS[proximo]);
+    const proximo = (indice + passo + abas.length) % abas.length;
+    onMudar(abas[proximo]);
     botoes.current[proximo]?.focus();
   }
 
@@ -346,7 +357,7 @@ function Abas({ aba, onMudar, painel }: AbasProps) {
         aria-label="Seções da ficha"
         className="flex gap-1 border-b border-zinc-200"
       >
-        {ABAS.map((nome, indice) => {
+        {abas.map((nome, indice) => {
           const selecionada = nome === aba;
           return (
             <button

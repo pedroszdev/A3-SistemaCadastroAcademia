@@ -416,6 +416,23 @@ describe("FichaMembro", () => {
       expect(historico).toHaveAttribute("aria-selected", "true");
     });
 
+    it("INSTRUTOR não vê a aba Pagamentos e as setas andam só entre Treinos e Histórico", async () => {
+      renderizar(instrutor);
+      await ficha();
+
+      const abas = screen.getAllByRole("tab");
+      expect(abas.map((a) => a.textContent)).toEqual(["Treinos", "Histórico"]);
+      const [treinos, historico] = abas;
+
+      treinos.focus();
+      await userEvent.keyboard("{ArrowRight}");
+      expect(historico).toHaveFocus();
+      expect(screen.getByText("historico m1 ativo=true")).toBeInTheDocument();
+      await userEvent.keyboard("{ArrowRight}");
+      expect(treinos).toHaveFocus();
+      expect(screen.queryByText(/^pagamentos /)).not.toBeInTheDocument();
+    });
+
     it("outras teclas não trocam de aba", async () => {
       renderizar();
       await ficha();
