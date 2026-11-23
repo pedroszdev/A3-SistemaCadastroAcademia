@@ -1611,3 +1611,4 @@ A regra 1 (seção 2) diz que cada um commita só o próprio código. As exceç�
 | Data | Quem commitou | Código de quem | O que | Motivo |
 | --- | --- | --- | --- | --- |
 | 05/11/2026 | Pedro | Gabriel (`membros.controller.ts`) e Yohan (`pagamentos.controller.ts`, `membros-situacao.controller.ts`, `historico.controller.ts`, `membros-atividades.controller.ts`) | Só os decorators `@Roles` da matriz 4.2 (MEM-04, PAG-04, PAG-05, HIS-03) | Issue #28, com prazo em 11/11: a matriz precisava estar completa na `main` e testada por HTTP. As rotas, os services e os testes continuam de autoria deles |
+| 23/11/2026 | Yohan | Pedro (dashboard, WEB-04) | Só o teste de navegação `features/dashboard/navegacao-ficha.test.tsx` (issue #78), sem mudar o código do dashboard | O Pedro pediu para o Yohan fazer no lugar dele, para a #78 fechar até o code freeze (23/11) e o M4 terminar com 0 issues abertas |
