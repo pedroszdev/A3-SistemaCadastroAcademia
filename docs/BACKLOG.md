@@ -1586,7 +1586,7 @@ Uma task de código só é marcada como concluída quando:
 
 ## 8. Issues do professor
 
-Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada como resolvida depois que o professor confere as evidências na `main`. Atualizado em 12/11/2026.
+Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada como resolvida depois que o professor confere as evidências na `main`. Atualizado em 23/11/2026.
 
 | Issue | Assunto | Responsável | PRs e commits | Status | Prazo |
 | --- | --- | --- | --- | --- | --- |
@@ -1602,6 +1602,7 @@ A cada triagem (toda segunda, até 02/12), uma linha nova: o que estava aberto, 
 | Data | Issues abertas | Novas desde a anterior | O que foi feito |
 | --- | --- | --- | --- |
 | 12/11/2026 | 0 | 0 | #28, #29 e #30 fechadas pelo grupo, sem comentário do professor depois do retorno final. Tabela acima atualizada com os fechamentos, os PRs e os responsáveis |
+| 23/11/2026 | 1 | 1 (#78, aberta em 17/11) | #78 entrou na tabela acima, com as labels `professor`, `dashboard` e `web` e atribuída ao Pedro, dono do dashboard (WEB-04). A ficha já está na `main` (PR #79); falta o teste de navegação, que tem que entrar até o code freeze para o M4 fechar com 0 issues. #28, #29 e #30 continuam fechadas, sem comentário do professor desde o retorno final |
 
 ### Exceções à regra 1
 
