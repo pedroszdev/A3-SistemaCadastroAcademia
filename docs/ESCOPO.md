@@ -157,7 +157,7 @@ Em 11/11, a MEM-07, a WEB-G6 e a E2E-04 passaram do Gabriel para o Pedro. Em 13/
 | WEB-G2 | formulário de membros | Yohan | ✅ 14/11 (PR #72) |
 | WEB-G3 | ficha do membro | Gabriel | ✅ 18/11 (PR #79) |
 | WEB-G4 | telas de treinos | Gabriel | ✅ 16/11 (PR #73) |
-| WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
+| WEB-G5 | testes do front de membros e treinos | Gabriel | ✅ 23/11 |
 | WEB-G6 | "Meus treinos" do portal do aluno e o componente de acesso da ficha | Pedro | ✅ 16/11 |
 | E2E-04 | e2e das validações de membros e treinos | Pedro | ✅ 16/11 (PR #75) |
 
@@ -374,7 +374,7 @@ A cobertura de 100% do escopo analisado vale só para o que já está na `main`;
 | WEB-G2 | formulário de membros (passo 2 pela interface) | Yohan | ✅ 14/11 (PR #72) |
 | WEB-G3 | ficha de membros (passo 2 pela interface) | Gabriel | ✅ 18/11 (PR #79) |
 | WEB-G4 | telas de treinos (passo 3 pela interface) | Gabriel | ✅ 16/11 (PR #73) |
-| WEB-G5 | testes do front de membros e treinos | Gabriel | 16/11 |
+| WEB-G5 | testes do front de membros e treinos | Gabriel | ✅ 23/11 |
 | WEB-G6 e E2E-04 | "Meus treinos" e e2e de validações | Pedro | 16/11 |
 | E2E-05 (RN16 aluno × aluno) | fecha o e2e de segurança | Pedro | ✅ 11/11 (PR #59) |
 | QA-01 a QA-05 | issues do Sonar zeradas, cobertura consolidada ≥ 75% e quality gate aprovado | Pedro, Gabriel e Yohan | 17/11 a 23/11 (code freeze) |
