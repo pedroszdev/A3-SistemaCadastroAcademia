@@ -1602,7 +1602,7 @@ A cada triagem (toda segunda, até 02/12), uma linha nova: o que estava aberto, 
 | Data | Issues abertas | Novas desde a anterior | O que foi feito |
 | --- | --- | --- | --- |
 | 12/11/2026 | 0 | 0 | #28, #29 e #30 fechadas pelo grupo, sem comentário do professor depois do retorno final. Tabela acima atualizada com os fechamentos, os PRs e os responsáveis |
-| 23/11/2026 | 1 | 1 (#78, aberta em 17/11) | #78 entrou na tabela acima, com as labels `professor`, `dashboard` e `web` e atribuída ao Pedro, dono do dashboard (WEB-04). A ficha já está na `main` (PR #79); falta o teste de navegação, que tem que entrar até o code freeze para o M4 fechar com 0 issues. #28, #29 e #30 continuam fechadas, sem comentário do professor desde o retorno final |
+| 23/11/2026 | 1 | 1 (#78, aberta em 17/11) | #78 entrou na tabela acima, com as labels `professor`, `dashboard` e `web` e atribuída ao Pedro, dono do dashboard (WEB-04). O professor confirmou na issue que a ficha e o teste dela já estavam na `main` pelo PR #79 e pediu para vincular a correção; a #78 foi fechada no mesmo dia com o PR #79 vinculado, e o M4 fica com 0 issues abertas. #28, #29 e #30 continuam fechadas, sem comentário do professor desde o retorno final |
 
 ### Exceções à regra 1
 
