@@ -563,5 +563,41 @@ describe("FichaMembro", () => {
       ).toBeInTheDocument();
       expect(consultarResumo).toHaveBeenLastCalledWith("m2");
     });
+
+    it("descarta a recarga atrasada quando uma recarga mais nova já chegou", async () => {
+      let resolverAntiga: (r: ResumoMembro) => void = () => {};
+      vi.mocked(consultarResumo)
+        .mockResolvedValueOnce(resumo())
+        .mockReturnValueOnce(new Promise((resolver) => (resolverAntiga = resolver)))
+        .mockResolvedValueOnce(resumo({ membro: { ...ana, ativo: false } }));
+      renderizar();
+      await ficha();
+
+      await userEvent.click(botao("alterou acesso")!);
+      await userEvent.click(botao("alterou acesso")!);
+      expect(await screen.findByText("Inativo")).toBeInTheDocument();
+      await act(async () => resolverAntiga(resumo()));
+
+      expect(screen.getByText("Inativo")).toBeInTheDocument();
+      expect(screen.queryByText("Ativo")).not.toBeInTheDocument();
+    });
+
+    it("ignora o erro atrasado de uma recarga que já foi substituída", async () => {
+      let falharAntiga: (e: Error) => void = () => {};
+      vi.mocked(consultarResumo)
+        .mockResolvedValueOnce(resumo())
+        .mockReturnValueOnce(new Promise((_, falhar) => (falharAntiga = falhar)))
+        .mockResolvedValueOnce(resumo({ membro: { ...ana, ativo: false } }));
+      renderizar();
+      await ficha();
+
+      await userEvent.click(botao("alterou acesso")!);
+      await userEvent.click(botao("alterou acesso")!);
+      expect(await screen.findByText("Inativo")).toBeInTheDocument();
+      await act(async () => falharAntiga(new ApiError(404, "Membro não encontrado")));
+
+      expect(screen.queryByText("Membro não encontrado")).not.toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 2, name: "Ana Souza" })).toBeInTheDocument();
+    });
   });
 });
