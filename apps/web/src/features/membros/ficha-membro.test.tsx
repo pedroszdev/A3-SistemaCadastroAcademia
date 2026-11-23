@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
@@ -327,6 +327,30 @@ describe("FichaMembro", () => {
 
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(desativarMembro).not.toHaveBeenCalled();
+    });
+
+    it("não deixa fechar a confirmação enquanto o PATCH é enviado", async () => {
+      let terminar: (m: Membro) => void = () => {};
+      vi.mocked(desativarMembro).mockReturnValue(
+        new Promise<Membro>((resolve) => {
+          terminar = resolve;
+        }),
+      );
+      renderizar();
+      await ficha();
+
+      await userEvent.click(botao("Desativar")!);
+      const dialogo = screen.getByRole("dialog", { name: "Desativar membro" });
+      await userEvent.click(within(dialogo).getByRole("button", { name: "Confirmar" }));
+      expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
+      await userEvent.keyboard("{Escape}");
+      await userEvent.click(screen.getByTestId("dialog-overlay"));
+      expect(screen.getByRole("dialog", { name: "Desativar membro" })).toBeInTheDocument();
+
+      await act(async () => terminar({ ...ana, ativo: false }));
+
+      expect(await screen.findByText("Membro desativado.")).toBeInTheDocument();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
     it("mostra o erro da API num toast e mantém a ficha", async () => {
