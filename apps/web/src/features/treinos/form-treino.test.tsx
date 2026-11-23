@@ -284,6 +284,21 @@ describe("FormTreino", () => {
       expect(screen.queryByText("Selecione o membro")).toBeNull();
     });
 
+    it("Trocar tira o membro escolhido sem mostrar erro, e salvar sem outro membro barra", async () => {
+      const usuario = userEvent.setup();
+      renderizar();
+
+      await preencher(usuario);
+      await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+
+      expect(screen.getByLabelText("Membro")).toHaveValue("");
+      expect(screen.queryByText("Selecione o membro")).toBeNull();
+      await salvar(usuario);
+
+      expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
+      expect(criarTreino).not.toHaveBeenCalled();
+    });
+
     it("Cancelar chama onCancelar sem enviar", async () => {
       const usuario = userEvent.setup();
       renderizar();
