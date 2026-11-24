@@ -56,12 +56,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`flex items-center gap-3 rounded px-4 py-3 text-sm text-white ${
-              toast.tipo === "erro" ? "bg-red-600" : "bg-green-600"
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white shadow-lg ${
+              toast.tipo === "erro" ? "bg-red-600" : "bg-tinta"
             }`}
           >
             <span>{toast.mensagem}</span>
-            <button type="button" onClick={() => fechar(toast.id)}>
+            <button
+              type="button"
+              onClick={() => fechar(toast.id)}
+              className={`cursor-pointer font-semibold ${toast.tipo === "erro" ? "text-white" : "text-lima"}`}
+            >
               Fechar
             </button>
           </div>

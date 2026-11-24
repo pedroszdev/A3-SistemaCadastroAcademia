@@ -1,10 +1,13 @@
 import { Button } from "./button";
+import { Icone } from "./icone";
 
 type RodapeFormularioProps = {
   erro: string | null;
   enviando: boolean;
   desabilitado?: boolean;
   onCancelar: () => void;
+  // Texto do botão de envio (ex.: "Salvar membro"). O padrão é "Salvar".
+  rotuloSalvar?: string;
 };
 
 export function RodapeFormulario({
@@ -12,6 +15,7 @@ export function RodapeFormulario({
   enviando,
   desabilitado = false,
   onCancelar,
+  rotuloSalvar = "Salvar",
 }: RodapeFormularioProps) {
   return (
     <>
@@ -20,12 +24,13 @@ export function RodapeFormulario({
           {erro}
         </p>
       )}
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2.5 pt-1">
         <Button variante="secundario" onClick={onCancelar} disabled={enviando}>
           Cancelar
         </Button>
         <Button type="submit" disabled={enviando || desabilitado}>
-          {enviando ? "Salvando…" : "Salvar"}
+          <Icone nome="check" tamanho={16} />
+          {enviando ? "Salvando…" : rotuloSalvar}
         </Button>
       </div>
     </>
