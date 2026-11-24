@@ -90,7 +90,7 @@ describe('MembrosService', () => {
     };
     $transaction: jest.Mock;
   };
-  let mensalidades: { garantirProxima: jest.Mock };
+  let mensalidades: { garantirProxima: jest.Mock; cancelarFuturas: jest.Mock };
   let service: MembrosService;
 
   beforeEach(() => {
@@ -107,7 +107,10 @@ describe('MembrosService', () => {
         callback(prisma),
       ),
     };
-    mensalidades = { garantirProxima: jest.fn().mockResolvedValue(true) };
+    mensalidades = {
+      garantirProxima: jest.fn().mockResolvedValue(true),
+      cancelarFuturas: jest.fn().mockResolvedValue(1),
+    };
     service = new MembrosService(
       prisma as unknown as PrismaService,
       mensalidades as unknown as MensalidadesService,
@@ -389,6 +392,39 @@ describe('MembrosService', () => {
       // RN18: só quem volta a ficar ativo ganha a próxima cobrança.
       expect(mensalidades.garantirProxima).toHaveBeenCalledTimes(ativo ? 1 : 0);
     });
+
+    if (ativo) {
+      it('RN18: na reativação, a cobrança do mês cancelada não impede a nova', async () => {
+        const reativado = membro({ ativo });
+        prisma.membro.findUnique.mockResolvedValue(membro({ ativo: !ativo }));
+        prisma.membro.update.mockResolvedValue(reativado);
+
+        await service[metodo](ID);
+
+        expect(mensalidades.garantirProxima).toHaveBeenCalledWith(
+          reativado,
+          undefined,
+          undefined,
+          { ignorarCanceladas: true },
+        );
+        expect(mensalidades.cancelarFuturas).not.toHaveBeenCalled();
+      });
+    } else {
+      it('RN18: cancela as cobranças que ainda não venceram, na mesma transação', async () => {
+        prisma.membro.findUnique.mockResolvedValue(membro({ ativo: !ativo }));
+        prisma.membro.update.mockResolvedValue(membro({ ativo }));
+
+        await service[metodo](ID);
+
+        expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+        expect(mensalidades.cancelarFuturas).toHaveBeenCalledTimes(1);
+        expect(mensalidades.cancelarFuturas).toHaveBeenCalledWith(
+          ID,
+          expect.any(Date),
+          prisma,
+        );
+      });
+    }
 
     it('lança 404 quando não existe', async () => {
       prisma.membro.findUnique.mockResolvedValue(null);

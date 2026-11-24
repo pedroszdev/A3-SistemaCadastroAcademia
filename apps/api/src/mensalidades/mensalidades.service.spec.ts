@@ -20,7 +20,11 @@ const comPlano = (extra: Record<string, unknown> = {}) => ({
 describe('MensalidadesService (RN18)', () => {
   let prisma: {
     membro: { findMany: jest.Mock };
-    pagamento: { findFirst: jest.Mock; createMany: jest.Mock };
+    pagamento: {
+      findFirst: jest.Mock;
+      createMany: jest.Mock;
+      updateMany: jest.Mock;
+    };
   };
   let service: MensalidadesService;
 
@@ -30,6 +34,7 @@ describe('MensalidadesService (RN18)', () => {
       pagamento: {
         findFirst: jest.fn().mockResolvedValue(null),
         createMany: jest.fn().mockResolvedValue({ count: 1 }),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
     };
     service = new MensalidadesService(prisma as unknown as PrismaService);
@@ -109,6 +114,59 @@ describe('MensalidadesService (RN18)', () => {
 
       expect(tx.pagamento.createMany).toHaveBeenCalled();
       expect(prisma.pagamento.createMany).not.toHaveBeenCalled();
+    });
+
+    it('na reativação, ignora a cancelada do mês', async () => {
+      await expect(
+        service.garantirProxima(comPlano(), HOJE, undefined, {
+          ignorarCanceladas: true,
+        }),
+      ).resolves.toBe(true);
+
+      expect(prisma.pagamento.findFirst).toHaveBeenCalledWith({
+        where: {
+          membroId: ID,
+          dataVencimento: { gte: dia('2026-12-01'), lt: dia('2027-01-01') },
+          status: { not: 'CANCELADO' },
+        },
+        select: { id: true },
+      });
+      expect(prisma.pagamento.createMany).toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelarFuturas', () => {
+    it('cancela as pendentes que ainda não venceram', async () => {
+      await expect(service.cancelarFuturas(ID, HOJE)).resolves.toBe(1);
+
+      expect(prisma.pagamento.updateMany).toHaveBeenCalledWith({
+        where: {
+          membroId: ID,
+          status: 'PENDENTE',
+          dataPagamento: null,
+          dataVencimento: { gte: HOJE },
+        },
+        data: { status: 'CANCELADO' },
+      });
+    });
+
+    it('usa o cliente recebido (a transação da desativação)', async () => {
+      const tx = {
+        pagamento: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
+      };
+
+      await expect(
+        service.cancelarFuturas(
+          ID,
+          HOJE,
+          tx as unknown as Parameters<
+            MensalidadesService['cancelarFuturas']
+          >[2],
+        ),
+      ).resolves.toBe(2);
+
+      expect(tx.pagamento.updateMany).toHaveBeenCalled();
+      expect(prisma.pagamento.updateMany).not.toHaveBeenCalled();
     });
   });
 

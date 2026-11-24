@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { hoje } from '../common/utils/date';
 import type { Prisma } from '../generated/prisma/client';
+import { StatusPagamento } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { mesDe, proximoVencimento } from './vencimento';
 
@@ -53,12 +54,15 @@ export class MensalidadesService
   /**
    * Garante a próxima cobrança do membro, se ele tem plano. Devolve true quando
    * criou uma. Não cria se já existe alguma cobrança no mês do próximo vencimento,
-   * cancelada ou não: a recepção pode ter cancelado de propósito.
+   * cancelada ou não: a recepção pode ter cancelado de propósito. A reativação é a
+   * exceção (`ignorarCanceladas`): a do mês foi cancelada pela desativação, então só
+   * as não canceladas contam.
    */
   async garantirProxima(
     membro: PlanoDoMembro,
     referencia: Date = hoje(),
     cliente: Cliente = this.prisma,
+    opcoes: { ignorarCanceladas?: boolean } = {},
   ): Promise<boolean> {
     const { valorMensalidade, diaVencimento } = membro;
     if (valorMensalidade === null || diaVencimento === null) {
@@ -70,6 +74,9 @@ export class MensalidadesService
       where: {
         membroId: membro.id,
         dataVencimento: { gte: inicio, lt: fim },
+        ...(opcoes.ignorarCanceladas && {
+          status: { not: StatusPagamento.CANCELADO },
+        }),
       },
       select: { id: true },
     });
@@ -89,6 +96,28 @@ export class MensalidadesService
       skipDuplicates: true,
     });
     return count > 0;
+  }
+
+  /**
+   * RN18: ao desativar, as cobranças que ainda não venceram (vencimento hoje ou
+   * depois, sem pagamento) são canceladas: o membro parado não acumula dívida. As
+   * já vencidas continuam, porque são dívida de quando ele estava ativo.
+   */
+  async cancelarFuturas(
+    membroId: string,
+    referencia: Date,
+    cliente: Cliente = this.prisma,
+  ): Promise<number> {
+    const { count } = await cliente.pagamento.updateMany({
+      where: {
+        membroId,
+        status: StatusPagamento.PENDENTE,
+        dataPagamento: null,
+        dataVencimento: { gte: referencia },
+      },
+      data: { status: StatusPagamento.CANCELADO },
+    });
+    return count;
   }
 
   /** Passa por todos os membros ativos com plano. Devolve quantas cobranças criou. */

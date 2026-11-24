@@ -179,13 +179,17 @@ export class MembrosService {
   // RN03: membro não é excluído, só desativado e reativado.
   async desativar(id: string) {
     await this.findOne(id);
-    return paraResposta(
-      await this.prisma.membro.update({
+    const membro = await this.prisma.$transaction(async (tx) => {
+      const desativado = await tx.membro.update({
         where: { id },
         data: { ativo: false },
         select: MEMBRO_SELECT_COM_HASH,
-      }),
-    );
+      });
+      // RN18: o membro parado não acumula mensalidade.
+      await this.mensalidades.cancelarFuturas(id, hoje(), tx);
+      return desativado;
+    });
+    return paraResposta(membro);
   }
 
   async reativar(id: string) {
@@ -195,8 +199,11 @@ export class MembrosService {
       data: { ativo: true },
       select: MEMBRO_SELECT_COM_HASH,
     });
-    // RN18: volta a ter a próxima cobrança (nunca uma já vencida).
-    await this.mensalidades.garantirProxima(membro);
+    // RN18: volta a ter a próxima cobrança (nunca uma já vencida), mesmo que a do
+    // mês tenha sido cancelada na desativação.
+    await this.mensalidades.garantirProxima(membro, undefined, undefined, {
+      ignorarCanceladas: true,
+    });
     return paraResposta(membro);
   }
 
