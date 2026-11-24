@@ -1,19 +1,36 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UsuarioAtual } from '../auth/decorators/usuario-atual.decorator';
 import type { UsuarioAutenticado } from '../auth/usuario-autenticado';
+import { CreateAtividadeAlunoDto } from './dto/create-atividade-aluno.dto';
 import {
   PeriodoAtividadeDto,
   QueryMinhasAtividadesDto,
 } from './dto/query-atividade.dto';
 import { HistoricoService } from './historico.service';
 
-// HIS-05: o histórico do próprio aluno. O membroId vem sempre do token (RN16),
-// e o aluno só lê (RN17).
+// HIS-05: o histórico do próprio aluno. O membroId vem sempre do token (RN16).
+// O aluno também registra a própria atividade, num treino dele (RN19).
 @Roles('ALUNO')
 @Controller('me/atividades')
 export class MinhasAtividadesController {
   constructor(private readonly historico: HistoricoService) {}
+
+  @Post()
+  registrar(
+    @UsuarioAtual() usuario: UsuarioAutenticado,
+    @Body() dto: CreateAtividadeAlunoDto,
+  ) {
+    return this.historico.registrarDoAluno(dto, usuario.id);
+  }
 
   @Get()
   findAll(

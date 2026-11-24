@@ -9,6 +9,7 @@ import type { Prisma } from '../generated/prisma/client';
 import { MembrosService } from '../membros/membros.service';
 import { PagamentosService } from '../pagamentos/pagamentos.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateAtividadeAlunoDto } from './dto/create-atividade-aluno.dto';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import {
   QueryAtividadeDto,
@@ -69,6 +70,38 @@ export class HistoricoService {
         tempoExecucao: dto.tempoExecucao,
       },
       select: ATIVIDADE_SELECT,
+    });
+  }
+
+  /**
+   * RN19: o aluno registra a própria atividade, sem funcionário. O treino é
+   * obrigatório e precisa ser dele; o de outro membro dá 404, como se não existisse
+   * (RN16). Valem as mesmas RN04, RN09 e RN10 do registro pelo funcionário.
+   */
+  async registrarDoAluno(dto: CreateAtividadeAlunoDto, membroId: string) {
+    await this.membros.assertMembroAtivo(
+      membroId,
+      'Membro inativo não pode registrar atividade',
+    );
+    await this.pagamentos.assertMembroAdimplente(membroId);
+    const treino = await this.prisma.treino.findFirst({
+      where: { id: dto.treinoId, membroId },
+      select: { descricao: true },
+    });
+    if (!treino) {
+      throw new NotFoundException('Treino não encontrado');
+    }
+
+    return this.prisma.historicoAtividade.create({
+      data: {
+        membroId,
+        funcionarioId: null,
+        treinoId: dto.treinoId,
+        atividade: dto.atividade ?? treino.descricao.slice(0, 120),
+        data: dto.data,
+        tempoExecucao: dto.tempoExecucao,
+      },
+      select: ATIVIDADE_DO_ALUNO_SELECT,
     });
   }
 

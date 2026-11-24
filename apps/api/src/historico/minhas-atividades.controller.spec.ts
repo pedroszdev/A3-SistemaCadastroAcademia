@@ -63,4 +63,21 @@ describe('MinhasAtividadesController', () => {
     await expect(controller.findOne(ALUNO, ID)).resolves.toBe(atividade);
     expect(service.findOneDoAluno).toHaveBeenCalledWith(ID, ALUNO_ID);
   });
+
+  it('registrar delega o dto e o id do token (RN19)', async () => {
+    const registrar = jest.fn().mockResolvedValue({ id: 'a1' });
+    const comRegistro = new MinhasAtividadesController({
+      registrarDoAluno: registrar,
+    } as unknown as HistoricoService);
+    const dto = {
+      treinoId: ID,
+      data: new Date('2026-11-24'),
+      tempoExecucao: 40,
+    };
+
+    await expect(comRegistro.registrar(ALUNO, dto)).resolves.toEqual({
+      id: 'a1',
+    });
+    expect(registrar).toHaveBeenCalledWith(dto, ALUNO_ID);
+  });
 });
