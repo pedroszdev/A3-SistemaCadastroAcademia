@@ -9,6 +9,7 @@ type TabelaPaginadaProps<T> = {
   chaveDaLinha: (linha: T) => string;
   vazio: ReactNode;
   onMudarPagina: (page: number) => void;
+  rotuloItens?: string;
 };
 
 export function TabelaPaginada<T>({
@@ -18,9 +19,10 @@ export function TabelaPaginada<T>({
   chaveDaLinha,
   vazio,
   onMudarPagina,
+  rotuloItens,
 }: TabelaPaginadaProps<T>) {
   return (
-    <>
+    <div className="flex flex-col gap-3">
       {erro && (
         <p role="alert" className="text-sm text-red-600">
           {erro}
@@ -28,13 +30,16 @@ export function TabelaPaginada<T>({
       )}
 
       {!pagina && !erro ? (
-        <p className="text-sm text-zinc-600">Carregando…</p>
+        <p className="rounded-2xl border border-borda bg-white px-4 py-10 text-center text-sm text-suave">
+          Carregando…
+        </p>
       ) : (
         pagina && (
           <Table
             colunas={colunas}
             linhas={pagina.data}
             chaveDaLinha={chaveDaLinha}
+            rotuloItens={rotuloItens}
             paginacao={{
               page: pagina.page,
               pageSize: pagina.pageSize,
@@ -45,6 +50,6 @@ export function TabelaPaginada<T>({
           />
         )
       )}
-    </>
+    </div>
   );
 }
