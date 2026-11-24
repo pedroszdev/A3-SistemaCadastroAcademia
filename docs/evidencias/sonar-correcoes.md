@@ -14,4 +14,11 @@ Registro das issues do Sonar corrigidas por cada um no próprio código: problem
 | 2 | Code smell · Blocker | `typescript:S2699` | `apps/api/test/membros.e2e-spec.ts` (linha 89) | O teste "redefinir: a senha antiga para de logar" só usava o `.expect(200)` do supertest, que o Sonar não conta como assertion | `expect` de que o login com a senha nova devolve um `accessToken` | `d824d84` |
 | 3 | Code smell · Blocker | `typescript:S2699` | `apps/api/test/membros-treinos.e2e-spec.ts` (linha 309) | O teste "RN05 · dataInicio de hoje → 201" também só tinha o `.expect(201)` do supertest | `expect` de que o treino criado volta com o `membroId` e a `dataInicio` de hoje | `7f32e39` |
 
+## Gabriel
+
+- **Análise de partida:** `main` em `7a220b1`, 18/11/2026 (15:29, horário de Brasília), mais o PR #84 (WEB-G5)
+- **Situação:** quality gate aprovado, 0 bugs, 0 vulnerabilidades, 0 code smells, 0 security hotspots (100% revisados), duplicação 0,6% e cobertura 98,8%. A análise do PR #84 também não trouxe nenhuma issue
+- **Meu código:** membros e treinos na API (`apps/api/src/membros`, `apps/api/src/treinos`, `/me/treinos`) e as telas de membros e treinos no front (`apps/web/src/features/membros`, `apps/web/src/features/treinos`)
+- **Resultado:** nenhuma issue para corrigir. Das 3 issues já fechadas no histórico do Sonar, nenhuma estava em linha minha: as 2 do PR #75 estão na tabela do Pedro e a de `auth.http.spec.ts` (06/11) é do módulo de auth
+
 Nenhuma issue foi resolvida desligando a regra, com `NOSONAR` ou marcando como falso positivo.
