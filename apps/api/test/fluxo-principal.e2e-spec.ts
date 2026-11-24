@@ -111,6 +111,7 @@ describe('Fluxo principal (e2e) — CA01 a CA08', () => {
         cpf,
         telefone: '48999990000',
         endereco: 'Rua Fictícia, 100',
+        valorMensalidade: 100,
       })
       .expect(201);
 
@@ -131,6 +132,19 @@ describe('Fluxo principal (e2e) — CA01 a CA08', () => {
     expect(data.find((membro) => membro.id === membroId)).toMatchObject({
       ativo: true,
     });
+
+    // ... e já nasce com a primeira mensalidade, vencendo hoje (RN18)
+    const cobrancas = await request(app.getHttpServer())
+      .get(`/pagamentos?membroId=${membroId}`)
+      .set('Authorization', bearer(tokenRecepcao))
+      .expect(200);
+    expect((cobrancas.body as { data: unknown[] }).data).toEqual([
+      expect.objectContaining({
+        valor: 100,
+        status: 'PENDENTE',
+        dataVencimento: dataHoje.toISOString(),
+      }),
+    ]);
   });
 
   it('CA03 · criar treino: o treino fica vinculado ao membro', async () => {
