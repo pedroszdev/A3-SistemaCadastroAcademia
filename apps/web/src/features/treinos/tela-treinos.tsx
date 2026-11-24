@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { Pessoa } from "@/components/ui/avatar";
+import { BotaoIcone } from "@/components/ui/botao-icone";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import { DuasColunas } from "@/components/ui/cartao";
+import { Dialog, PainelLateral } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Select } from "@/components/ui/select";
+import { BarraDeFiltros, FiltroChips } from "@/components/ui/filtro-chips";
+import { Icone } from "@/components/ui/icone";
 import { TabelaPaginada } from "@/components/ui/tabela-paginada";
-import type { Coluna } from "@/components/ui/table";
+import { AcoesDaLinha, type Coluna } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { useUsuario } from "@/features/auth/usuario";
 import type { MembroBusca } from "@/features/pagamentos/api";
@@ -21,15 +26,21 @@ import {
   podeEditarTreino,
   type Treino,
 } from "./api";
+import { BadgeTipoTreino } from "./badge-tipo";
 import { FormTreino } from "./form-treino";
-import { OPCOES_TIPO_TREINO, type TipoTreino } from "./tipos";
+import { OPCOES_TIPO_TREINO } from "./tipos";
 
 // O nome do membro sozinho não distingue os botões: o mesmo membro pode ter vários treinos.
 function descricaoDoTreino(t: Treino): string {
   return `${t.tipo} de ${t.membro.nome} com início em ${formatarData(t.dataInicio)}`;
 }
 
-export function TelaTreinos() {
+type TelaTreinosProps = {
+  // Na página /treinos o cabeçalho (com o botão Novo treino) vem daqui.
+  cabecalho?: { titulo: string; descricao?: string };
+};
+
+export function TelaTreinos({ cabecalho }: TelaTreinosProps = {}) {
   const usuario = useUsuario();
   const podeEditar = podeEditarTreino(usuario);
   const { mostrar } = useToast();
@@ -78,8 +89,8 @@ export function TelaTreinos() {
   }
 
   const colunas: Coluna<Treino>[] = [
-    { chave: "membro", titulo: "Membro", celula: (t) => t.membro.nome },
-    { chave: "tipo", titulo: "Tipo", celula: (t) => t.tipo },
+    { chave: "membro", titulo: "Membro", celula: (t) => <Pessoa nome={t.membro.nome} /> },
+    { chave: "tipo", titulo: "Tipo", celula: (t) => <BadgeTipoTreino tipo={t.tipo} /> },
     // Única forma de a RECEPCIONISTA ler a descrição: ela não abre a edição. O texto longo
     // (até 500 caracteres) é cortado na tela e fica inteiro no title.
     {
@@ -99,75 +110,94 @@ export function TelaTreinos() {
           {
             chave: "acoes",
             titulo: "Ações",
+            acoes: true,
             celula: (t: Treino) => (
-              <div className="flex gap-2">
-                <Button
-                  variante="secundario"
-                  aria-label={`Editar treino ${descricaoDoTreino(t)}`}
+              <AcoesDaLinha>
+                <BotaoIcone
+                  icone="editar"
+                  rotulo={`Editar treino ${descricaoDoTreino(t)}`}
                   onClick={() => dialogForm.abrir(t)}
-                >
-                  Editar
-                </Button>
-                <Button
-                  variante="perigo"
-                  aria-label={`Excluir treino ${descricaoDoTreino(t)}`}
+                />
+                <BotaoIcone
+                  icone="lixeira"
+                  tom="alerta"
+                  rotulo={`Excluir treino ${descricaoDoTreino(t)}`}
                   onClick={() => setConfirmar(t)}
-                >
-                  Excluir
-                </Button>
-              </div>
+                />
+              </AcoesDaLinha>
             ),
           },
         ]
       : []),
   ];
 
+  const botaoNovo: ReactNode = podeEditar && (
+    <Button onClick={() => dialogForm.abrir()}>
+      <Icone nome="mais" tamanho={16} />
+      Novo treino
+    </Button>
+  );
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-4">
-        <Select
-          rotulo="Tipo"
-          placeholder="Todos os tipos"
-          opcoes={OPCOES_TIPO_TREINO}
-          value={filtro.tipo ?? ""}
-          onChange={(e) =>
-            setFiltro({
-              ...filtro,
-              tipo: (e.target.value || undefined) as TipoTreino | undefined,
-              page: 1,
-            })
-          }
-        />
-        <BuscaMembro selecionado={membroFiltro} onSelecionar={aoSelecionarMembro} incluirInativos />
-        {podeEditar && (
-          <Button className="ml-auto" onClick={() => dialogForm.abrir()}>
-            Novo treino
-          </Button>
-        )}
-      </div>
+    <div className="flex flex-col gap-6">
+      {cabecalho && <CabecalhoPagina {...cabecalho} acoes={botaoNovo} />}
 
-      <TabelaPaginada
-        pagina={pagina}
-        erro={erro}
-        colunas={colunas}
-        chaveDaLinha={(t) => t.id}
-        vazio={<EmptyState titulo="Nenhum treino encontrado" />}
-        onMudarPagina={(page) => setFiltro({ ...filtro, page })}
+      <BarraDeFiltros>
+        <div className="max-w-[420px] flex-[1_1_320px]">
+          <BuscaMembro
+            selecionado={membroFiltro}
+            onSelecionar={aoSelecionarMembro}
+            incluirInativos
+            rotuloOculto
+            placeholder="Buscar por membro"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <FiltroChips
+            rotulo="Tipo"
+            opcoes={OPCOES_TIPO_TREINO}
+            valor={filtro.tipo}
+            onMudar={(tipo) => setFiltro({ ...filtro, tipo, page: 1 })}
+          />
+          {!cabecalho && botaoNovo}
+        </div>
+      </BarraDeFiltros>
+
+      <DuasColunas
+        principal={
+          <TabelaPaginada
+            pagina={pagina}
+            erro={erro}
+            colunas={colunas}
+            chaveDaLinha={(t) => t.id}
+            rotuloItens="treinos"
+            vazio={<EmptyState titulo="Nenhum treino encontrado" />}
+            onMudarPagina={(page) => setFiltro({ ...filtro, page })}
+          />
+        }
+        lateral={
+          form.aberto && (
+            <PainelLateral
+              aberto
+              titulo={form.dados ? "Editar treino" : "Novo treino"}
+              descricao={
+                form.dados
+                  ? `Ficha de ${form.dados.membro.nome}.`
+                  : "Ficha planejada para um membro ativo."
+              }
+              onFechar={dialogForm.fechar}
+            >
+              <FormTreino
+                key={form.chave}
+                treino={form.dados}
+                onSalvo={aoSalvar}
+                onCancelar={dialogForm.fechar}
+                onEnviando={dialogForm.setOcupado}
+              />
+            </PainelLateral>
+          )
+        }
       />
-
-      <Dialog
-        aberto={form.aberto}
-        titulo={form.dados ? "Editar treino" : "Novo treino"}
-        onFechar={dialogForm.fechar}
-      >
-        <FormTreino
-          key={form.chave}
-          treino={form.dados}
-          onSalvo={aoSalvar}
-          onCancelar={dialogForm.fechar}
-          onEnviando={dialogForm.setOcupado}
-        />
-      </Dialog>
 
       <Dialog
         aberto={confirmar !== null}

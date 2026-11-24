@@ -59,13 +59,13 @@ async function preencher(usuario: Usuario, extra: { duracao?: string; dataInicio
   fireEvent.change(screen.getByLabelText("Duração (min)"), {
     target: { value: extra.duracao ?? "45" },
   });
-  fireEvent.change(screen.getByLabelText("Início"), {
+  fireEvent.change(screen.getByLabelText("Data de início"), {
     target: { value: extra.dataInicio ?? "2026-11-12" },
   });
 }
 
 function salvar(usuario: Usuario) {
-  return usuario.click(screen.getByRole("button", { name: "Salvar" }));
+  return usuario.click(screen.getByRole("button", { name: "Salvar treino" }));
 }
 
 describe("FormTreino", () => {
@@ -113,7 +113,7 @@ describe("FormTreino", () => {
       await escolherMembro(usuario);
 
       expect(buscarMembros).toHaveBeenCalledWith("Ful", { incluirInativos: false });
-      expect(screen.getByLabelText("Início")).toHaveAttribute("min", "2026-11-11");
+      expect(screen.getByLabelText("Data de início")).toHaveAttribute("min", "2026-11-11");
     });
 
     it("oferece no select os tipos da RN05", () => {
@@ -215,7 +215,7 @@ describe("FormTreino", () => {
       );
       expect(onSalvo).not.toHaveBeenCalled();
       expect(onEnviando).toHaveBeenLastCalledWith(false);
-      expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Salvar treino" })).toBeEnabled();
     });
 
     it("mostra o 400 da API", async () => {
@@ -265,7 +265,7 @@ describe("FormTreino", () => {
       expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
       expect(criarTreino).toHaveBeenCalledTimes(1);
       // Os campos travam: o que está na tela é o que foi enviado.
-      for (const rotulo of ["Tipo", "Descrição", "Duração (min)", "Início"]) {
+      for (const rotulo of ["Tipo", "Descrição", "Duração (min)", "Data de início"]) {
         expect(screen.getByLabelText(rotulo)).toBeDisabled();
       }
 
@@ -319,7 +319,7 @@ describe("FormTreino", () => {
       expect(screen.getByLabelText("Tipo")).toHaveValue("Funcional");
       expect(screen.getByLabelText("Descrição")).toHaveValue("Circuito de corpo inteiro");
       expect(screen.getByLabelText("Duração (min)")).toHaveValue(45);
-      expect(screen.getByLabelText("Início")).toHaveValue("2026-10-01");
+      expect(screen.getByLabelText("Data de início")).toHaveValue("2026-10-01");
     });
 
     it("envia PATCH sem o membroId e aceita reenviar a data já salva no passado", async () => {
@@ -344,7 +344,7 @@ describe("FormTreino", () => {
       const usuario = userEvent.setup();
       renderizar(salvo);
 
-      fireEvent.change(screen.getByLabelText("Início"), { target: { value: "2026-10-02" } });
+      fireEvent.change(screen.getByLabelText("Data de início"), { target: { value: "2026-10-02" } });
       await salvar(usuario);
 
       expect(screen.getByText("dataInicio não pode ser anterior a hoje")).toBeInTheDocument();
