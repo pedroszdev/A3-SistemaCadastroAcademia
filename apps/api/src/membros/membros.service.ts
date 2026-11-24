@@ -6,9 +6,11 @@ import {
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { paginacaoPrisma, paginate } from '../common/utils/paginate';
+import { hoje } from '../common/utils/date';
 import { hashSenha } from '../common/utils/senha';
 import { normalizarCpf } from '../common/validators/cpf';
 import type { Prisma } from '../generated/prisma/client';
+import { MensalidadesService } from '../mensalidades/mensalidades.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
 import { LiberarAcessoDto } from './dto/liberar-acesso.dto';
@@ -23,6 +25,8 @@ export const MEMBRO_SELECT = {
   endereco: true,
   ativo: true,
   dataCadastro: true,
+  valorMensalidade: true,
+  diaVencimento: true,
 } as const;
 
 // RN12: o hash só é lido para virar o acessoLiberado e não sai do service.
@@ -41,8 +45,16 @@ type MembroComHash = Prisma.MembroGetPayload<{
  * senha: o inativo continua com acessoLiberado true, mas não loga (o login e
  * a jwt.strategy exigem ativo), e ao ser reativado volta a logar com ela.
  */
-export function paraResposta({ senhaHash, ...membro }: MembroComHash) {
-  return { ...membro, acessoLiberado: senhaHash !== null };
+export function paraResposta({
+  senhaHash,
+  valorMensalidade,
+  ...membro
+}: MembroComHash) {
+  return {
+    ...membro,
+    valorMensalidade: valorMensalidade?.toNumber() ?? null,
+    acessoLiberado: senhaHash !== null,
+  };
 }
 
 const SO_DIGITOS = /^\d+$/;
@@ -64,7 +76,10 @@ export function filtroBusca(busca?: string): Prisma.MembroWhereInput {
 
 @Injectable()
 export class MembrosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mensalidades: MensalidadesService,
+  ) {}
 
   async create(dto: CreateMembroDto) {
     const existente = await this.prisma.membro.findUnique({
@@ -75,18 +90,25 @@ export class MembrosService {
       throw new ConflictException('CPF já cadastrado');
     }
 
+    const referencia = hoje();
     try {
-      return paraResposta(
-        await this.prisma.membro.create({
+      // RN18: o membro e a primeira mensalidade entram juntos, ou nenhum dos dois.
+      const membro = await this.prisma.$transaction(async (tx) => {
+        const criado = await tx.membro.create({
           data: {
             nome: dto.nome,
             cpf: dto.cpf,
             telefone: dto.telefone,
             endereco: dto.endereco,
+            valorMensalidade: dto.valorMensalidade,
+            diaVencimento: dto.diaVencimento ?? referencia.getUTCDate(),
           },
           select: MEMBRO_SELECT_COM_HASH,
-        }),
-      );
+        });
+        await this.mensalidades.garantirProxima(criado, referencia, tx);
+        return criado;
+      });
+      return paraResposta(membro);
     } catch (erro) {
       // Outro cadastro com o mesmo CPF pode entrar entre a consulta e o insert;
       // o índice único recusa, e a resposta continua a mesma da RN02.
@@ -136,17 +158,22 @@ export class MembrosService {
   // RN02: o CPF fica de fora; o DTO já recusa a tentativa de alterá-lo.
   async update(id: string, dto: UpdateMembroDto) {
     await this.findOne(id);
-    return paraResposta(
-      await this.prisma.membro.update({
-        where: { id },
-        data: {
-          nome: dto.nome,
-          telefone: dto.telefone,
-          endereco: dto.endereco,
-        },
-        select: MEMBRO_SELECT_COM_HASH,
-      }),
-    );
+    const membro = await this.prisma.membro.update({
+      where: { id },
+      data: {
+        nome: dto.nome,
+        telefone: dto.telefone,
+        endereco: dto.endereco,
+        valorMensalidade: dto.valorMensalidade,
+        diaVencimento: dto.diaVencimento,
+      },
+      select: MEMBRO_SELECT_COM_HASH,
+    });
+    // RN18: quem passou a ter plano já ganha a próxima cobrança.
+    if (membro.ativo) {
+      await this.mensalidades.garantirProxima(membro);
+    }
+    return paraResposta(membro);
   }
 
   // RN03: membro não é excluído, só desativado e reativado.
@@ -163,13 +190,14 @@ export class MembrosService {
 
   async reativar(id: string) {
     await this.findOne(id);
-    return paraResposta(
-      await this.prisma.membro.update({
-        where: { id },
-        data: { ativo: true },
-        select: MEMBRO_SELECT_COM_HASH,
-      }),
-    );
+    const membro = await this.prisma.membro.update({
+      where: { id },
+      data: { ativo: true },
+      select: MEMBRO_SELECT_COM_HASH,
+    });
+    // RN18: volta a ter a próxima cobrança (nunca uma já vencida).
+    await this.mensalidades.garantirProxima(membro);
+    return paraResposta(membro);
   }
 
   // RN15: libera o acesso do aluno ou redefine a senha. O hashSenha usa o

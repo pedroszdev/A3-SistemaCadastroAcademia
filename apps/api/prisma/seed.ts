@@ -20,6 +20,8 @@ const DIAS_DE_CADASTRO = -90;
 // Cerca de 30 consultas em sequência; o padrão de 5 s do Prisma é curto num CI lento.
 const TIMEOUT_TRANSACAO_MS = 30_000;
 
+const VALOR_MENSALIDADE = 120;
+
 const FUNCIONARIOS = [
   { nome: 'Administrador', login: 'admin', cargo: Cargo.ADMIN },
   { nome: 'Recepção', login: 'recepcao', cargo: Cargo.RECEPCIONISTA },
@@ -367,6 +369,9 @@ export async function seed(prisma: PrismaClient): Promise<void> {
           ativo: membro.ativo,
           senhaHash: membro.aluno ? senhaHash : null,
           dataCadastro: dia(DIAS_DE_CADASTRO),
+          // RN18: todos com plano; a API gera a próxima cobrança ao subir.
+          valorMensalidade: VALOR_MENSALIDADE,
+          diaVencimento: dia(DIAS_DE_CADASTRO).getUTCDate(),
         };
         const { id } = await tx.membro.upsert({
           where: { cpf: membro.cpf },

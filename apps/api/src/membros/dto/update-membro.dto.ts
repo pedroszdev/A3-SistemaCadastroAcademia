@@ -6,6 +6,7 @@ import {
   normalizarTelefone,
 } from '../../common/utils/telefone';
 import { SeVeio } from '../../common/validators/se-veio.decorator';
+import { DiaVencimento, ValorMensalidade } from './plano-mensalidade';
 
 export class UpdateMembroDto {
   @SeVeio()
@@ -25,6 +26,15 @@ export class UpdateMembroDto {
   @IsString({ message: 'endereco deve ser um texto' })
   @Length(5, 200, { message: 'endereco deve ter entre 5 e 200 caracteres' })
   endereco?: string;
+
+  // RN18: vale para as próximas cobranças; as já geradas ficam como estão.
+  @SeVeio()
+  @ValorMensalidade()
+  valorMensalidade?: number;
+
+  @SeVeio()
+  @DiaVencimento()
+  diaVencimento?: number;
 
   // RN02: o CPF não muda depois do cadastro. Declarado só para responder
   // 400 com uma mensagem clara, em vez do genérico da whitelist. O
