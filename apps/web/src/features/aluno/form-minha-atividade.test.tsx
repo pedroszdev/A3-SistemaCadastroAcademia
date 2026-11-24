@@ -8,7 +8,7 @@ import { registrarMinhaAtividade } from "./historico";
 import { listarMeusTreinos, type TreinoDoAluno } from "./treinos";
 
 vi.mock("./historico", () => ({ registrarMinhaAtividade: vi.fn() }));
-vi.mock("./treinos", () => ({ listarMeusTreinos: vi.fn() }));
+vi.mock("./treinos", () => ({ listarMeusTreinos: vi.fn(), MAXIMO_TREINOS_NO_SELETOR: 100 }));
 
 const treino: TreinoDoAluno = {
   id: "t1",
@@ -54,7 +54,7 @@ describe("FormMinhaAtividade (RN19)", () => {
     await usuario.selectOptions(select, "t1");
 
     expect(screen.getByLabelText("Tempo (min)")).toHaveValue(60);
-    expect(listarMeusTreinos).toHaveBeenCalledWith(undefined, 1);
+    expect(listarMeusTreinos).toHaveBeenCalledWith(undefined, 1, 100);
   });
 
   it("registra com o treino, a data e o tempo, sem o texto em branco", async () => {

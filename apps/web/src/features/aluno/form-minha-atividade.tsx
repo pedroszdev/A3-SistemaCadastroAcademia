@@ -9,7 +9,7 @@ import { MENSAGEM_INADIMPLENTE } from "@/features/historico/api";
 import { ApiError } from "@/lib/api";
 import { formatarData, hojeEmSaoPaulo } from "@/lib/format";
 import { registrarMinhaAtividade } from "./historico";
-import { listarMeusTreinos, type TreinoDoAluno } from "./treinos";
+import { listarMeusTreinos, MAXIMO_TREINOS_NO_SELETOR, type TreinoDoAluno } from "./treinos";
 import { type ErrosMinhaAtividade, validarMinhaAtividade } from "./validacao-atividade";
 
 type FormMinhaAtividadeProps = {
@@ -34,7 +34,7 @@ export function FormMinhaAtividade({ onSalvo, onCancelar, onEnviando }: FormMinh
 
   useEffect(() => {
     let ativo = true;
-    listarMeusTreinos(undefined, 1)
+    listarMeusTreinos(undefined, 1, MAXIMO_TREINOS_NO_SELETOR)
       .then((pagina) => {
         if (ativo) setTreinos(pagina.data);
       })
