@@ -201,6 +201,29 @@ export class PagamentosService {
     };
   }
 
+  // Tela de pagamentos do aluno: situação, próxima cobrança em aberto e o plano.
+  async resumoDoAluno(membroId: string) {
+    const referencia = hoje();
+    const [situacao, proxima, membro] = await Promise.all([
+      this.situacaoMembro(membroId),
+      this.prisma.pagamento.findFirst({
+        where: { membroId, ...filtroStatus('PENDENTE', referencia) },
+        orderBy: [{ dataVencimento: 'asc' }, { id: 'asc' }],
+        select: PAGAMENTO_SELECT,
+      }),
+      this.prisma.membro.findUnique({
+        where: { id: membroId },
+        select: { valorMensalidade: true, diaVencimento: true },
+      }),
+    ]);
+    return {
+      ...situacao,
+      proximoPagamento: proxima ? apresentar(proxima, referencia) : null,
+      valorMensalidade: membro?.valorMensalidade?.toNumber() ?? null,
+      diaVencimento: membro?.diaVencimento ?? null,
+    };
+  }
+
   async assertMembroAdimplente(membroId: string): Promise<void> {
     const { situacao } = await this.situacaoMembro(membroId);
     if (situacao === 'INADIMPLENTE') {

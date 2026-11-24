@@ -58,7 +58,7 @@ describe("FormPagamento", () => {
     await preencher(usuario);
     expect(screen.getByText("Fulano Silva · 123.456.789-09")).toBeInTheDocument();
     expect(screen.getByLabelText("Valor")).toHaveDisplayValue(/^R\$\s150,50$/);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(criarPagamento).toHaveBeenCalledWith({
       membroId: "m1",
@@ -72,7 +72,7 @@ describe("FormPagamento", () => {
     const usuario = userEvent.setup();
     render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
     expect(screen.getByText("valor deve ser no mínimo 0,01")).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe("FormPagamento", () => {
     render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
 
     await preencher(usuario, "1000001");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByText("valor deve ser no máximo 10.000")).toBeInTheDocument();
     expect(criarPagamento).not.toHaveBeenCalled();
@@ -111,13 +111,13 @@ describe("FormPagamento", () => {
     render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Membro inativo não pode receber novo pagamento",
     );
     expect(onSalvo).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Registrar" })).toBeEnabled();
     expect(screen.getByText("Fulano Silva · 123.456.789-09")).toBeInTheDocument();
     expect(screen.getByLabelText("Vencimento")).toHaveValue("2026-11-20");
   });
@@ -129,7 +129,7 @@ describe("FormPagamento", () => {
     await escolherMembro(usuario);
     await usuario.type(screen.getByLabelText("Valor"), "15050");
     fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-08-12" } });
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByLabelText("Vencimento")).toHaveAttribute("min", "2026-08-13");
     expect(
@@ -142,7 +142,7 @@ describe("FormPagamento", () => {
     const usuario = userEvent.setup();
     render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
     expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
     await escolherMembro(usuario);
     await usuario.click(screen.getByRole("button", { name: "Trocar" }));
@@ -171,7 +171,7 @@ describe("FormPagamento", () => {
     render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} />);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
@@ -184,7 +184,7 @@ describe("FormPagamento", () => {
     render(<FormPagamento onSalvo={onSalvo} onCancelar={onCancelar} onEnviando={onEnviando} />);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
     await screen.findByRole("alert");
 
     expect(onEnviando.mock.calls).toEqual([[true], [false]]);
@@ -198,7 +198,7 @@ describe("FormPagamento", () => {
     expect(screen.queryByLabelText("Membro")).toBeNull();
     await usuario.type(screen.getByLabelText("Valor"), "15050");
     fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(criarPagamento).toHaveBeenCalledWith({
       membroId: "m-fixo",
@@ -213,7 +213,7 @@ describe("FormPagamento", () => {
     const usuario = userEvent.setup();
     render(<FormPagamento membroId="m-fixo" onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.queryByText("Selecione o membro")).toBeNull();
     expect(screen.getByText("valor deve ser no mínimo 0,01")).toBeInTheDocument();
@@ -227,7 +227,7 @@ describe("FormPagamento", () => {
     render(<FormPagamento membroId="" onSalvo={onSalvo} onCancelar={onCancelar} />);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(criarPagamento).toHaveBeenCalledWith({
       membroId: "m1",

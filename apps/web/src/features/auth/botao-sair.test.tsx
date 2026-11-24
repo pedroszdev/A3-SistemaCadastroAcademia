@@ -45,3 +45,15 @@ describe("BotaoSair", () => {
     expect(screen.getByRole("button", { name: "Sair" })).toBeEnabled();
   });
 });
+
+describe("BotaoSair compacto", () => {
+  it("fica menor e mantém o nome Sair", () => {
+    render(
+      <ToastProvider>
+        <BotaoSair compacto />
+      </ToastProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "Sair" })).toHaveClass("size-8");
+  });
+});

@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { useUsuario } from "@/features/auth/usuario";
+import { Pessoa } from "@/components/ui/avatar";
+import { BotaoIcone } from "@/components/ui/botao-icone";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import { Cartao, DuasColunas } from "@/components/ui/cartao";
+import { Dialog, PainelLateral } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Icone } from "@/components/ui/icone";
 import { Select } from "@/components/ui/select";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { Badge, StatusBadge, type TomBadge } from "@/components/ui/status-badge";
 import { TabelaPaginada } from "@/components/ui/tabela-paginada";
-import type { Coluna } from "@/components/ui/table";
+import { AcoesDaLinha, type Coluna, Table } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import type { Cargo } from "@/lib/sessao";
 import { useFormDialog } from "@/lib/use-form-dialog";
@@ -27,15 +32,65 @@ const OPCOES_SITUACAO = [
   { valor: "false", rotulo: "Inativos" },
 ];
 
+const TOM_DO_CARGO: Record<Cargo, TomBadge> = {
+  ADMIN: "escuro",
+  RECEPCIONISTA: "info",
+  INSTRUTOR: "lima",
+};
+
+const TITULO = "Funcionários";
+const DESCRICAO = "Equipe com acesso ao sistema. Só o administrador gerencia.";
+
+// Espelha a matriz 4.2 do backlog, só para consulta.
+type Permissao = { nome: string; admin: boolean; recepcao: boolean; instrutor: boolean };
+
+const PERMISSOES: Permissao[] = [
+  { nome: "Membros: cadastrar e editar", admin: true, recepcao: true, instrutor: false },
+  { nome: "Treinos e atividades", admin: true, recepcao: false, instrutor: true },
+  { nome: "Pagamentos", admin: true, recepcao: true, instrutor: false },
+  { nome: "Funcionários", admin: true, recepcao: false, instrutor: false },
+];
+
+function Marca({ pode }: { pode: boolean }) {
+  return pode ? (
+    <span className="inline-flex justify-center text-sucesso">
+      <Icone nome="check" espessura={2.2} />
+      <span className="sr-only">Sim</span>
+    </span>
+  ) : (
+    <span className="text-suave">
+      <span aria-hidden="true">—</span>
+      <span className="sr-only">Não</span>
+    </span>
+  );
+}
+
+function MatrizDePermissoes() {
+  const colunas: Coluna<Permissao>[] = [
+    { chave: "nome", titulo: "Permissão", celula: (p) => p.nome },
+    { chave: "admin", centralizar: true, titulo: "Admin", celula: (p) => <Marca pode={p.admin} /> },
+    { chave: "recepcao", centralizar: true, titulo: "Recepção", celula: (p) => <Marca pode={p.recepcao} /> },
+    { chave: "instrutor", centralizar: true, titulo: "Instrutor", celula: (p) => <Marca pode={p.instrutor} /> },
+  ];
+  return (
+    <Cartao titulo="O que cada cargo pode fazer" espaco="compacto">
+      <Table colunas={colunas} linhas={PERMISSOES} chaveDaLinha={(p) => p.nome} moldura={false} />
+    </Cartao>
+  );
+}
+
 export function TelaFuncionarios() {
   const usuario = useUsuario();
 
   if (usuario.tipo !== "FUNCIONARIO" || usuario.cargo !== "ADMIN") {
     return (
-      <EmptyState
-        titulo="Acesso restrito"
-        descricao="Só o administrador gerencia funcionários."
-      />
+      <div className="flex flex-col gap-6">
+        <CabecalhoPagina titulo={TITULO} descricao={DESCRICAO} />
+        <EmptyState
+          titulo="Acesso restrito"
+          descricao="Só o administrador gerencia funcionários."
+        />
+      </div>
     );
   }
 
@@ -81,34 +136,40 @@ function GestaoFuncionarios() {
   }
 
   const colunas: Coluna<Funcionario>[] = [
-    { chave: "nome", titulo: "Nome", celula: (f) => f.nome },
-    { chave: "login", titulo: "Login", celula: (f) => f.login },
-    { chave: "cargo", titulo: "Cargo", celula: (f) => ROTULO_CARGO[f.cargo] },
+    { chave: "nome", titulo: "Funcionário", celula: (f) => <Pessoa nome={f.nome} /> },
+    {
+      chave: "login",
+      titulo: "Login",
+      celula: (f) => <code className="rounded-md bg-fundo-2 px-2 py-0.5 text-[13px]">{f.login}</code>,
+    },
+    {
+      chave: "cargo",
+      titulo: "Cargo",
+      celula: (f) => (
+        <span title={ROTULO_CARGO[f.cargo]}>
+          <Badge tom={TOM_DO_CARGO[f.cargo]}>{f.cargo}</Badge>
+        </span>
+      ),
+    },
     {
       chave: "situacao",
-      titulo: "Situação",
+      titulo: "Status",
       celula: (f) => <StatusBadge status={f.ativo ? "ATIVO" : "INATIVO"} />,
     },
     {
       chave: "acoes",
       titulo: "Ações",
+      acoes: true,
       celula: (f) => (
-        <div className="flex gap-2">
-          <Button
-            variante="secundario"
-            aria-label={`Editar ${f.nome}`}
-            onClick={() => dialogForm.abrir(f)}
-          >
-            Editar
-          </Button>
-          <Button
-            variante={f.ativo ? "perigo" : "secundario"}
-            aria-label={`${f.ativo ? "Desativar" : "Reativar"} ${f.nome}`}
+        <AcoesDaLinha>
+          <BotaoIcone icone="editar" rotulo={`Editar ${f.nome}`} onClick={() => dialogForm.abrir(f)} />
+          <BotaoIcone
+            icone="energia"
+            tom={f.ativo ? "alerta" : "sucesso"}
+            rotulo={`${f.ativo ? "Desativar" : "Reativar"} ${f.nome}`}
             onClick={() => setConfirmar(f)}
-          >
-            {f.ativo ? "Desativar" : "Reativar"}
-          </Button>
-        </div>
+          />
+        </AcoesDaLinha>
       ),
     },
   ];
@@ -116,7 +177,18 @@ function GestaoFuncionarios() {
   const acaoConfirmada = confirmar?.ativo ? "desativar" : "reativar";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      <CabecalhoPagina
+        titulo={TITULO}
+        descricao={DESCRICAO}
+        acoes={
+          <Button onClick={() => dialogForm.abrir()}>
+            <Icone nome="mais" tamanho={16} />
+            Novo funcionário
+          </Button>
+        }
+      />
+
       <div className="flex flex-wrap items-end gap-4">
         <Select
           rotulo="Cargo"
@@ -140,33 +212,41 @@ function GestaoFuncionarios() {
             })
           }
         />
-        <Button className="ml-auto" onClick={() => dialogForm.abrir()}>
-          Novo funcionário
-        </Button>
       </div>
 
-      <TabelaPaginada
-        pagina={pagina}
-        erro={erro}
-        colunas={colunas}
-        chaveDaLinha={(f) => f.id}
-        vazio={<EmptyState titulo="Nenhum funcionário encontrado" />}
-        onMudarPagina={(page) => setFiltro({ ...filtro, page })}
+      <DuasColunas
+        principal={
+          <div className="flex flex-col gap-5">
+            <TabelaPaginada
+              pagina={pagina}
+              erro={erro}
+              colunas={colunas}
+              chaveDaLinha={(f) => f.id}
+              rotuloItens="funcionários"
+              vazio={<EmptyState titulo="Nenhum funcionário encontrado" />}
+              onMudarPagina={(page) => setFiltro({ ...filtro, page })}
+            />
+            <MatrizDePermissoes />
+          </div>
+        }
+        lateral={
+          form.aberto && (
+            <PainelLateral
+              aberto
+              titulo={form.dados ? "Editar funcionário" : "Novo funcionário"}
+              onFechar={dialogForm.fechar}
+            >
+              <FormFuncionario
+                key={form.chave}
+                funcionario={form.dados}
+                onSalvo={aoSalvar}
+                onCancelar={dialogForm.fechar}
+                onEnviando={dialogForm.setOcupado}
+              />
+            </PainelLateral>
+          )
+        }
       />
-
-      <Dialog
-        aberto={form.aberto}
-        titulo={form.dados ? "Editar funcionário" : "Novo funcionário"}
-        onFechar={dialogForm.fechar}
-      >
-        <FormFuncionario
-          key={form.chave}
-          funcionario={form.dados}
-          onSalvo={aoSalvar}
-          onCancelar={dialogForm.fechar}
-          onEnviando={dialogForm.setOcupado}
-        />
-      </Dialog>
 
       <Dialog
         aberto={confirmar !== null}

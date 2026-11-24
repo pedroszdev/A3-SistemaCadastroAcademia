@@ -5,13 +5,13 @@ import type { Cargo, UsuarioDoToken } from "./sessao";
 const ESPERADO: [Cargo, string[]][] = [
   [
     "ADMIN",
-    ["Dashboard", "Membros", "Treinos", "Pagamentos", "Histórico", "Funcionários"],
+    ["Dashboard", "Membros", "Treinos", "Pagamentos", "Histórico", "Funcionários", "Meus dados"],
   ],
   [
     "RECEPCIONISTA",
-    ["Dashboard", "Membros", "Treinos", "Pagamentos", "Histórico"],
+    ["Dashboard", "Membros", "Treinos", "Pagamentos", "Histórico", "Meus dados"],
   ],
-  ["INSTRUTOR", ["Dashboard", "Membros", "Treinos", "Histórico"]],
+  ["INSTRUTOR", ["Dashboard", "Membros", "Treinos", "Histórico", "Meus dados"]],
 ];
 
 describe("itensDoMenu", () => {
@@ -25,10 +25,12 @@ describe("itensDoMenu", () => {
 });
 
 describe("ITENS_MENU_ALUNO", () => {
-  it("lista treinos e histórico do portal", () => {
+  it("lista treinos, histórico, pagamentos e dados do portal", () => {
     expect(ITENS_MENU_ALUNO).toEqual([
       { rotulo: "Meus treinos", href: "/aluno/treinos" },
       { rotulo: "Meu histórico", href: "/aluno/historico" },
+      { rotulo: "Pagamentos", href: "/aluno/pagamentos" },
+      { rotulo: "Meus dados", href: "/aluno/dados" },
     ]);
   });
 });

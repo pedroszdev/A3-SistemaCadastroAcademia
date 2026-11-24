@@ -34,4 +34,12 @@ describe("api dos treinos do aluno", () => {
       expect.any(Object),
     );
   });
+
+  it("pede o tamanho recebido", async () => {
+    fetchMock.mockResolvedValue(respostaJson(pagina));
+
+    await listarMeusTreinos(undefined, 1, 100);
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/me/treinos?page=1&pageSize=100", expect.any(Object));
+  });
 });

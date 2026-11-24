@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -27,6 +27,8 @@ const ana: Membro = {
   ativo: true,
   dataCadastro: "2026-01-10T00:00:00.000Z",
   acessoLiberado: false,
+  valorMensalidade: null,
+  diaVencimento: null,
 };
 
 const admin: UsuarioDoToken = { tipo: "FUNCIONARIO", cargo: "ADMIN" };
@@ -48,10 +50,15 @@ describe("NovoMembro", () => {
   });
 
   async function preencher(usuario: ReturnType<typeof userEvent.setup>) {
-    await usuario.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await usuario.type(screen.getByLabelText("Nome completo"), "Ana Souza");
     await usuario.type(screen.getByLabelText("CPF"), "52998224725");
     await usuario.type(screen.getByLabelText("Telefone"), "48999990000");
     await usuario.type(screen.getByLabelText("Endereço"), "Rua Fictícia, 100");
+    // fireEvent: digitar tecla a tecla deixava o teste lento sob carga.
+    fireEvent.change(screen.getByLabelText("Valor da mensalidade"), {
+      target: { value: "12000" },
+    });
+    fireEvent.change(screen.getByLabelText("Dia do vencimento"), { target: { value: "10" } });
   }
 
   it.each([
@@ -63,13 +70,15 @@ describe("NovoMembro", () => {
     renderizar(<NovoMembro />, logado);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(criarMembro).toHaveBeenCalledWith({
       nome: "Ana Souza",
       cpf: "52998224725",
       telefone: "48999990000",
       endereco: "Rua Fictícia, 100",
+      valorMensalidade: 120,
+      diaVencimento: 10,
     });
     expect(await screen.findByText("Membro cadastrado.")).toBeInTheDocument();
     expect(push).toHaveBeenCalledWith("/membros");
@@ -81,7 +90,7 @@ describe("NovoMembro", () => {
     renderizar(<NovoMembro />);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(await screen.findByText("CPF já cadastrado")).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
@@ -100,7 +109,16 @@ describe("NovoMembro", () => {
     renderizar(<NovoMembro />, instrutor);
 
     expect(screen.getByText("Acesso restrito")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Nome")).toBeNull();
+    expect(screen.queryByLabelText("Nome completo")).toBeNull();
+  });
+
+  it("mostra ao lado o que fazer depois de salvar", () => {
+    renderizar(<NovoMembro />);
+
+    expect(screen.getByRole("heading", { name: "Depois de salvar" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Treinos" })).toHaveAttribute("href", "/treinos");
+    expect(screen.getByRole("link", { name: "Pagamentos" })).toHaveAttribute("href", "/pagamentos");
+    expect(screen.getByRole("link", { name: "Histórico" })).toHaveAttribute("href", "/atividades");
   });
 });
 
@@ -116,7 +134,7 @@ describe("EditarMembro", () => {
     renderizar(<EditarMembro id="m1" />);
 
     expect(screen.getByText("Carregando…")).toBeInTheDocument();
-    expect(await screen.findByLabelText("Nome")).toHaveValue("Ana Souza");
+    expect(await screen.findByLabelText("Nome completo")).toHaveValue("Ana Souza");
     expect(screen.getByLabelText("CPF")).toHaveValue("529.982.247-25");
     expect(screen.getByLabelText("CPF")).toBeDisabled();
     expect(buscarMembro).toHaveBeenCalledWith("m1");
@@ -129,7 +147,7 @@ describe("EditarMembro", () => {
 
     await usuario.clear(await screen.findByLabelText("Endereço"));
     await usuario.type(screen.getByLabelText("Endereço"), "Av. Fictícia, 200");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(atualizarMembro).toHaveBeenCalledWith("m1", {
       nome: "Ana Souza",
@@ -153,7 +171,7 @@ describe("EditarMembro", () => {
     renderizar(<EditarMembro id="x9" />);
 
     expect(await screen.findByText("Membro não encontrado")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Nome")).toBeNull();
+    expect(screen.queryByLabelText("Nome completo")).toBeNull();
   });
 
   it("mostra Membro não encontrado no 400 do id que não é UUID", async () => {
@@ -171,7 +189,7 @@ describe("EditarMembro", () => {
     renderizar(<EditarMembro id="m1" />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Falha ao carregar");
-    expect(screen.queryByLabelText("Nome")).toBeNull();
+    expect(screen.queryByLabelText("Nome completo")).toBeNull();
   });
 
   it("tenta carregar de novo depois do erro", async () => {
@@ -180,7 +198,7 @@ describe("EditarMembro", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Tentar de novo" }));
 
-    expect(await screen.findByLabelText("Nome")).toHaveValue("Ana Souza");
+    expect(await screen.findByLabelText("Nome completo")).toHaveValue("Ana Souza");
     expect(buscarMembro).toHaveBeenCalledTimes(2);
   });
 

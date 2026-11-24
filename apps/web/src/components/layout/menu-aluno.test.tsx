@@ -9,10 +9,17 @@ describe("MenuAluno", () => {
     render(<MenuAluno />);
 
     const links = screen.getAllByRole("link");
-    expect(links.map((l) => l.textContent)).toEqual(["Meus treinos", "Meu histórico"]);
+    expect(links.map((l) => l.textContent)).toEqual([
+      "Meus treinos",
+      "Meu histórico",
+      "Pagamentos",
+      "Meus dados",
+    ]);
     expect(links.map((l) => l.getAttribute("href"))).toEqual([
       "/aluno/treinos",
       "/aluno/historico",
+      "/aluno/pagamentos",
+      "/aluno/dados",
     ]);
   });
 

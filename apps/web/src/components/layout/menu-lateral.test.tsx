@@ -13,6 +13,7 @@ describe("MenuLateral", () => {
       "Membros",
       "Treinos",
       "Histórico",
+      "Meus dados",
     ]);
     expect(screen.queryByRole("link", { name: "Pagamentos" })).toBeNull();
   });

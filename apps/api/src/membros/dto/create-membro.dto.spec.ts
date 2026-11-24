@@ -8,6 +8,7 @@ const valido = {
   cpf: '529.982.247-25',
   telefone: '(48) 99999-1234',
   endereco: 'Rua das Flores, 100',
+  valorMensalidade: 120,
 };
 
 async function validar(corpo: Record<string, unknown>) {
@@ -79,5 +80,42 @@ describe('CreateMembroDto', () => {
     const { mensagens } = await validar({ ...valido, ...campos });
 
     expect(mensagens).toContain(mensagem);
+  });
+
+  describe('mensalidade (RN18)', () => {
+    it('exige o valor da mensalidade', async () => {
+      const { mensagens } = await validar({
+        ...valido,
+        valorMensalidade: undefined,
+      });
+
+      expect(mensagens).toContain('valorMensalidade deve ser no mínimo 0,01');
+    });
+
+    it.each([
+      [0, 'valorMensalidade deve ser no mínimo 0,01'],
+      [10000.01, 'valorMensalidade deve ser no máximo 10.000'],
+      [
+        12.345,
+        'valorMensalidade deve ser um número com no máximo 2 casas decimais',
+      ],
+    ])('recusa o valor %p', async (valorMensalidade, mensagem) => {
+      const { mensagens } = await validar({ ...valido, valorMensalidade });
+
+      expect(mensagens).toContain(mensagem);
+    });
+
+    it('aceita o dia de vencimento de 1 a 31 e o deixa opcional', async () => {
+      for (const diaVencimento of [1, 31, undefined]) {
+        const { mensagens } = await validar({ ...valido, diaVencimento });
+        expect(mensagens).toEqual([]);
+      }
+    });
+
+    it.each([0, 32, 10.5])('recusa o dia %p', async (diaVencimento) => {
+      const { mensagens } = await validar({ ...valido, diaVencimento });
+
+      expect(mensagens.length).toBeGreaterThan(0);
+    });
   });
 });

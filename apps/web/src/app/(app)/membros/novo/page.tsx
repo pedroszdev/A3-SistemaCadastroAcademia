@@ -1,12 +1,18 @@
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { Trilha } from "@/components/layout/trilha";
 import { NovoMembro } from "@/features/membros/cadastro-membro";
 
 export const metadata = { title: "Novo membro · Academia" };
 
 export default function NovoMembroPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold text-zinc-900">Novo membro</h1>
+    <>
+      <CabecalhoPagina
+        titulo="Novo membro"
+        descricao="Preencha os dados para cadastrar um aluno."
+      />
+      <Trilha passos={[{ rotulo: "Membros", href: "/membros" }, { rotulo: "Novo membro" }]} />
       <NovoMembro />
-    </div>
+    </>
   );
 }

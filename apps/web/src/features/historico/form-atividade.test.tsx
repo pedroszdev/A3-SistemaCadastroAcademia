@@ -108,7 +108,7 @@ describe("FormAtividade", () => {
     const usuario = userEvent.setup();
     renderizar();
 
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
     expect(screen.getByText("atividade deve ter entre 3 e 120 caracteres")).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe("FormAtividade", () => {
 
     await preencher(usuario);
     fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2999-12-31" } });
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByText("data não pode ser uma data futura")).toBeInTheDocument();
     expect(registrarAtividade).not.toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe("FormAtividade", () => {
     renderizar();
 
     fireEvent.change(screen.getByLabelText("Tempo (min)"), { target: { value: tempo } });
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByText(mensagem)).toBeInTheDocument();
     expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe("FormAtividade", () => {
 
     await preencher(usuario);
     fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: "a".repeat(121) } });
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByLabelText("Atividade")).toHaveValue("a".repeat(121));
     expect(screen.getByText("atividade deve ter entre 3 e 120 caracteres")).toBeInTheDocument();
@@ -176,7 +176,7 @@ describe("FormAtividade", () => {
 
     await preencher(usuario);
     fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: `  ${atividade}  ` } });
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ atividade }));
   });
@@ -203,7 +203,7 @@ describe("FormAtividade", () => {
       screen.getByLabelText("Treino (opcional)"),
       screen.getByRole("option", { name: "Hipertrofia · início 01/10/2026" }),
     );
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith({
       membroId: "m1",
@@ -248,7 +248,7 @@ describe("FormAtividade", () => {
 
     expect(await screen.findByRole("option", { name: "Nenhum treino disponível" })).toBeInTheDocument();
     expect(screen.getByLabelText("Treino (opcional)")).toBeDisabled();
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith({
       membroId: "m1",
@@ -272,7 +272,7 @@ describe("FormAtividade", () => {
       await screen.findByText("Não foi possível carregar os treinos: Falha interna"),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Treino (opcional)")).toBeDisabled();
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ treinoId: undefined }));
   });
@@ -300,7 +300,7 @@ describe("FormAtividade", () => {
     expect(aviso).toHaveTextContent("Membro com pagamento em atraso");
     expect(aviso).toHaveTextContent("(maior atraso: 12 dias)");
     expect(consultarSituacao).toHaveBeenCalledWith("m1");
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Registrar" })).toBeDisabled();
     expect(registrarAtividade).not.toHaveBeenCalled();
   });
 
@@ -318,7 +318,7 @@ describe("FormAtividade", () => {
 
     await waitFor(() => expect(consultarSituacao).toHaveBeenLastCalledWith("m2"));
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Registrar" })).toBeEnabled();
   });
 
   it("a situação do membro anterior que chega tarde não vale para o novo", async () => {
@@ -337,7 +337,7 @@ describe("FormAtividade", () => {
 
     expect(consultarSituacao).toHaveBeenLastCalledWith("m2");
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Registrar" })).toBeEnabled();
   });
 
   it.each([
@@ -370,7 +370,7 @@ describe("FormAtividade", () => {
     await waitFor(() => expect(consultarSituacao).toHaveBeenCalledWith("m1"));
 
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Registrar" })).toBeEnabled();
   });
 
   it("não bloqueia quando a consulta da situação falha", async () => {
@@ -382,7 +382,7 @@ describe("FormAtividade", () => {
     await waitFor(() => expect(consultarSituacao).toHaveBeenCalled());
 
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Registrar" })).toBeEnabled();
   });
 
   it("o INSTRUTOR não consulta a situação e vê o aviso destacado quando o POST responde 422 de inadimplência", async () => {
@@ -395,13 +395,13 @@ describe("FormAtividade", () => {
     await preencher(usuario);
     await waitFor(() => expect(listarTreinosDoMembro).toHaveBeenCalled());
     expect(consultarSituacao).not.toHaveBeenCalled();
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     const aviso = await screen.findByRole("alert");
     expect(aviso).toHaveTextContent("Membro com pagamento em atraso");
-    expect(aviso).toHaveClass("border-amber-300");
+    expect(aviso).toHaveClass("border-alerta-borda");
     expect(aviso).not.toHaveClass("text-red-600");
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Registrar" })).toBeDisabled();
     expect(onSalvo).not.toHaveBeenCalled();
   });
 
@@ -413,12 +413,12 @@ describe("FormAtividade", () => {
     renderizar(instrutor);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     const erro = await screen.findByRole("alert");
     expect(erro).toHaveTextContent("Treino não pertence ao membro");
     expect(erro).toHaveClass("text-red-600");
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Registrar" })).toBeEnabled();
     expect(onSalvo).not.toHaveBeenCalled();
   });
 
@@ -428,7 +428,7 @@ describe("FormAtividade", () => {
     renderizar(instrutor);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Falha de rede");
   });
@@ -441,7 +441,7 @@ describe("FormAtividade", () => {
     await escolherMembro(usuario, "Ful", /Fulano Silva/);
     await usuario.type(screen.getByLabelText("Atividade"), "  Esteira  ");
     await usuario.type(screen.getByLabelText("Tempo (min)"), "45");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith({
       membroId: "m1",
@@ -471,7 +471,7 @@ describe("FormAtividade", () => {
     const aviso = await screen.findByRole("alert");
     expect(aviso).toHaveTextContent("Membro com pagamento em atraso");
     expect(aviso).toHaveTextContent("(maior atraso: 12 dias)");
-    const salvar = screen.getByRole("button", { name: "Salvar" });
+    const salvar = screen.getByRole("button", { name: "Registrar" });
     expect(salvar).toBeDisabled();
 
     // Com o resto válido, só o bloqueio da RN09 impede o POST.
@@ -490,7 +490,7 @@ describe("FormAtividade", () => {
     await escolherMembro(usuario, "Ful", /Fulano Silva/);
     await usuario.type(screen.getByLabelText("Atividade"), "Esteira");
     await usuario.type(screen.getByLabelText("Tempo (min)"), "30");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith(expect.objectContaining({ membroId: "m1" }));
   });
@@ -504,7 +504,7 @@ describe("FormAtividade", () => {
     await usuario.selectOptions(screen.getByLabelText("Treino (opcional)"), "t1");
     await usuario.type(screen.getByLabelText("Atividade"), "Esteira");
     await usuario.type(screen.getByLabelText("Tempo (min)"), "30");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith({
       membroId: "m1",
@@ -523,7 +523,7 @@ describe("FormAtividade", () => {
     renderizar();
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
   });
@@ -539,7 +539,7 @@ describe("FormAtividade", () => {
     renderizar(instrutor);
 
     await preencher(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
     expect(screen.getByRole("button", { name: "Trocar" })).toBeDisabled();
 
     await act(async () => falhar(new ApiError(422, "Membro com pagamento em atraso")));

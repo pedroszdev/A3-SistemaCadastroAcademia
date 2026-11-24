@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
@@ -80,6 +80,8 @@ const ana: Membro = {
   ativo: true,
   dataCadastro: "2026-11-01T00:00:00.000Z",
   acessoLiberado: false,
+  valorMensalidade: null,
+  diaVencimento: null,
 };
 
 const treinoRecente: Treino = {
@@ -165,6 +167,20 @@ describe("FichaMembro", () => {
       expect(screen.getByText("Cardio, 45 min, início em 15/11/2026")).toBeInTheDocument();
       expect(screen.getByText("7 atividades nos últimos 30 dias")).toBeInTheDocument();
       expect(screen.queryByText(/em atraso/)).not.toBeInTheDocument();
+    });
+
+    it("mostra o plano de mensalidade, ou que o membro não tem um (RN18)", async () => {
+      renderizar();
+      await ficha();
+      expect(screen.getByText("Sem mensalidade automática")).toBeInTheDocument();
+
+      cleanup();
+      vi.mocked(consultarResumo).mockResolvedValue(
+        resumo({ membro: { ...ana, valorMensalidade: 120, diaVencimento: 10 } }),
+      );
+      renderizar();
+      await ficha();
+      expect(screen.getByText(/^R\$\s120,00, vence todo dia 10$/)).toBeInTheDocument();
     });
 
     it("mostra o badge inadimplente com a quantidade e o maior atraso", async () => {

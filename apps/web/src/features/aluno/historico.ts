@@ -32,3 +32,18 @@ export function listarMinhasAtividades(intervalo: Intervalo, page: number) {
   params.set("pageSize", String(TAMANHO_PAGINA));
   return api<PaginaAtividades>(`/me/atividades?${params}`);
 }
+
+// RN19: o aluno registra a própria atividade, sempre num treino dele.
+export type DadosMinhaAtividade = {
+  treinoId: string;
+  data: string;
+  tempoExecucao: number;
+  atividade?: string;
+};
+
+export function registrarMinhaAtividade(dados: DadosMinhaAtividade) {
+  return api<AtividadeDoAluno>("/me/atividades", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
+}

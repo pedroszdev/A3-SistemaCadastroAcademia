@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
+import { Icone } from "@/components/ui/icone";
+import { useToast } from "@/components/ui/toast";
+import { useFormDialog } from "@/lib/use-form-dialog";
+import { FormMinhaAtividade } from "./form-minha-atividade";
 import {
   type AtividadeDoAluno,
   type ResumoDoPeriodo,
@@ -35,6 +40,10 @@ type Estado =
 export function MeuHistorico() {
   const [periodo, setPeriodo] = useState<Periodo>(PERIODO_PADRAO);
   const [estado, setEstado] = useState<Estado>({ situacao: "carregando" });
+  const { mostrar } = useToast();
+  const formulario = useFormDialog();
+  // Muda depois de registrar: a lista e o resumo do período são buscados de novo.
+  const [versao, setVersao] = useState(0);
   // Muda a cada busca do período: um Carregar mais de uma busca anterior é descartado,
   // mesmo que o aluno tenha voltado ao mesmo período (30 → 7 → 30 dias).
   const geracao = useRef(0);
@@ -69,7 +78,13 @@ export function MeuHistorico() {
     return () => {
       ativo = false;
     };
-  }, [periodo]);
+  }, [periodo, versao]);
+
+  function aoRegistrar() {
+    mostrar("Atividade registrada.");
+    formulario.concluir();
+    setVersao((v) => v + 1);
+  }
 
   function escolher(novo: Periodo) {
     if (novo === periodo) return;
@@ -110,25 +125,50 @@ export function MeuHistorico() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <Button onClick={() => formulario.abrir()}>
+          <Icone nome="mais" tamanho={16} />
+          Registrar atividade
+        </Button>
+      </div>
+
+      <Dialog
+        aberto={formulario.form.aberto}
+        titulo="Registrar atividade"
+        onFechar={formulario.fechar}
+      >
+        <FormMinhaAtividade
+          key={formulario.form.chave}
+          onSalvo={aoRegistrar}
+          onCancelar={formulario.fechar}
+          onEnviando={formulario.setOcupado}
+        />
+      </Dialog>
+
       <div role="group" aria-label="Período" className="flex flex-wrap gap-2">
         {PERIODOS.map((p) => {
           const ativo = p.valor === periodo;
           return (
-            <Button
+            <button
               key={p.valor}
-              variante={ativo ? "primario" : "secundario"}
+              type="button"
               aria-pressed={ativo}
               onClick={() => escolher(p.valor)}
+              className={`min-h-10 cursor-pointer rounded-full border px-4 text-sm font-medium ${
+                ativo
+                  ? "border-tinta bg-tinta text-white"
+                  : "border-borda bg-white text-tinta hover:bg-fundo-2"
+              }`}
             >
               {p.rotulo}
-            </Button>
+            </button>
           );
         })}
       </div>
 
       {estado.situacao === "carregando" && (
-        <p className="text-sm text-zinc-600">Carregando…</p>
+        <p className="text-sm text-suave">Carregando…</p>
       )}
 
       {estado.situacao === "erro" && (
@@ -141,7 +181,7 @@ export function MeuHistorico() {
         <>
           <ResumoHistorico resumo={estado.resumo} />
           <section className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold text-zinc-900">Atividades</h2>
+            <h2 className="font-display text-lg font-semibold">Atividades</h2>
             <ListaAtividades atividades={estado.atividades} />
             {estado.atividades.length < estado.total && (
               <Button

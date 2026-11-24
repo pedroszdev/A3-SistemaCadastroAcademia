@@ -112,7 +112,7 @@ describe("HistoricoDoMembro", () => {
     expect(listarAtividades).not.toHaveBeenCalled();
     expect(screen.queryByRole("columnheader", { name: "Membro" })).toBeNull();
     expect(screen.queryByLabelText("Membro")).toBeNull();
-    for (const titulo of ["Data", "Atividade", "Tempo", "Treino", "Funcionário"]) {
+    for (const titulo of ["Data", "Atividade", "Tempo", "Treino", "Registrado por"]) {
       expect(screen.getByRole("columnheader", { name: titulo })).toBeInTheDocument();
     }
     expect(screen.getByLabelText("Data de")).toBeInTheDocument();
@@ -180,7 +180,7 @@ describe("HistoricoDoMembro", () => {
     await waitFor(() => expect(listarTreinosDoMembro).toHaveBeenCalledWith("m1"));
     await waitFor(() => expect(consultarSituacao).toHaveBeenCalledWith("m1"));
     expect(await within(dialogo).findByText(/Membro com pagamento em atraso/)).toBeInTheDocument();
-    expect(within(dialogo).getByRole("button", { name: "Salvar" })).toBeDisabled();
+    expect(within(dialogo).getByRole("button", { name: "Registrar" })).toBeDisabled();
     expect(buscarMembros).not.toHaveBeenCalled();
   });
 
@@ -194,7 +194,7 @@ describe("HistoricoDoMembro", () => {
     const dialogo = screen.getByRole("dialog", { name: "Registrar atividade" });
     await usuario.type(within(dialogo).getByLabelText("Atividade"), "Remo");
     await usuario.type(within(dialogo).getByLabelText("Tempo (min)"), "20");
-    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+    await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith(
       expect.objectContaining({ membroId: "m1", atividade: "Remo", tempoExecucao: 20 }),

@@ -134,6 +134,7 @@ const MATRIZ: Linha[] = [
       cpf: gerarCpf(),
       telefone: '48999990000',
       endereco: 'Rua Fictícia, 10',
+      valorMensalidade: 120,
     }),
     permitidos: GESTAO,
     sucesso: 201,
@@ -308,6 +309,17 @@ const MATRIZ: Linha[] = [
   // Histórico do aluno: só o ALUNO, sempre os próprios dados (RN16)
   { metodo: 'get', rota: '/me/atividades', permitidos: [ALUNO], sucesso: 200 },
   {
+    metodo: 'post',
+    rota: '/me/atividades',
+    corpo: (m) => ({
+      treinoId: m.treinoDoAlunoId,
+      data: diaIso(hoje()),
+      tempoExecucao: 30,
+    }),
+    permitidos: [ALUNO],
+    sucesso: 201,
+  },
+  {
     metodo: 'get',
     rota: '/me/atividades/resumo',
     permitidos: [ALUNO],
@@ -331,6 +343,15 @@ const MATRIZ: Linha[] = [
     sucesso: 200,
   },
 
+  // Pagamentos do aluno: só o ALUNO, sempre os próprios (RN16)
+  { metodo: 'get', rota: '/me/pagamentos', permitidos: [ALUNO], sucesso: 200 },
+  {
+    metodo: 'get',
+    rota: '/me/pagamentos/resumo',
+    permitidos: [ALUNO],
+    sucesso: 200,
+  },
+
   // Dashboard: todos os funcionários
   { metodo: 'get', rota: '/dashboard', permitidos: TODOS, sucesso: 200 },
   {
@@ -346,6 +367,21 @@ const MATRIZ: Linha[] = [
     rota: '/auth/me',
     permitidos: [...CARGOS, ALUNO],
     sucesso: 200,
+  },
+  {
+    metodo: 'patch',
+    rota: '/auth/me',
+    corpo: () => ({}),
+    permitidos: [...CARGOS, ALUNO],
+    sucesso: 200,
+  },
+  {
+    metodo: 'patch',
+    rota: '/auth/me/senha',
+    // a mesma senha: os outros testes continuam logando com ela
+    corpo: () => ({ senhaAtual: SENHA_PADRAO, novaSenha: SENHA_PADRAO }),
+    permitidos: [...CARGOS, ALUNO],
+    sucesso: 204,
   },
 ];
 
@@ -556,10 +592,11 @@ describe('Segurança: matriz de permissões (e2e)', () => {
       ).toBe(0);
     });
 
-    it('ALUNO só lê os próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)', async () => {
+    it('ALUNO só mexe nos próprios dados: 403 em toda rota de funcionário e nada gravado (RN17)', async () => {
       const rotas = MATRIZ.filter((l) => !l.permitidos.includes(ALUNO));
-      // fora do ALUNO ficam só as rotas dele: /auth/me, as 3 de /me/atividades e as 2 de /me/treinos
-      expect(rotas).toHaveLength(MATRIZ.length - 6);
+      // fora do ALUNO ficam só as rotas dele: as 3 de /auth/me, as 4 de
+      // /me/atividades, as 2 de /me/treinos e as 2 de /me/pagamentos
+      expect(rotas).toHaveLength(MATRIZ.length - 11);
 
       for (const l of rotas) {
         await chamar(l, tokens[ALUNO]).expect(403);

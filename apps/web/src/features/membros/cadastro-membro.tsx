@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Cartao, DuasColunas } from "@/components/ui/cartao";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { useUsuario } from "@/features/auth/usuario";
@@ -34,13 +36,54 @@ export function NovoMembro() {
   if (!podeGerenciarMembros(usuario)) return <AcessoRestrito />;
 
   return (
-    <FormMembro
-      onSalvo={() => {
-        mostrar("Membro cadastrado.");
-        router.push("/membros");
-      }}
-      onCancelar={() => router.push("/membros")}
+    <DuasColunas
+      larguraLateral="280px"
+      principal={
+        <div className="max-w-[820px]">
+          <FormMembro
+            onSalvo={() => {
+              mostrar("Membro cadastrado.");
+              router.push("/membros");
+            }}
+            onCancelar={() => router.push("/membros")}
+          />
+        </div>
+      }
+      lateral={<DepoisDeSalvar />}
     />
+  );
+}
+
+function DepoisDeSalvar() {
+  return (
+    <Cartao titulo="Depois de salvar" espaco="compacto">
+      <ol className="flex list-decimal flex-col gap-2.5 pl-5 text-sm leading-relaxed">
+        <li>
+          Monte a ficha de treino em{" "}
+          <Link href="/treinos" className="underline">
+            Treinos
+          </Link>
+          .
+        </li>
+        <li>
+          Lance a primeira mensalidade em{" "}
+          <Link href="/pagamentos" className="underline">
+            Pagamentos
+          </Link>
+          .
+        </li>
+        <li>
+          O instrutor registra cada atividade em{" "}
+          <Link href="/atividades" className="underline">
+            Histórico
+          </Link>
+          .
+        </li>
+      </ol>
+      <p className="mt-4 rounded-xl bg-fundo p-3.5 text-[13px] leading-relaxed text-suave">
+        Data de cadastro é preenchida automaticamente com a data de hoje.
+      </p>
+    </Cartao>
   );
 }
 
@@ -84,7 +127,7 @@ function CarregarMembro({ id }: { id: string }) {
 
   switch (carga.tipo) {
     case "carregando":
-      return <p className="text-sm text-zinc-600">Carregando…</p>;
+      return <p className="text-sm text-suave">Carregando…</p>;
     case "nao-encontrado":
       return <EmptyState titulo="Membro não encontrado" />;
     case "erro":
@@ -110,6 +153,7 @@ function CarregarMembro({ id }: { id: string }) {
       );
     case "carregado":
       return (
+        <div className="max-w-[820px]">
         <FormMembro
           membro={carga.membro}
           onSalvo={() => {
@@ -118,6 +162,7 @@ function CarregarMembro({ id }: { id: string }) {
           }}
           onCancelar={voltar}
         />
+        </div>
       );
   }
 }

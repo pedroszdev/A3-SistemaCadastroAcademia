@@ -10,11 +10,28 @@ import {
 } from "./historico";
 import { MeuHistorico } from "./meu-historico";
 import { type Periodo, intervaloDoPeriodo } from "./periodo";
+import { ToastProvider } from "@/components/ui/toast";
+
+function renderizar() {
+  return render(
+    <ToastProvider>
+      <MeuHistorico />
+    </ToastProvider>,
+  );
+}
 
 vi.mock("./historico", async (importarOriginal) => ({
   ...(await importarOriginal<typeof import("./historico")>()),
   buscarResumoDoPeriodo: vi.fn(),
   listarMinhasAtividades: vi.fn(),
+}));
+
+vi.mock("./form-minha-atividade", () => ({
+  FormMinhaAtividade: ({ onSalvo }: { onSalvo: () => void }) => (
+    <button type="button" onClick={onSalvo}>
+      salvar-stub
+    </button>
+  ),
 }));
 
 vi.mock("./periodo", async (importarOriginal) => ({
@@ -67,7 +84,7 @@ describe("MeuHistorico", () => {
     vi.mocked(buscarResumoDoPeriodo).mockReturnValue(new Promise(() => {}));
     vi.mocked(listarMinhasAtividades).mockReturnValue(new Promise(() => {}));
 
-    render(<MeuHistorico />);
+    renderizar();
 
     expect(screen.getByText("Carregando…")).toBeInTheDocument();
   });
@@ -76,7 +93,7 @@ describe("MeuHistorico", () => {
     vi.mocked(buscarResumoDoPeriodo).mockResolvedValue(resumo);
     vi.mocked(listarMinhasAtividades).mockResolvedValue(pagina(atividades(2)));
 
-    render(<MeuHistorico />);
+    renderizar();
 
     expect(await screen.findByText("Atividade 1")).toBeInTheDocument();
     expect(screen.getByText("Atividade 2")).toBeInTheDocument();
@@ -96,7 +113,7 @@ describe("MeuHistorico", () => {
     vi.mocked(buscarResumoDoPeriodo).mockResolvedValue(resumo);
     vi.mocked(listarMinhasAtividades).mockResolvedValue(pagina(atividades(1)));
     const user = userEvent.setup();
-    render(<MeuHistorico />);
+    renderizar();
     await screen.findByText("Atividade 1");
 
     await user.click(botao(rotulo));
@@ -112,7 +129,7 @@ describe("MeuHistorico", () => {
     vi.mocked(buscarResumoDoPeriodo).mockResolvedValue(resumo);
     vi.mocked(listarMinhasAtividades).mockResolvedValue(pagina(atividades(1)));
     const user = userEvent.setup();
-    render(<MeuHistorico />);
+    renderizar();
     await screen.findByText("Atividade 1");
 
     await user.click(botao("30 dias"));
@@ -126,7 +143,7 @@ describe("MeuHistorico", () => {
     vi.mocked(buscarResumoDoPeriodo).mockResolvedValue({ totalAtividades: 0, totalMinutos: 0 });
     vi.mocked(listarMinhasAtividades).mockResolvedValue(pagina([]));
 
-    render(<MeuHistorico />);
+    renderizar();
 
     expect(await screen.findByText("Nenhuma atividade no período")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Carregar mais" })).toBeNull();
@@ -138,7 +155,7 @@ describe("MeuHistorico", () => {
       .mockResolvedValueOnce(pagina(atividades(20), 21))
       .mockResolvedValueOnce({ data: [atividade(21)], total: 21, page: 2, pageSize: 20 });
     const user = userEvent.setup();
-    render(<MeuHistorico />);
+    renderizar();
 
     await user.click(await screen.findByRole("button", { name: "Carregar mais" }));
 
@@ -154,7 +171,7 @@ describe("MeuHistorico", () => {
       .mockResolvedValueOnce(pagina(atividades(20), 21))
       .mockRejectedValueOnce(new Error("Falha na página 2"));
     const user = userEvent.setup();
-    render(<MeuHistorico />);
+    renderizar();
 
     await user.click(await screen.findByRole("button", { name: "Carregar mais" }));
 
@@ -168,7 +185,7 @@ describe("MeuHistorico", () => {
     vi.mocked(buscarResumoDoPeriodo).mockRejectedValue(new Error("API fora do ar"));
     vi.mocked(listarMinhasAtividades).mockResolvedValue(pagina([]));
 
-    render(<MeuHistorico />);
+    renderizar();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("API fora do ar");
   });
@@ -184,7 +201,7 @@ describe("MeuHistorico", () => {
       .mockResolvedValueOnce({ totalAtividades: 2, totalMinutos: 60 });
     vi.mocked(listarMinhasAtividades).mockResolvedValue(pagina(atividades(2)));
     const user = userEvent.setup();
-    render(<MeuHistorico />);
+    renderizar();
 
     await user.click(botao("7 dias"));
     expect(await screen.findByText("Atividade 1")).toBeInTheDocument();
@@ -213,7 +230,7 @@ describe("MeuHistorico", () => {
         )
         .mockResolvedValueOnce(pagina([{ ...atividade(50), atividade: "Natação" }]));
       const user = userEvent.setup();
-      render(<MeuHistorico />);
+      renderizar();
       await user.click(await screen.findByRole("button", { name: "Carregar mais" }));
 
       await user.click(botao("7 dias"));
@@ -239,7 +256,7 @@ describe("MeuHistorico", () => {
       .mockResolvedValueOnce(pagina(atividades(1)))
       .mockResolvedValueOnce(pagina(atividades(20), 21));
     const user = userEvent.setup();
-    render(<MeuHistorico />);
+    renderizar();
     await user.click(await screen.findByRole("button", { name: "Carregar mais" }));
 
     await user.click(botao("7 dias"));
@@ -250,5 +267,22 @@ describe("MeuHistorico", () => {
 
     expect(screen.queryByText("Atividade 21")).toBeNull();
     expect(botao("Carregar mais")).toBeEnabled();
+  });
+
+  it("o aluno registra uma atividade e a lista é buscada de novo (RN19)", async () => {
+    vi.mocked(buscarResumoDoPeriodo).mockResolvedValue(resumo);
+    vi.mocked(listarMinhasAtividades).mockResolvedValue(pagina(atividades(1)));
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Atividade 1");
+
+    await usuario.click(botao("Registrar atividade"));
+    expect(screen.getByRole("dialog", { name: "Registrar atividade" })).toBeInTheDocument();
+    await usuario.click(botao("salvar-stub"));
+
+    expect(await screen.findByText("Atividade registrada.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(listarMinhasAtividades).toHaveBeenCalledTimes(2);
+    expect(buscarResumoDoPeriodo).toHaveBeenCalledTimes(2);
   });
 });

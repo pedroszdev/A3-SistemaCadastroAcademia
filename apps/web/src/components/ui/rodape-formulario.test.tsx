@@ -43,3 +43,18 @@ describe("RodapeFormulario", () => {
     expect(onCancelar).toHaveBeenCalled();
   });
 });
+
+describe("RodapeFormulario com rótulo próprio", () => {
+  it("usa o texto pedido no botão de envio", () => {
+    render(
+      <RodapeFormulario
+        erro={null}
+        enviando={false}
+        onCancelar={vi.fn()}
+        rotuloSalvar="Salvar membro"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Salvar membro" })).toHaveAttribute("type", "submit");
+  });
+});

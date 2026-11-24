@@ -69,6 +69,7 @@ describe("api de membros", () => {
       cpf: "52998224725",
       telefone: "48999990000",
       endereco: "Rua Fictícia, 100",
+      valorMensalidade: 120,
     };
 
     await criarMembro(dados);

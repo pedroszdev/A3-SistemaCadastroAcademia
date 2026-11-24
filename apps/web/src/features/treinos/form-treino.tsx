@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { AreaTexto } from "@/components/ui/area-texto";
 import { Input } from "@/components/ui/input";
 import { RodapeFormulario } from "@/components/ui/rodape-formulario";
 import { Select } from "@/components/ui/select";
@@ -74,11 +75,13 @@ export function FormTreino({ treino, onSalvo, onCancelar, onEnviando }: FormTrei
   return (
     // noValidate: o min da data e os limites da duração só ajudam no campo; quem barra e mostra
     // a mensagem igual à da API é o validarTreino.
-    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
+    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-[18px]">
       {treino ? (
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-zinc-800">Membro</span>
-          <p className="rounded border border-zinc-300 px-3 py-2 text-sm">{treino.membro.nome}</p>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-semibold">Membro</span>
+          <p className="flex h-[46px] items-center rounded-[10px] border border-borda-campo bg-fundo-2 px-3.5 text-[15px]">
+            {treino.membro.nome}
+          </p>
         </div>
       ) : (
         <BuscaMembro
@@ -86,10 +89,13 @@ export function FormTreino({ treino, onSalvo, onCancelar, onEnviando }: FormTrei
           onSelecionar={selecionarMembro}
           erro={erros.membro}
           desabilitado={enviando}
+          obrigatorio
+          ajuda="Membros inativos não aparecem."
         />
       )}
       <Select
         rotulo="Tipo"
+        obrigatorio
         placeholder="Selecione o tipo"
         opcoes={OPCOES_TIPO_TREINO}
         value={tipo}
@@ -97,35 +103,48 @@ export function FormTreino({ treino, onSalvo, onCancelar, onEnviando }: FormTrei
         disabled={enviando}
         erro={erros.tipo}
       />
-      <Input
+      <AreaTexto
         rotulo="Descrição"
+        obrigatorio
+        placeholder="Ex.: Treino C: pernas e glúteos"
         value={descricao}
         onChange={(e) => setDescricao(e.target.value)}
         disabled={enviando}
         erro={erros.descricao}
       />
-      <Input
-        rotulo="Duração (min)"
-        type="number"
-        inputMode="numeric"
-        min={DURACAO_MINIMA}
-        max={DURACAO_MAXIMA}
-        step={1}
-        value={duracao}
-        onChange={(e) => setDuracao(e.target.value)}
-        disabled={enviando}
-        erro={erros.duracao}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4">
+        <Input
+          rotulo="Duração (min)"
+          obrigatorio
+          type="number"
+          inputMode="numeric"
+          placeholder="60"
+          min={DURACAO_MINIMA}
+          max={DURACAO_MAXIMA}
+          step={1}
+          value={duracao}
+          onChange={(e) => setDuracao(e.target.value)}
+          disabled={enviando}
+          erro={erros.duracao}
+        />
+        <Input
+          rotulo="Data de início"
+          obrigatorio
+          type="date"
+          min={treino ? undefined : hoje}
+          ajuda={treino ? undefined : "A partir de hoje."}
+          value={dataInicio}
+          onChange={(e) => setDataInicio(e.target.value)}
+          disabled={enviando}
+          erro={erros.dataInicio}
+        />
+      </div>
+      <RodapeFormulario
+        erro={erroApi}
+        enviando={enviando}
+        onCancelar={onCancelar}
+        rotuloSalvar="Salvar treino"
       />
-      <Input
-        rotulo="Início"
-        type="date"
-        min={treino ? undefined : hoje}
-        value={dataInicio}
-        onChange={(e) => setDataInicio(e.target.value)}
-        disabled={enviando}
-        erro={erros.dataInicio}
-      />
-      <RodapeFormulario erro={erroApi} enviando={enviando} onCancelar={onCancelar} />
     </form>
   );
 }

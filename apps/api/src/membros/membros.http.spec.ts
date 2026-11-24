@@ -14,6 +14,7 @@ const CORPO = {
   cpf: '529.982.247-25',
   telefone: '(48) 99999-1234',
   endereco: 'Rua das Flores, 100',
+  valorMensalidade: 120,
 };
 
 // Exercita roteamento, pipes e validação sobre HTTP, sem banco: o service é mockado.

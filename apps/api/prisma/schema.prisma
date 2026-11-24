@@ -31,6 +31,10 @@ model Membro {
   /// hash da senha do aluno; nulo enquanto o acesso não for liberado
   senhaHash    String?  @map("senha_hash")
   dataCadastro DateTime @default(now()) @map("data_cadastro")
+  /// valor cobrado todo mês; nulo deixa o membro sem mensalidade automática
+  valorMensalidade Decimal? @map("valor_mensalidade") @db.Decimal(10, 2)
+  /// dia do mês do vencimento (1 a 31; nos meses mais curtos vence no último dia)
+  diaVencimento    Int?     @map("dia_vencimento") @db.SmallInt
 
   treinos    Treino[]
   pagamentos Pagamento[]

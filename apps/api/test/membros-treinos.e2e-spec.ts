@@ -87,7 +87,8 @@ describe('Membros e treinos: RN01 a RN05 (e2e)', () => {
     request(app.getHttpServer())
       .post('/membros')
       .set('Authorization', bearer(tokenRecepcao))
-      .send(body);
+      // RN18: o valor da mensalidade é obrigatório; o resto vem de cada teste.
+      .send({ valorMensalidade: 120, ...body });
 
   const postTreino = (body: object) =>
     request(app.getHttpServer())

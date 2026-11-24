@@ -2,19 +2,22 @@
 
 import Link from "next/link";
 import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
+import { Button, classesDoBotao } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TabelaPaginada } from "@/components/ui/tabela-paginada";
 import type { Coluna } from "@/components/ui/table";
+import { Icone } from "@/components/ui/icone";
 import { useToast } from "@/components/ui/toast";
 import { useUsuario } from "@/features/auth/usuario";
 import { HistoricoDoMembro } from "@/features/historico/historico-do-membro";
 import { PagamentosDoMembro } from "@/features/pagamentos/pagamentos-do-membro";
 import { listarTreinos, type Treino } from "@/features/treinos/api";
+import { BadgeTipoTreino } from "@/features/treinos/badge-tipo";
 import { ApiError } from "@/lib/api";
-import { formatarData, mascaraCpf, mascaraTelefone } from "@/lib/format";
+import { formatarData, formatarMoeda, mascaraCpf, mascaraTelefone } from "@/lib/format";
 import { temAcessoFinanceiro } from "@/lib/menu";
 import { useListaPaginada } from "@/lib/use-lista-paginada";
 import { AcessoDoMembro } from "./acesso-do-membro";
@@ -28,9 +31,8 @@ import {
 } from "./api";
 import { podeGerenciarMembros } from "./permissoes";
 
-// Mesmas classes do Button (components/ui/button.tsx), para o link ter a cara de botão.
-const LINK_SECUNDARIO =
-  "rounded px-4 py-2 text-sm font-medium border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-100";
+// Link com a cara do botão secundário.
+const LINK_SECUNDARIO = classesDoBotao("secundario");
 
 // O instrutor não consulta a situação financeira nem as atividades (matriz 4.2): para ele
 // esses dois campos ficam nulos e o cabeçalho não os mostra.
@@ -117,7 +119,7 @@ function FichaCarregada({ id }: { id: string }) {
 
   switch (carga.tipo) {
     case "carregando":
-      return <p className="text-sm text-zinc-600">Carregando…</p>;
+      return <p className="text-sm text-suave">Carregando…</p>;
     case "nao-encontrado":
       return (
         <EmptyState
@@ -218,10 +220,15 @@ function CabecalhoDaFicha({ id, dados, recarregar }: ConteudoDaFichaProps) {
   }
 
   return (
-    <section aria-label="Dados do membro" className="flex flex-col gap-4">
+    <section
+      aria-label="Dados do membro"
+      className="flex flex-col gap-5 rounded-2xl border border-borda bg-white p-6"
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-xl font-semibold text-zinc-900">{membro.nome}</h2>
+        <div className="flex items-center gap-4">
+          <Avatar nome={membro.nome} />
+          <div className="flex flex-col gap-2">
+          <h2 className="font-display text-2xl font-bold tracking-[-0.02em]">{membro.nome}</h2>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={membro.ativo ? "ATIVO" : "INATIVO"} />
             {situacao && (
@@ -231,35 +238,49 @@ function CabecalhoDaFicha({ id, dados, recarregar }: ConteudoDaFichaProps) {
               />
             )}
             {situacao && situacao.pagamentosAtrasados > 0 && (
-              <span className="text-sm text-zinc-600">
+              <span className="text-sm text-suave">
                 {situacao.pagamentosAtrasados} em atraso, maior atraso de{" "}
                 {plural(situacao.maiorAtrasoDias, "dia", "dias")}
               </span>
             )}
           </div>
+          </div>
         </div>
 
         {podeGerenciar && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             <Link href={`/membros/${encodeURIComponent(id)}/editar`} className={LINK_SECUNDARIO}>
+              <Icone nome="editar" tamanho={16} />
               Editar
             </Link>
             {membro.ativo ? (
-              <Button variante="perigo" onClick={() => setConfirmar("desativar")}>
+              <Button variante="secundario" className="text-alerta" onClick={() => setConfirmar("desativar")}>
+                <Icone nome="energia" tamanho={16} />
                 Desativar
               </Button>
             ) : (
-              <Button onClick={() => setConfirmar("reativar")}>Reativar</Button>
+              <Button onClick={() => setConfirmar("reativar")}>
+                <Icone nome="energia" tamanho={16} />
+                Reativar
+              </Button>
             )}
           </div>
         )}
       </div>
 
-      <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+      <dl className="grid gap-x-6 gap-y-4 border-t border-borda pt-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
         <Dado rotulo="CPF" valor={mascaraCpf(membro.cpf)} />
         <Dado rotulo="Telefone" valor={mascaraTelefone(membro.telefone)} />
         <Dado rotulo="Endereço" valor={membro.endereco} />
         <Dado rotulo="Cadastro em" valor={formatarData(membro.dataCadastro)} />
+        <Dado
+          rotulo="Mensalidade"
+          valor={
+            membro.valorMensalidade !== null && membro.diaVencimento !== null
+              ? `${formatarMoeda(membro.valorMensalidade)}, vence todo dia ${membro.diaVencimento}`
+              : "Sem mensalidade automática"
+          }
+        />
         <Dado
           rotulo="Treino mais recente"
           valor={
@@ -320,9 +341,9 @@ function CabecalhoDaFicha({ id, dados, recarregar }: ConteudoDaFichaProps) {
 
 function Dado({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-zinc-600">{rotulo}</dt>
-      <dd className="text-zinc-900">{valor}</dd>
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-[13px] text-suave">{rotulo}</dt>
+      <dd className="font-medium text-tinta">{valor}</dd>
     </div>
   );
 }
@@ -355,7 +376,7 @@ function Abas({ abas, aba, onMudar, painel }: AbasProps) {
       <div
         role="tablist"
         aria-label="Seções da ficha"
-        className="flex gap-1 border-b border-zinc-200"
+        className="flex gap-1 overflow-x-auto border-b border-borda"
       >
         {abas.map((nome, indice) => {
           const selecionada = nome === aba;
@@ -373,10 +394,10 @@ function Abas({ abas, aba, onMudar, painel }: AbasProps) {
               tabIndex={selecionada ? 0 : -1}
               onClick={() => onMudar(nome)}
               onKeyDown={(e) => aoPressionar(e, indice)}
-              className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
+              className={`-mb-px min-h-11 cursor-pointer border-b-[3px] px-4 text-sm ${
                 selecionada
-                  ? "border-zinc-900 text-zinc-900"
-                  : "border-transparent text-zinc-600 hover:text-zinc-900"
+                  ? "border-lima font-semibold text-tinta"
+                  : "border-transparent font-medium text-suave hover:text-tinta"
               }`}
             >
               {nome}
@@ -392,7 +413,16 @@ function Abas({ abas, aba, onMudar, painel }: AbasProps) {
 }
 
 const colunasDeTreinos: Coluna<Treino>[] = [
-  { chave: "tipo", titulo: "Tipo", celula: (t) => t.tipo },
+  { chave: "tipo", titulo: "Tipo", celula: (t) => <BadgeTipoTreino tipo={t.tipo} /> },
+  {
+    chave: "descricao",
+    titulo: "Descrição",
+    celula: (t) => (
+      <span className="block max-w-xs truncate" title={t.descricao}>
+        {t.descricao}
+      </span>
+    ),
+  },
   { chave: "duracao", titulo: "Duração", celula: (t) => `${t.duracao} min` },
   { chave: "inicio", titulo: "Início", celula: (t) => formatarData(t.dataInicio) },
 ];
@@ -410,6 +440,7 @@ function TreinosDoMembro({ membroId }: { membroId: string }) {
       erro={erro}
       colunas={colunasDeTreinos}
       chaveDaLinha={(t) => t.id}
+      rotuloItens="treinos"
       vazio={<EmptyState titulo="Nenhum treino cadastrado" />}
       onMudarPagina={(page) => setFiltro({ ...filtro, page })}
     />

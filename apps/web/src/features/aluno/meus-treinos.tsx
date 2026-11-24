@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
+import { FiltroChips } from "@/components/ui/filtro-chips";
 import { OPCOES_TIPO_TREINO, ehTipoTreino, type TipoTreino } from "@/features/treinos/tipos";
 import { formatarData } from "@/lib/format";
 import { ListaTreinos } from "./lista-treinos";
@@ -106,16 +106,15 @@ export function MeusTreinos() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Select
+      <FiltroChips
         rotulo="Tipo"
-        placeholder="Todos os tipos"
         opcoes={OPCOES_TIPO_TREINO}
-        value={tipo ?? ""}
-        onChange={(e) => escolher(e.target.value)}
+        valor={tipo}
+        onMudar={(valor) => escolher(valor ?? "")}
       />
 
       {estado.situacao === "carregando" && (
-        <p className="text-sm text-zinc-600">Carregando…</p>
+        <p className="text-sm text-suave">Carregando…</p>
       )}
 
       {estado.situacao === "erro" && (
@@ -160,17 +159,17 @@ export function MeusTreinos() {
         }
       >
         {aberto && (
-          <dl className="flex flex-col gap-2 text-sm">
+          <dl className="flex flex-col gap-3 text-sm">
             <div>
-              <dt className="font-medium text-zinc-800">Início</dt>
+              <dt className="text-[13px] text-suave">Início</dt>
               <dd>{formatarData(aberto.dataInicio)}</dd>
             </div>
             <div>
-              <dt className="font-medium text-zinc-800">Duração</dt>
+              <dt className="text-[13px] text-suave">Duração</dt>
               <dd>{`${aberto.duracao} min`}</dd>
             </div>
             <div>
-              <dt className="font-medium text-zinc-800">Descrição</dt>
+              <dt className="text-[13px] text-suave">Descrição</dt>
               <dd className="whitespace-pre-line">{aberto.descricao}</dd>
             </div>
           </dl>

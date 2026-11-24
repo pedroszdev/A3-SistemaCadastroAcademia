@@ -7,12 +7,7 @@ vi.mock("@/features/dashboard/painel-dashboard", () => ({
 }));
 
 describe("DashboardPage", () => {
-  it("mostra o título", () => {
-    render(<DashboardPage />);
-
-    expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
-  });
-
+  // O título fica dentro da tela, junto do botão de ação que depende do cargo.
   it("renderiza o painel", () => {
     render(<DashboardPage />);
 

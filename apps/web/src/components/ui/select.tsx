@@ -1,36 +1,51 @@
 import type { SelectHTMLAttributes } from "react";
 import { useId } from "react";
+import {
+  bordaDoCampo,
+  CLASSES_CAMPO,
+  idsDaDescricao,
+  MolduraDoCampo,
+  type PropsDeCampo,
+} from "./campo";
 
-type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
-  rotulo: string;
-  opcoes: { valor: string; rotulo: string }[];
-  placeholder?: string;
-  erro?: string;
-};
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> &
+  Omit<PropsDeCampo, "icone"> & {
+    opcoes: { valor: string; rotulo: string }[];
+    placeholder?: string;
+  };
 
 export function Select({
   rotulo,
   opcoes,
   placeholder,
   erro,
+  ajuda,
+  obrigatorio,
+  rotuloOculto,
   id,
   className = "",
   ...props
 }: SelectProps) {
   const idGerado = useId();
   const idCampo = id ?? idGerado;
-  const idErro = `${idCampo}-erro`;
+  const { idErro, idAjuda, descritoPor } = idsDaDescricao(idCampo, erro, ajuda);
 
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={idCampo} className="text-sm font-medium text-zinc-800">
-        {rotulo}
-      </label>
+    <MolduraDoCampo
+      rotulo={rotulo}
+      rotuloOculto={rotuloOculto}
+      obrigatorio={obrigatorio}
+      idCampo={idCampo}
+      idErro={idErro}
+      idAjuda={idAjuda}
+      erro={erro}
+      ajuda={ajuda}
+    >
       <select
         id={idCampo}
         aria-invalid={erro ? "true" : undefined}
-        aria-describedby={erro ? idErro : undefined}
-        className={`rounded border border-zinc-300 px-3 py-2 text-sm ${className}`}
+        aria-describedby={descritoPor}
+        className={`${CLASSES_CAMPO} ${bordaDoCampo(erro)} h-[46px] px-3 ${className}`}
         {...props}
       >
         {placeholder && <option value="">{placeholder}</option>}
@@ -40,11 +55,6 @@ export function Select({
           </option>
         ))}
       </select>
-      {erro && (
-        <p id={idErro} className="text-sm text-red-600">
-          {erro}
-        </p>
-      )}
-    </div>
+    </MolduraDoCampo>
   );
 }

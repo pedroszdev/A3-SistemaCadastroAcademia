@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { type ReactNode, Suspense } from "react";
+import { CartaoUsuario } from "@/components/layout/cartao-usuario";
+import { Marca } from "@/components/layout/marca";
 import { MenuLateral } from "@/components/layout/menu-lateral";
 import { ToastProvider } from "@/components/ui/toast";
 import { BotaoSair } from "@/features/auth/botao-sair";
@@ -24,15 +26,17 @@ async function AreaAutenticada({ children }: { children: ReactNode }) {
 
   return (
     <UsuarioProvider usuario={usuario}>
-      <div className="flex min-h-full flex-1">
-        <aside className="flex w-56 shrink-0 flex-col gap-4 border-r border-zinc-200 p-4">
-          <p className="text-lg font-semibold text-zinc-900">Academia</p>
-          <MenuLateral cargo={cargo} />
-          <div className="mt-auto">
-            <BotaoSair />
+      <div className="flex min-h-full flex-1 flex-col md:flex-row">
+        <aside className="flex shrink-0 flex-col gap-8 bg-tinta px-4 py-6 md:sticky md:top-0 md:h-screen md:w-[248px] md:overflow-y-auto">
+          <div className="px-1.5">
+            <Marca />
           </div>
+          <MenuLateral cargo={cargo} />
+          {cargo ? <CartaoUsuario cargo={cargo} acao={<BotaoSair compacto />} /> : <BotaoSair />}
         </aside>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex min-w-0 flex-1 flex-col gap-6 px-4 pt-8 pb-12 md:px-10">
+          {children}
+        </main>
       </div>
     </UsuarioProvider>
   );
@@ -41,7 +45,7 @@ async function AreaAutenticada({ children }: { children: ReactNode }) {
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <ToastProvider>
-      <Suspense fallback={<p className="p-6 text-sm text-zinc-600">Carregando…</p>}>
+      <Suspense fallback={<p className="p-6 text-sm text-suave">Carregando…</p>}>
         <AreaAutenticada>{children}</AreaAutenticada>
       </Suspense>
     </ToastProvider>

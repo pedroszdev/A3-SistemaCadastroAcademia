@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buscarResumoDoPeriodo, listarMinhasAtividades } from "./historico";
+import {
+  buscarResumoDoPeriodo,
+  listarMinhasAtividades,
+  registrarMinhaAtividade,
+} from "./historico";
 
 function respostaJson(corpo: unknown) {
   return new Response(JSON.stringify(corpo), {
@@ -38,5 +42,16 @@ describe("api do histórico do aluno", () => {
       "/api/me/atividades?dataDe=2026-10-11&dataAte=2026-11-09&page=2&pageSize=20",
       expect.any(Object),
     );
+  });
+
+  it("registrarMinhaAtividade faz POST em /me/atividades com o corpo (RN19)", async () => {
+    fetchMock.mockResolvedValue(respostaJson({ id: "a1" }));
+    const dados = { treinoId: "t1", data: "2026-11-24", tempoExecucao: 45 };
+
+    await expect(registrarMinhaAtividade(dados)).resolves.toEqual({ id: "a1" });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/me/atividades");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(String(init?.body))).toEqual(dados);
   });
 });

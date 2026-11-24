@@ -17,7 +17,8 @@ export type Atividade = {
   data: string;
   tempoExecucao: number;
   membro: { id: string; nome: string };
-  funcionario: { id: string; nome: string };
+  // null quando o próprio aluno registrou (RN19).
+  funcionario: { id: string; nome: string } | null;
   treino: { id: string; tipo: string } | null;
 };
 

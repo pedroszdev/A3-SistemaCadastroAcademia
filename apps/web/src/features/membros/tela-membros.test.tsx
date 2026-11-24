@@ -20,6 +20,8 @@ const ana: Membro = {
   ativo: true,
   dataCadastro: "2026-01-10T00:00:00.000Z",
   acessoLiberado: true,
+  valorMensalidade: null,
+  diaVencimento: null,
 };
 const beto: Membro = {
   id: "m2",
@@ -30,6 +32,8 @@ const beto: Membro = {
   ativo: false,
   dataCadastro: "2026-02-15T00:00:00.000Z",
   acessoLiberado: false,
+  valorMensalidade: null,
+  diaVencimento: null,
 };
 
 function pagina(data: Membro[], extra: Partial<PaginaMembros> = {}): PaginaMembros {
@@ -73,13 +77,13 @@ describe("TelaMembros", () => {
     renderizar();
     await screen.findByText("Ana Souza");
 
-    await usuario.selectOptions(screen.getByLabelText("Situação"), "true");
+    await usuario.click(within(screen.getByRole("group", { name: "Situação" })).getByRole("button", { name: "Ativos" }));
     expect(listarMembros).toHaveBeenLastCalledWith({ ativo: true, page: 1 });
 
-    await usuario.selectOptions(screen.getByLabelText("Situação"), "false");
+    await usuario.click(within(screen.getByRole("group", { name: "Situação" })).getByRole("button", { name: "Inativos" }));
     expect(listarMembros).toHaveBeenLastCalledWith({ ativo: false, page: 1 });
 
-    await usuario.selectOptions(screen.getByLabelText("Situação"), "");
+    await usuario.click(within(screen.getByRole("group", { name: "Situação" })).getByRole("button", { name: "Todos" }));
     expect(listarMembros).toHaveBeenLastCalledWith({ ativo: undefined, page: 1 });
   });
 
@@ -227,7 +231,7 @@ describe("TelaMembros", () => {
       renderizar();
       await screen.findByText("Ana Souza");
 
-      await usuario.selectOptions(screen.getByLabelText("Situação"), "true");
+      await usuario.click(within(screen.getByRole("group", { name: "Situação" })).getByRole("button", { name: "Ativos" }));
       await usuario.type(screen.getByLabelText("Buscar"), "ana");
       await avancar(ESPERA_BUSCA_MS);
       expect(listarMembros).toHaveBeenLastCalledWith({ ativo: true, busca: "ana", page: 1 });
@@ -250,5 +254,22 @@ describe("TelaMembros", () => {
 
       expect(listarMembros).toHaveBeenLastCalledWith({ busca: "ana", page: 1 });
     });
+  });
+
+  it("mostra o cabeçalho e o link de edição para quem gerencia membros", async () => {
+    renderizar();
+
+    expect(screen.getByRole("heading", { level: 1, name: "Membros" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Editar Ana Souza" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/membros\/.+\/editar$/),
+    );
+  });
+
+  it("o INSTRUTOR não vê o link de edição", async () => {
+    renderizar({ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" });
+
+    expect(await screen.findByRole("link", { name: "Ver ficha de Ana Souza" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Editar Ana Souza" })).toBeNull();
   });
 });

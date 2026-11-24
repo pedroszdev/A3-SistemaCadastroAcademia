@@ -120,7 +120,7 @@ describe("TelaHistorico", () => {
     renderizar();
 
     expect(await screen.findByText("Esteira")).toBeInTheDocument();
-    for (const titulo of ["Data", "Membro", "Atividade", "Tempo", "Treino", "Funcionário"]) {
+    for (const titulo of ["Data", "Membro", "Atividade", "Tempo", "Treino", "Registrado por"]) {
       expect(screen.getByRole("columnheader", { name: titulo })).toBeInTheDocument();
     }
     expect(listarAtividades).toHaveBeenCalledWith({ page: 1 });
@@ -340,7 +340,7 @@ describe("TelaHistorico", () => {
     await screen.findByText("Esteira");
 
     const dialogo = await abrirFormEPreencher(usuario);
-    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+    await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
 
     expect(registrarAtividade).toHaveBeenCalledWith(
       expect.objectContaining({ membroId: "m-novo", atividade: "Remo", tempoExecucao: 20 }),
@@ -366,11 +366,11 @@ describe("TelaHistorico", () => {
     await screen.findByText("Esteira");
 
     const dialogo = await abrirFormEPreencher(usuario);
-    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+    await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
 
     expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
     await usuario.keyboard("{Escape}");
-    await usuario.click(screen.getByTestId("dialog-overlay"));
+    await usuario.click(screen.getByRole("button", { name: "Fechar painel" }));
     expect(screen.getByRole("dialog", { name: "Registrar atividade" })).toBeInTheDocument();
 
     await act(async () => terminar(atividade("a9")));
@@ -390,10 +390,42 @@ describe("TelaHistorico", () => {
     await screen.findByText("Esteira");
 
     const dialogo = await abrirFormEPreencher(usuario);
-    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+    await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
     expect(await within(dialogo).findByRole("alert")).toHaveTextContent("Membro inativo");
     await usuario.keyboard("{Escape}");
 
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("com o cabeçalho, mostra o título e o Registrar atividade nele", async () => {
+    const usuario = userEvent.setup();
+    render(
+      <UsuarioProvider usuario={instrutor}>
+        <ToastProvider>
+          <TelaHistorico cabecalho={{ titulo: "Histórico de atividades", descricao: "Execuções." }} />
+        </ToastProvider>
+      </UsuarioProvider>,
+    );
+    await screen.findByText("Esteira");
+
+    const cabecalho = screen.getByRole("banner");
+    expect(
+      within(cabecalho).getByRole("heading", { level: 1, name: "Histórico de atividades" }),
+    ).toBeInTheDocument();
+    await usuario.click(within(cabecalho).getByRole("button", { name: "Registrar atividade" }));
+    expect(screen.getByRole("dialog", { name: "Registrar atividade" })).toHaveTextContent(
+      "Lançada pelo instrutor ao fim do treino.",
+    );
+  });
+
+  it("a atividade registrada pelo próprio aluno aparece sem funcionário (RN19)", async () => {
+    vi.mocked(listarAtividades).mockResolvedValue(
+      pagina([atividade("a7", { atividade: "Treino do aluno", funcionario: null })]),
+    );
+    renderizar();
+    await screen.findByText("Treino do aluno");
+
+    const linha = linhaDe("Treino do aluno");
+    expect(within(linha).getByText("O próprio aluno")).toBeInTheDocument();
   });
 });

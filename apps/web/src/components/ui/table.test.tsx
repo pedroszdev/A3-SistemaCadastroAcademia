@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { type Coluna, Table } from "./table";
+import { AcoesDaLinha, type Coluna, Table } from "./table";
 
 type Membro = { id: string; nome: string };
 
@@ -120,5 +120,86 @@ describe("Table", () => {
     renderizar(3);
 
     expect(screen.getByRole("button", { name: "Próxima" })).toBeDisabled();
+  });
+});
+
+describe("Table no visual do design", () => {
+  it("mostra o intervalo da página com o nome dos itens", () => {
+    render(
+      <Table
+        colunas={COLUNAS}
+        linhas={LINHAS}
+        chaveDaLinha={(m) => m.id}
+        rotuloItens="membros"
+        paginacao={{ page: 2, pageSize: 2, total: 6, onMudarPagina: vi.fn() }}
+      />,
+    );
+
+    expect(screen.getByText("Mostrando 3–4 de 6 membros")).toBeInTheDocument();
+  });
+
+  it("numa página vazia avisa o total", () => {
+    render(
+      <Table
+        colunas={COLUNAS}
+        linhas={[]}
+        chaveDaLinha={(m) => m.id}
+        paginacao={{ page: 3, pageSize: 2, total: 4, onMudarPagina: vi.fn() }}
+      />,
+    );
+
+    expect(screen.getByText("Nenhum item nesta página (4 registros no total)")).toBeInTheDocument();
+  });
+
+  it("a coluna de ações tem título só para leitor de tela e alinha à direita", () => {
+    render(
+      <Table
+        colunas={[
+          ...COLUNAS,
+          { chave: "acoes", titulo: "Ações", acoes: true, celula: () => <button>Editar</button> },
+        ]}
+        linhas={LINHAS}
+        chaveDaLinha={(m) => m.id}
+      />,
+    );
+
+    const cabecalho = screen.getByRole("columnheader", { name: "Ações" });
+    expect(cabecalho).toHaveClass("text-right");
+    expect(within(cabecalho).getByText("Ações")).toHaveClass("sr-only");
+  });
+
+  it("sem moldura não desenha o cartão em volta", () => {
+    const { container } = render(
+      <Table colunas={COLUNAS} linhas={LINHAS} chaveDaLinha={(m) => m.id} moldura={false} />,
+    );
+
+    expect(container.firstChild).not.toHaveClass("rounded-2xl");
+  });
+});
+
+describe("AcoesDaLinha", () => {
+  it("agrupa os botões", () => {
+    render(
+      <AcoesDaLinha>
+        <button>Editar</button>
+      </AcoesDaLinha>,
+    );
+
+    expect(screen.getByRole("button", { name: "Editar" })).toBeInTheDocument();
+  });
+});
+
+describe("Table com coluna centralizada", () => {
+  it("centraliza o título e as células", () => {
+    render(
+      <Table
+        colunas={[{ chave: "nome", titulo: "Nome", centralizar: true, celula: (m) => m.nome }]}
+        linhas={LINHAS}
+        chaveDaLinha={(m) => m.id}
+      />,
+    );
+
+    expect(screen.getByRole("columnheader", { name: "Nome" })).toHaveClass("text-center");
+    expect(screen.getByRole("cell", { name: "Ana" })).toHaveClass("text-center");
   });
 });

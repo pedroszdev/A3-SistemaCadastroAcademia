@@ -4,8 +4,10 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import { Prisma } from '../generated/prisma/client';
 import { compare, getRounds } from 'bcryptjs';
 import { SALT_ROUNDS } from '../common/utils/senha';
+import { MensalidadesService } from '../mensalidades/mensalidades.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMembroDto } from './dto/create-membro.dto';
 import { QueryMembroDto } from './dto/query-membro.dto';
@@ -27,6 +29,8 @@ const membro = (extra: Record<string, unknown> = {}) => ({
   endereco: 'Rua das Flores, 100',
   ativo: true,
   dataCadastro: new Date('2026-10-01T12:00:00.000Z'),
+  valorMensalidade: null,
+  diaVencimento: null,
   senhaHash: null,
   ...extra,
 });
@@ -40,6 +44,8 @@ const resposta = (extra: Record<string, unknown> = {}) => ({
   endereco: 'Rua das Flores, 100',
   ativo: true,
   dataCadastro: new Date('2026-10-01T12:00:00.000Z'),
+  valorMensalidade: null,
+  diaVencimento: null,
   acessoLiberado: false,
   ...extra,
 });
@@ -82,7 +88,9 @@ describe('MembrosService', () => {
       create: jest.Mock;
       update: jest.Mock;
     };
+    $transaction: jest.Mock;
   };
+  let mensalidades: { garantirProxima: jest.Mock; cancelarFuturas: jest.Mock };
   let service: MembrosService;
 
   beforeEach(() => {
@@ -94,8 +102,19 @@ describe('MembrosService', () => {
         create: jest.fn(),
         update: jest.fn(),
       },
+      // A transação roda o callback com o próprio mock, como se fosse o tx.
+      $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+        callback(prisma),
+      ),
     };
-    service = new MembrosService(prisma as unknown as PrismaService);
+    mensalidades = {
+      garantirProxima: jest.fn().mockResolvedValue(true),
+      cancelarFuturas: jest.fn().mockResolvedValue(1),
+    };
+    service = new MembrosService(
+      prisma as unknown as PrismaService,
+      mensalidades as unknown as MensalidadesService,
+    );
   });
 
   describe('create', () => {
@@ -104,6 +123,8 @@ describe('MembrosService', () => {
       cpf: '52998224725',
       telefone: '48999991234',
       endereco: 'Rua das Flores, 100',
+      valorMensalidade: 120,
+      diaVencimento: 10,
     };
 
     it('cria o membro com os dados do dto', async () => {
@@ -118,6 +139,53 @@ describe('MembrosService', () => {
       expect(prisma.membro.create).toHaveBeenCalledWith({
         data: { ...dto },
         select: MEMBRO_SELECT_COM_HASH,
+      });
+    });
+
+    it('gera a primeira mensalidade na mesma transação (RN18)', async () => {
+      prisma.membro.findUnique.mockResolvedValue(null);
+      const criado = membro({
+        valorMensalidade: new Prisma.Decimal(120),
+        diaVencimento: 10,
+      });
+      prisma.membro.create.mockResolvedValue(criado);
+
+      await service.create(dto);
+
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mensalidades.garantirProxima).toHaveBeenCalledWith(
+        criado,
+        expect.any(Date),
+        prisma,
+      );
+    });
+
+    it('sem o dia de vencimento, usa o dia de hoje', async () => {
+      jest.useFakeTimers({ now: new Date('2026-11-24T15:00:00.000Z') });
+      prisma.membro.findUnique.mockResolvedValue(null);
+      prisma.membro.create.mockResolvedValue(membro());
+
+      await service.create({ ...dto, diaVencimento: undefined });
+
+      const args = primeiroArg<{ data: { diaVencimento: number } }>(
+        prisma.membro.create,
+      );
+      expect(args.data.diaVencimento).toBe(24);
+      jest.useRealTimers();
+    });
+
+    it('devolve o valor da mensalidade como número', async () => {
+      prisma.membro.findUnique.mockResolvedValue(null);
+      prisma.membro.create.mockResolvedValue(
+        membro({
+          valorMensalidade: new Prisma.Decimal('99.9'),
+          diaVencimento: 5,
+        }),
+      );
+
+      await expect(service.create(dto)).resolves.toMatchObject({
+        valorMensalidade: 99.9,
+        diaVencimento: 5,
       });
     });
 
@@ -255,9 +323,37 @@ describe('MembrosService', () => {
       );
       expect(prisma.membro.update).toHaveBeenCalledWith({
         where: { id: ID },
-        data: { nome: 'Ana Paula', telefone: undefined, endereco: undefined },
+        data: {
+          nome: 'Ana Paula',
+          telefone: undefined,
+          endereco: undefined,
+          valorMensalidade: undefined,
+          diaVencimento: undefined,
+        },
         select: MEMBRO_SELECT_COM_HASH,
       });
+    });
+
+    it('atualiza o plano e garante a próxima cobrança do membro ativo (RN18)', async () => {
+      prisma.membro.findUnique.mockResolvedValue(membro());
+      const atualizado = membro({
+        valorMensalidade: new Prisma.Decimal(150),
+        diaVencimento: 5,
+      });
+      prisma.membro.update.mockResolvedValue(atualizado);
+
+      await service.update(ID, { valorMensalidade: 150, diaVencimento: 5 });
+
+      expect(mensalidades.garantirProxima).toHaveBeenCalledWith(atualizado);
+    });
+
+    it('não gera cobrança para o membro inativo', async () => {
+      prisma.membro.findUnique.mockResolvedValue(membro({ ativo: false }));
+      prisma.membro.update.mockResolvedValue(membro({ ativo: false }));
+
+      await service.update(ID, { valorMensalidade: 150 });
+
+      expect(mensalidades.garantirProxima).not.toHaveBeenCalled();
     });
 
     it('não repassa o CPF ao Prisma (RN02)', async () => {
@@ -293,7 +389,42 @@ describe('MembrosService', () => {
         data: { ativo },
         select: MEMBRO_SELECT_COM_HASH,
       });
+      // RN18: só quem volta a ficar ativo ganha a próxima cobrança.
+      expect(mensalidades.garantirProxima).toHaveBeenCalledTimes(ativo ? 1 : 0);
     });
+
+    if (ativo) {
+      it('RN18: na reativação, a cobrança do mês cancelada não impede a nova', async () => {
+        const reativado = membro({ ativo });
+        prisma.membro.findUnique.mockResolvedValue(membro({ ativo: !ativo }));
+        prisma.membro.update.mockResolvedValue(reativado);
+
+        await service[metodo](ID);
+
+        expect(mensalidades.garantirProxima).toHaveBeenCalledWith(
+          reativado,
+          undefined,
+          undefined,
+          { ignorarCanceladas: true },
+        );
+        expect(mensalidades.cancelarFuturas).not.toHaveBeenCalled();
+      });
+    } else {
+      it('RN18: cancela as cobranças que ainda não venceram, na mesma transação', async () => {
+        prisma.membro.findUnique.mockResolvedValue(membro({ ativo: !ativo }));
+        prisma.membro.update.mockResolvedValue(membro({ ativo }));
+
+        await service[metodo](ID);
+
+        expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+        expect(mensalidades.cancelarFuturas).toHaveBeenCalledTimes(1);
+        expect(mensalidades.cancelarFuturas).toHaveBeenCalledWith(
+          ID,
+          expect.any(Date),
+          prisma,
+        );
+      });
+    }
 
     it('lança 404 quando não existe', async () => {
       prisma.membro.findUnique.mockResolvedValue(null);

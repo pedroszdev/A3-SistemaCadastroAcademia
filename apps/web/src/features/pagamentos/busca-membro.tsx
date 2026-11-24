@@ -19,6 +19,14 @@ type BuscaMembroProps = {
   incluirInativos?: boolean;
   // Durante o envio do formulário em volta, o membro escolhido não pode ser trocado.
   desabilitado?: boolean;
+  // Texto de apoio do campo (ex.: "Membros inativos não aparecem.").
+  ajuda?: string;
+  // Na barra de filtros o rótulo fica só para leitor de tela.
+  rotuloOculto?: boolean;
+  placeholder?: string;
+  rotulo?: string;
+  // Marca o rótulo com "*" nos formulários.
+  obrigatorio?: boolean;
 };
 
 type Resultado = { termo: string; membros: MembroBusca[]; total: number };
@@ -30,6 +38,11 @@ export function BuscaMembro({
   erro,
   incluirInativos = false,
   desabilitado = false,
+  ajuda = "Busque pelo nome ou CPF.",
+  rotuloOculto = false,
+  placeholder = "Nome ou CPF",
+  rotulo = "Membro",
+  obrigatorio = false,
 }: BuscaMembroProps) {
   const [texto, setTexto] = useState("");
   const [resultado, setResultado] = useState<Resultado | null>(null);
@@ -60,13 +73,26 @@ export function BuscaMembro({
 
   if (selecionado) {
     return (
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-zinc-800">Membro</span>
-        <div className="flex items-center justify-between gap-2 rounded border border-zinc-300 px-3 py-2">
-          <p className="text-sm">
+      <div className="flex flex-col gap-1.5">
+        <span
+          className={
+            rotuloOculto
+              ? "sr-only"
+              : `text-sm font-semibold ${obrigatorio ? "after:text-alerta after:content-['_*']" : ""}`
+          }
+        >
+          {rotulo}
+        </span>
+        <div className="flex min-h-[46px] items-center justify-between gap-2 rounded-[10px] border border-borda-campo bg-white py-1 pr-1 pl-3.5">
+          <p className="truncate text-[15px] font-semibold">
             {selecionado.nome} · {mascaraCpf(selecionado.cpf)}
           </p>
-          <Button variante="secundario" onClick={() => onSelecionar(null)} disabled={desabilitado}>
+          <Button
+            variante="secundario"
+            tamanho="pequeno"
+            onClick={() => onSelecionar(null)}
+            disabled={desabilitado}
+          >
             Trocar
           </Button>
         </div>
@@ -86,10 +112,15 @@ export function BuscaMembro({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="relative flex flex-col gap-2">
       <Input
-        rotulo="Membro"
-        placeholder="Nome ou CPF"
+        rotulo={rotulo}
+        rotuloOculto={rotuloOculto}
+        obrigatorio={obrigatorio}
+        icone="busca"
+        type="search"
+        placeholder={placeholder}
+        ajuda={rotuloOculto ? undefined : ajuda}
         autoComplete="off"
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
@@ -105,17 +136,20 @@ export function BuscaMembro({
         </p>
       )}
       {membros && membros.length === 0 && (
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-suave">
           {incluirInativos ? "Nenhum membro encontrado" : "Nenhum membro ativo encontrado"}
         </p>
       )}
       {membros && membros.length > 0 && (
-        <ul aria-label="Membros encontrados" className="flex flex-col gap-1">
+        <ul
+          aria-label="Membros encontrados"
+          className="flex flex-col overflow-hidden rounded-xl border border-borda bg-white shadow-sm"
+        >
           {membros.map((membro) => (
             <li key={membro.id}>
               <button
                 type="button"
-                className="w-full rounded border border-zinc-300 px-3 py-2 text-left text-sm hover:bg-zinc-100"
+                className="w-full cursor-pointer border-b border-borda px-3.5 py-2.5 text-left text-sm last:border-b-0 hover:bg-fundo-2"
                 onClick={() => escolher(membro)}
               >
                 {membro.nome} · {mascaraCpf(membro.cpf)}
@@ -125,7 +159,7 @@ export function BuscaMembro({
         </ul>
       )}
       {doTermo && doTermo.total > doTermo.membros.length && (
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-suave">
           Mostrando {doTermo.membros.length} de {doTermo.total}. Refine a busca para ver os outros.
         </p>
       )}

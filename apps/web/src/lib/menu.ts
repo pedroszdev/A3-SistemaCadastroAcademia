@@ -31,6 +31,8 @@ export const ITENS_MENU: readonly ItemMenu[] = [
   { rotulo: "Pagamentos", href: "/pagamentos", cargos: CARGOS_FINANCEIRO },
   { rotulo: "Histórico", href: "/atividades", cargos: TODOS },
   { rotulo: "Funcionários", href: "/funcionarios", cargos: ["ADMIN"] },
+  // RN20: cada um vê e muda os próprios dados.
+  { rotulo: "Meus dados", href: "/perfil", cargos: TODOS },
 ];
 
 export function itensDoMenu(cargo: Cargo | null): ItemMenu[] {
@@ -43,6 +45,8 @@ export type ItemMenuAluno = Pick<ItemMenu, "rotulo" | "href">;
 export const ITENS_MENU_ALUNO: readonly ItemMenuAluno[] = [
   { rotulo: "Meus treinos", href: "/aluno/treinos" },
   { rotulo: "Meu histórico", href: "/aluno/historico" },
+  { rotulo: "Pagamentos", href: "/aluno/pagamentos" },
+  { rotulo: "Meus dados", href: "/aluno/dados" },
 ];
 
 export function estaAtivo(pathname: string, href: string): boolean {

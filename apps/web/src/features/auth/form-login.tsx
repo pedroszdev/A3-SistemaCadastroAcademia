@@ -2,6 +2,7 @@
 
 import { type FormEvent, type KeyboardEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Icone } from "@/components/ui/icone";
 import { Input } from "@/components/ui/input";
 import { apenasDigitos, mascaraCpf } from "@/lib/format";
 import { ROTA_ALUNO, ROTA_INICIAL } from "@/lib/protecao-rotas";
@@ -76,11 +77,11 @@ export function FormLogin() {
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-7">
       <div
         role="tablist"
         aria-label="Tipo de acesso"
-        className="mb-4 grid grid-cols-2 gap-1 rounded border border-zinc-200 p-1"
+        className="grid grid-cols-2 gap-1 rounded-xl bg-fundo-3 p-1"
       >
         {ABAS.map((item) => (
           <button
@@ -94,10 +95,10 @@ export function FormLogin() {
             disabled={enviando}
             onClick={() => trocarAba(item.aba)}
             onKeyDown={aoTeclarNaAba}
-            className={`rounded px-3 py-2 text-sm font-medium ${
+            className={`min-h-11 cursor-pointer rounded-[9px] text-sm ${
               aba === item.aba
-                ? "bg-zinc-900 text-white"
-                : "text-zinc-700 hover:bg-zinc-100"
+                ? "bg-white font-semibold text-tinta shadow-sm"
+                : "font-medium text-suave hover:text-tinta"
             }`}
           >
             {item.rotulo}
@@ -110,26 +111,40 @@ export function FormLogin() {
         role="tabpanel"
         aria-labelledby={ABAS.find((item) => item.aba === aba)?.id}
         onSubmit={aoEnviar}
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-[18px]"
       >
         {aba === "ALUNO" ? (
           <Input
             rotulo="CPF"
             name="cpf"
+            icone="usuario"
+            obrigatorio
             inputMode="numeric"
             autoComplete="username"
             placeholder="000.000.000-00"
+            ajuda="Só números ou com pontos e traço."
             value={cpf}
             onChange={(e) => setCpf(mascaraCpf(e.target.value))}
             required
           />
         ) : (
-          <Input rotulo="Login" name="login" autoComplete="username" required />
+          <Input
+            rotulo="Login"
+            name="login"
+            icone="usuario"
+            obrigatorio
+            placeholder="ex.: recepcao"
+            autoComplete="username"
+            required
+          />
         )}
         <Input
           rotulo="Senha"
           name="senha"
           type="password"
+          icone="cadeado"
+          obrigatorio
+          placeholder="Sua senha"
           autoComplete="current-password"
           required
         />
@@ -138,10 +153,19 @@ export function FormLogin() {
             {erro}
           </p>
         )}
-        <Button type="submit" disabled={enviando}>
+        <Button type="submit" disabled={enviando} className="min-h-[50px] rounded-xl text-[15px] font-bold">
           {enviando ? "Entrando…" : "Entrar"}
+          <Icone nome="proximo" tamanho={16} />
         </Button>
       </form>
-    </>
+      {aba === "ALUNO" ? (
+        <p className="rounded-xl bg-lima-fundo px-4 py-3.5 text-sm leading-relaxed text-lima-texto">
+          O acesso do aluno é liberado pela recepção no cadastro. Se ainda não tem senha, fale
+          com a recepção.
+        </p>
+      ) : (
+        <p className="text-sm text-suave">Esqueceu a senha? Peça ao administrador para redefinir.</p>
+      )}
+    </div>
   );
 }

@@ -66,16 +66,21 @@ export function FormFuncionario({
   }
 
   return (
-    <form onSubmit={aoEnviar} className="flex flex-col gap-4">
+    <form onSubmit={aoEnviar} className="flex flex-col gap-[18px]">
       <Input
         rotulo="Nome"
         name="nome"
+        obrigatorio
+        placeholder="Nome completo"
         defaultValue={funcionario?.nome}
         erro={erros.nome}
       />
       <Input
         rotulo="Login"
         name="login"
+        obrigatorio={modo === "criar"}
+        placeholder="ex.: joao.silva"
+        ajuda={modo === "criar" ? "Único no sistema. Usado para entrar." : "O login não muda."}
         autoComplete="off"
         defaultValue={funcionario?.login}
         disabled={modo === "editar"}
@@ -84,6 +89,7 @@ export function FormFuncionario({
       <Select
         rotulo="Cargo"
         name="cargo"
+        obrigatorio
         placeholder="Selecione"
         opcoes={OPCOES_CARGO}
         defaultValue={funcionario?.cargo ?? ""}
@@ -93,6 +99,8 @@ export function FormFuncionario({
         rotulo={modo === "editar" ? "Nova senha (deixe em branco para manter)" : "Senha"}
         name="senha"
         type="password"
+        obrigatorio={modo === "criar"}
+        placeholder="Mínimo de 8 caracteres"
         autoComplete="new-password"
         erro={erros.senha}
       />

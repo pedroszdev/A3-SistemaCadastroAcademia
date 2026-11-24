@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useUsuario } from "@/features/auth/usuario";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { Pessoa } from "@/components/ui/avatar";
+import { LinkIcone } from "@/components/ui/botao-icone";
+import { classesDoBotao } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { BarraDeFiltros, FiltroChips } from "@/components/ui/filtro-chips";
+import { Icone } from "@/components/ui/icone";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TabelaPaginada } from "@/components/ui/tabela-paginada";
-import type { Coluna } from "@/components/ui/table";
-import { mascaraCpf, mascaraTelefone } from "@/lib/format";
+import { AcoesDaLinha, type Coluna } from "@/components/ui/table";
+import { useUsuario } from "@/features/auth/usuario";
+import { formatarData, mascaraCpf, mascaraTelefone } from "@/lib/format";
 import { useListaPaginada } from "@/lib/use-lista-paginada";
 import { listarMembros, type Membro } from "./api";
 import { podeGerenciarMembros } from "./permissoes";
@@ -17,42 +22,53 @@ import { podeGerenciarMembros } from "./permissoes";
 export const ESPERA_BUSCA_MS = 300;
 
 const OPCOES_SITUACAO = [
-  { valor: "true", rotulo: "Ativos" },
-  { valor: "false", rotulo: "Inativos" },
-];
+  { valor: "ativos", rotulo: "Ativos" },
+  { valor: "inativos", rotulo: "Inativos" },
+] as const;
 
-// Mesmas classes do Button (components/ui/button.tsx), para o link ter a cara de botão.
-const LINK_PRIMARIO =
-  "rounded px-4 py-2 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-700";
-const LINK_SECUNDARIO =
-  "rounded px-4 py-2 text-sm font-medium border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-100";
+type Situacao = (typeof OPCOES_SITUACAO)[number]["valor"];
 
-const colunas: Coluna<Membro>[] = [
-  { chave: "nome", titulo: "Nome", celula: (m) => m.nome },
-  { chave: "cpf", titulo: "CPF", celula: (m) => mascaraCpf(m.cpf) },
-  { chave: "telefone", titulo: "Telefone", celula: (m) => mascaraTelefone(m.telefone) },
-  {
-    chave: "situacao",
-    titulo: "Situação",
-    celula: (m) => <StatusBadge status={m.ativo ? "ATIVO" : "INATIVO"} />,
-  },
-  {
-    chave: "acoes",
-    titulo: "Ações",
-    celula: (m) => (
-      <Link
-        href={`/membros/${encodeURIComponent(m.id)}`}
-        aria-label={`Ver ficha de ${m.nome}`}
-        className={LINK_SECUNDARIO}
-      >
-        Ver ficha
-      </Link>
-    ),
-  },
-];
+function colunasDaLista(podeEditar: boolean): Coluna<Membro>[] {
+  return [
+    { chave: "nome", titulo: "Membro", celula: (m) => <Pessoa nome={m.nome} /> },
+    {
+      chave: "cpf",
+      titulo: "CPF",
+      celula: (m) => <span className="tabular-nums">{mascaraCpf(m.cpf)}</span>,
+    },
+    { chave: "telefone", titulo: "Telefone", celula: (m) => mascaraTelefone(m.telefone) },
+    { chave: "cadastro", titulo: "Cadastro", celula: (m) => formatarData(m.dataCadastro) },
+    {
+      chave: "situacao",
+      titulo: "Status",
+      celula: (m) => <StatusBadge status={m.ativo ? "ATIVO" : "INATIVO"} />,
+    },
+    {
+      chave: "acoes",
+      titulo: "Ações",
+      acoes: true,
+      celula: (m) => {
+        const id = encodeURIComponent(m.id);
+        return (
+          <AcoesDaLinha>
+            <LinkIcone icone="olho" rotulo={`Ver ficha de ${m.nome}`} href={`/membros/${id}`} />
+            {podeEditar && (
+              <LinkIcone
+                icone="editar"
+                rotulo={`Editar ${m.nome}`}
+                href={`/membros/${id}/editar`}
+              />
+            )}
+          </AcoesDaLinha>
+        );
+      },
+    },
+  ];
+}
 
 export function TelaMembros() {
   const usuario = useUsuario();
+  const podeEditar = podeGerenciarMembros(usuario);
   const { filtro, setFiltro, pagina, erro } = useListaPaginada(listarMembros, { page: 1 });
   const [texto, setTexto] = useState("");
 
@@ -67,45 +83,65 @@ export function TelaMembros() {
     return () => clearTimeout(timer);
   }, [texto, setFiltro]);
 
+  let situacao: Situacao | undefined;
+  if (filtro.ativo !== undefined) situacao = filtro.ativo ? "ativos" : "inativos";
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-4">
-        <Input
-          rotulo="Buscar"
-          placeholder="Nome ou CPF"
-          type="search"
-          autoComplete="off"
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-        />
-        <Select
+    <div className="flex flex-col gap-6">
+      <CabecalhoPagina
+        titulo="Membros"
+        descricao="Cadastro e situação de cada aluno da academia."
+        acoes={
+          podeEditar && (
+            <Link href="/membros/novo" className={classesDoBotao("primario")}>
+              <Icone nome="mais" tamanho={16} />
+              <span>Novo membro</span>
+            </Link>
+          )
+        }
+      />
+
+      <BarraDeFiltros>
+        <div className="max-w-[420px] flex-[1_1_320px]">
+          <Input
+            rotulo="Buscar"
+            rotuloOculto
+            icone="busca"
+            placeholder="Buscar por nome ou CPF"
+            type="search"
+            autoComplete="off"
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+          />
+        </div>
+        <FiltroChips
           rotulo="Situação"
-          placeholder="Todas"
           opcoes={OPCOES_SITUACAO}
-          value={filtro.ativo === undefined ? "" : String(filtro.ativo)}
-          onChange={(e) =>
+          valor={situacao}
+          todosNoFim
+          onMudar={(valor) =>
             setFiltro({
               ...filtro,
-              ativo: e.target.value === "" ? undefined : e.target.value === "true",
+              ativo: valor === undefined ? undefined : valor === "ativos",
               page: 1,
             })
           }
         />
-        {podeGerenciarMembros(usuario) && (
-          <Link href="/membros/novo" className={`ml-auto ${LINK_PRIMARIO}`}>
-            Novo membro
-          </Link>
-        )}
-      </div>
+      </BarraDeFiltros>
 
       <TabelaPaginada
         pagina={pagina}
         erro={erro}
-        colunas={colunas}
+        colunas={colunasDaLista(podeEditar)}
         chaveDaLinha={(m) => m.id}
+        rotuloItens="membros"
         vazio={<EmptyState titulo="Nenhum membro encontrado" />}
         onMudarPagina={(page) => setFiltro({ ...filtro, page })}
       />
+
+      <p className="text-[13px] text-suave">
+        Membros não são excluídos: desativar preserva treinos, pagamentos e histórico.
+      </p>
     </div>
   );
 }

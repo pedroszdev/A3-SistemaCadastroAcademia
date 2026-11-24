@@ -9,13 +9,23 @@ import { LoginDto } from './dto/login.dto';
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
 
 describe('AuthController', () => {
-  let auth: { login: jest.Mock; loginAluno: jest.Mock };
+  let auth: {
+    login: jest.Mock;
+    loginAluno: jest.Mock;
+    atualizarMeusDados: jest.Mock;
+    trocarSenha: jest.Mock;
+  };
   let funcionarios: { findOne: jest.Mock };
   let membros: { findOne: jest.Mock };
   let controller: AuthController;
 
   beforeEach(() => {
-    auth = { login: jest.fn(), loginAluno: jest.fn() };
+    auth = {
+      login: jest.fn(),
+      loginAluno: jest.fn(),
+      atualizarMeusDados: jest.fn(),
+      trocarSenha: jest.fn(),
+    };
     funcionarios = { findOne: jest.fn() };
     membros = { findOne: jest.fn() };
     controller = new AuthController(
@@ -60,5 +70,27 @@ describe('AuthController', () => {
     await expect(controller.me({ id: ID, tipo: 'ALUNO' })).resolves.toBe(aluno);
     expect(membros.findOne).toHaveBeenCalledWith(ID);
     expect(funcionarios.findOne).not.toHaveBeenCalled();
+  });
+
+  describe('meus dados (RN20)', () => {
+    const aluno = { id: ID, tipo: 'ALUNO' } as const;
+
+    it('atualizarMe grava e devolve o perfil atualizado', async () => {
+      const perfil = { id: ID, telefone: '48999990000' };
+      membros.findOne.mockResolvedValue(perfil);
+      const dto = { telefone: '48999990000' };
+
+      await expect(controller.atualizarMe(aluno, dto)).resolves.toBe(perfil);
+      expect(auth.atualizarMeusDados).toHaveBeenCalledWith(aluno, dto);
+      expect(membros.findOne).toHaveBeenCalledWith(ID);
+    });
+
+    it('trocarSenha delega ao service', async () => {
+      const dto = { senhaAtual: 'senha1234', novaSenha: 'nova-senha-1' };
+      auth.trocarSenha.mockResolvedValue(undefined);
+
+      await expect(controller.trocarSenha(aluno, dto)).resolves.toBeUndefined();
+      expect(auth.trocarSenha).toHaveBeenCalledWith(aluno, dto);
+    });
   });
 });

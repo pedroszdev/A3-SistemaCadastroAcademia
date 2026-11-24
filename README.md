@@ -71,6 +71,7 @@ O seed também cria:
 
 - 10 membros, 2 deles inativos; Carla Mendes tem 5 dias de atraso, ainda na tolerância (em dia);
 - 9 treinos, 15 pagamentos nos 4 status (PAGO, PENDENTE, ATRASADO, CANCELADO) e 30 atividades, 3 delas hoje;
+- todos os membros com mensalidade de R$ 120,00 (RN18): ao subir, a API cria a próxima cobrança de cada membro ativo que ainda não tem uma no mês do próximo vencimento;
 - todas as datas são relativas a hoje, então a demonstração vale em qualquer dia.
 
 Rodar de novo não duplica nada: os funcionários que já existem ficam como estão (senha incluída) e os 10 membros do seed voltam ao estado de demonstração, com treinos, pagamentos e atividades recriados. O seed reconhece os membros dele pelo CPF, então membros com outros CPFs não são tocados.

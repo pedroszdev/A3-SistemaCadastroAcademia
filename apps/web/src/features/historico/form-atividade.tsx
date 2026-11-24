@@ -140,13 +140,14 @@ export function FormAtividade({
   return (
     // noValidate: o max da data e os limites do tempo só ajudam no campo; quem barra e mostra
     // a mensagem igual à da API é o validarAtividade.
-    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
+    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-[18px]">
       {!membroFixo && (
         <BuscaMembro
           selecionado={membro}
           onSelecionar={aoSelecionarMembro}
           erro={erros.membro}
           desabilitado={enviando}
+          obrigatorio
         />
       )}
       {bloqueado && <AvisoInadimplencia maiorAtrasoDias={situacao?.maiorAtrasoDias} />}
@@ -164,34 +165,42 @@ export function FormAtividade({
       />
       <Input
         rotulo="Atividade"
+        obrigatorio
+        placeholder="Ex.: Treino full body"
         value={atividade}
         onChange={(e) => setAtividade(e.target.value)}
         erro={erros.atividade}
       />
-      <Input
-        rotulo="Data"
-        type="date"
-        max={hoje}
-        value={data}
-        onChange={(e) => setData(e.target.value)}
-        erro={erros.data}
-      />
-      <Input
-        rotulo="Tempo (min)"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        max={600}
-        step={1}
-        value={tempo}
-        onChange={(e) => setTempo(e.target.value)}
-        erro={erros.tempoExecucao}
-      />
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4">
+        <Input
+          rotulo="Data"
+          obrigatorio
+          type="date"
+          max={hoje}
+          value={data}
+          onChange={(e) => setData(e.target.value)}
+          erro={erros.data}
+        />
+        <Input
+          rotulo="Tempo (min)"
+          obrigatorio
+          type="number"
+          inputMode="numeric"
+          placeholder="50"
+          min={1}
+          max={600}
+          step={1}
+          value={tempo}
+          onChange={(e) => setTempo(e.target.value)}
+          erro={erros.tempoExecucao}
+        />
+      </div>
       <RodapeFormulario
         erro={erroApi}
         enviando={enviando}
         desabilitado={bloqueado}
         onCancelar={onCancelar}
+        rotuloSalvar="Registrar"
       />
     </form>
   );

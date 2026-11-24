@@ -48,6 +48,7 @@ describe('MembrosController', () => {
       cpf: '52998224725',
       telefone: '48999991234',
       endereco: 'Rua das Flores, 100',
+      valorMensalidade: 120,
     };
     const criado = { id: ID };
     service.create.mockResolvedValue(criado);

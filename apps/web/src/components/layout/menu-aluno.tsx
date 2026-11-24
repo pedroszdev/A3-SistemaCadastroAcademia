@@ -9,18 +9,18 @@ export function MenuAluno() {
 
   return (
     <nav aria-label="Menu do aluno">
-      <ul className="flex gap-1 overflow-x-auto">
+      <ul className="-mx-5 flex gap-1 overflow-x-auto px-5">
         {ITENS_MENU_ALUNO.map((item) => {
           const ativo = estaAtivo(pathname, item.href);
           return (
-            <li key={item.href}>
+            <li key={item.href} className="flex-1 shrink-0">
               <Link
                 href={item.href}
                 aria-current={ativo ? "page" : undefined}
-                className={`block whitespace-nowrap border-b-2 px-3 py-2 text-sm ${
+                className={`flex min-h-[46px] items-center justify-center border-b-[3px] px-3 text-sm whitespace-nowrap no-underline ${
                   ativo
-                    ? "border-zinc-900 font-medium text-zinc-900"
-                    : "border-transparent text-zinc-600 hover:text-zinc-900"
+                    ? "border-lima font-semibold text-white"
+                    : "border-transparent font-medium text-suave-escuro-2 hover:text-white"
                 }`}
               >
                 {item.rotulo}

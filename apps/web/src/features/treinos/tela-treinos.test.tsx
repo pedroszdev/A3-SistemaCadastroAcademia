@@ -143,10 +143,10 @@ describe("TelaTreinos", () => {
       await screen.findByText("Fulano Silva");
       await usuario.click(screen.getByRole("button", { name: "Próxima" }));
 
-      await usuario.selectOptions(screen.getByLabelText("Tipo"), "Musculação");
+      await usuario.click(within(screen.getByRole("group", { name: "Tipo" })).getByRole("button", { name: "Musculação" }));
       expect(listarTreinos).toHaveBeenLastCalledWith({ tipo: "Musculação", page: 1 });
 
-      await usuario.selectOptions(screen.getByLabelText("Tipo"), "");
+      await usuario.click(within(screen.getByRole("group", { name: "Tipo" })).getByRole("button", { name: "Todos" }));
       expect(listarTreinos).toHaveBeenLastCalledWith({ tipo: undefined, page: 1 });
     });
 
@@ -154,13 +154,12 @@ describe("TelaTreinos", () => {
       renderizar();
       await screen.findByText("Fulano Silva");
 
-      const opcoes = Array.from(
-        (screen.getByLabelText("Tipo") as HTMLSelectElement).options,
-        (opcao) => opcao.textContent,
-      );
+      const opcoes = within(screen.getByRole("group", { name: "Tipo" }))
+        .getAllByRole("button")
+        .map((botao) => botao.textContent);
 
       expect(opcoes).toEqual([
-        "Todos os tipos",
+        "Todos",
         "Musculação",
         "Cardio",
         "Funcional",
@@ -195,7 +194,7 @@ describe("TelaTreinos", () => {
       renderizar();
       await screen.findByText("Fulano Silva");
 
-      await usuario.selectOptions(screen.getByLabelText("Tipo"), "Cardio");
+      await usuario.click(within(screen.getByRole("group", { name: "Tipo" })).getByRole("button", { name: "Cardio" }));
       await usuario.type(screen.getByLabelText("Membro"), "Ful");
       await usuario.click(await screen.findByRole("button", { name: /Fulano Silva · / }));
 
@@ -380,10 +379,10 @@ describe("TelaTreinos", () => {
       fireEvent.change(within(dialogo).getByLabelText("Duração (min)"), {
         target: { value: "45" },
       });
-      fireEvent.change(within(dialogo).getByLabelText("Início"), {
+      fireEvent.change(within(dialogo).getByLabelText("Data de início"), {
         target: { value: "2026-11-15" },
       });
-      await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+      await usuario.click(within(dialogo).getByRole("button", { name: "Salvar treino" }));
 
       expect(await screen.findByText("Treino cadastrado.")).toBeInTheDocument();
       expect(criarTreino).toHaveBeenCalledWith({
@@ -411,7 +410,7 @@ describe("TelaTreinos", () => {
       const dialogo = screen.getByRole("dialog", { name: "Editar treino" });
       expect(within(dialogo).getByLabelText("Descrição")).toHaveValue("Esteira e bicicleta");
       await usuario.selectOptions(within(dialogo).getByLabelText("Tipo"), "Funcional");
-      await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+      await usuario.click(within(dialogo).getByRole("button", { name: "Salvar treino" }));
 
       expect(await screen.findByText("Treino atualizado.")).toBeInTheDocument();
       expect(atualizarTreino).toHaveBeenCalledWith("t1", {
@@ -436,6 +435,43 @@ describe("TelaTreinos", () => {
 
       expect(screen.queryByRole("dialog")).toBeNull();
       expect(criarTreino).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("cabeçalho da página", () => {
+    it("com o cabeçalho, mostra o título e o Novo treino nele", async () => {
+      const usuario = userEvent.setup();
+      render(
+        <UsuarioProvider usuario={instrutor}>
+          <ToastProvider>
+            <TelaTreinos cabecalho={{ titulo: "Treinos", descricao: "Fichas de treino." }} />
+          </ToastProvider>
+        </UsuarioProvider>,
+      );
+      await screen.findByText("Fulano Silva");
+
+      const cabecalho = screen.getByRole("banner");
+      expect(within(cabecalho).getByRole("heading", { level: 1, name: "Treinos" })).toBeInTheDocument();
+      expect(within(cabecalho).getByText("Fichas de treino.")).toBeInTheDocument();
+
+      await usuario.click(within(cabecalho).getByRole("button", { name: "Novo treino" }));
+      expect(screen.getByRole("dialog", { name: "Novo treino" })).toHaveTextContent(
+        "Ficha planejada para um membro ativo.",
+      );
+    });
+
+    it("a RECEPCIONISTA vê o cabeçalho sem o botão", async () => {
+      render(
+        <UsuarioProvider usuario={recepcionista}>
+          <ToastProvider>
+            <TelaTreinos cabecalho={{ titulo: "Treinos" }} />
+          </ToastProvider>
+        </UsuarioProvider>,
+      );
+      await screen.findByText("Fulano Silva");
+
+      expect(screen.getByRole("heading", { level: 1, name: "Treinos" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Novo treino" })).toBeNull();
     });
   });
 });
