@@ -1,11 +1,35 @@
-const STATUS = {
-  PENDENTE: { texto: "Pendente", cor: "bg-yellow-100 text-yellow-800" },
-  PAGO: { texto: "Pago", cor: "bg-green-100 text-green-800" },
-  ATRASADO: { texto: "Atrasado", cor: "bg-red-100 text-red-800" },
-  CANCELADO: { texto: "Cancelado", cor: "bg-zinc-100 text-zinc-700" },
-  ATIVO: { texto: "Ativo", cor: "bg-green-100 text-green-800" },
-  INATIVO: { texto: "Inativo", cor: "bg-zinc-100 text-zinc-700" },
+import type { ReactNode } from "react";
+
+export const TONS_BADGE = {
+  sucesso: "bg-sucesso-fundo text-sucesso",
+  alerta: "bg-alerta-fundo text-alerta",
+  info: "bg-info-fundo text-info",
+  neutro: "bg-neutro-fundo text-neutro",
+  lima: "bg-lima-fundo text-lima-texto",
+  roxo: "bg-roxo-fundo text-roxo",
+  escuro: "bg-tinta text-white",
 };
+
+export type TomBadge = keyof typeof TONS_BADGE;
+
+export function Badge({ tom, children }: { tom: TomBadge; children: ReactNode }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-[3px] text-xs font-semibold ${TONS_BADGE[tom]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+const STATUS = {
+  PENDENTE: { texto: "Pendente", tom: "info" },
+  PAGO: { texto: "Pago", tom: "sucesso" },
+  ATRASADO: { texto: "Atrasado", tom: "alerta" },
+  CANCELADO: { texto: "Cancelado", tom: "neutro" },
+  ATIVO: { texto: "Ativo", tom: "sucesso" },
+  INATIVO: { texto: "Inativo", tom: "neutro" },
+} satisfies Record<string, { texto: string; tom: TomBadge }>;
 
 type StatusBadgeProps = {
   status: keyof typeof STATUS;
@@ -13,13 +37,7 @@ type StatusBadgeProps = {
 };
 
 export function StatusBadge({ status, rotulo }: StatusBadgeProps) {
-  const { texto, cor } = STATUS[status];
+  const { texto, tom } = STATUS[status];
 
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${cor}`}
-    >
-      {rotulo ?? texto}
-    </span>
-  );
+  return <Badge tom={tom}>{rotulo ?? texto}</Badge>;
 }

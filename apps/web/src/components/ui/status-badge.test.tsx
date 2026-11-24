@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { StatusBadge } from "./status-badge";
+import { Badge, StatusBadge } from "./status-badge";
 
 describe("StatusBadge", () => {
   it.each([
@@ -19,7 +19,7 @@ describe("StatusBadge", () => {
   it("usa a cor do status", () => {
     render(<StatusBadge status="PAGO" />);
 
-    expect(screen.getByText("Pago")).toHaveClass("bg-green-100");
+    expect(screen.getByText("Pago")).toHaveClass("bg-sucesso-fundo");
   });
 
   it("deixa o rotulo substituir o texto", () => {
@@ -27,5 +27,13 @@ describe("StatusBadge", () => {
 
     expect(screen.getByText("Atrasado há 12 dias")).toBeInTheDocument();
     expect(screen.queryByText("Atrasado")).toBeNull();
+  });
+});
+
+describe("Badge", () => {
+  it("aplica o tom", () => {
+    render(<Badge tom="roxo">Alongamento</Badge>);
+
+    expect(screen.getByText("Alongamento")).toHaveClass("bg-roxo-fundo");
   });
 });
