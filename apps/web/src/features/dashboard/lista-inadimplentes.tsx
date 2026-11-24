@@ -1,36 +1,42 @@
 import Link from "next/link";
+import { Avatar } from "@/components/ui/avatar";
+import { Cartao } from "@/components/ui/cartao";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Table } from "@/components/ui/table";
+import { Badge } from "@/components/ui/status-badge";
+import { rotuloAtraso } from "@/features/pagamentos/status-pagamento";
 import type { MembroInadimplente } from "./api";
 
 export function ListaInadimplentes({ membros }: { membros: MembroInadimplente[] }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold text-zinc-900">Membros inadimplentes</h2>
-      <Table
-        colunas={[
-          {
-            chave: "nome",
-            titulo: "Membro",
-            celula: (membro) => (
-              <Link
-                href={`/membros/${membro.id}`}
-                className="text-zinc-900 underline"
-              >
-                {membro.nome}
-              </Link>
-            ),
-          },
-          {
-            chave: "atraso",
-            titulo: "Dias em atraso",
-            celula: (membro) => membro.maiorAtrasoDias,
-          },
-        ]}
-        linhas={membros}
-        chaveDaLinha={(membro) => membro.id}
-        vazio={<EmptyState titulo="Nenhum membro inadimplente" />}
-      />
-    </section>
+    <Cartao
+      titulo="Inadimplentes"
+      descricao="Não podem registrar atividade até regularizar"
+      acao={
+        <Link href="/pagamentos" className="text-sm font-semibold underline">
+          Ver pagamentos
+        </Link>
+      }
+    >
+      {membros.length === 0 ? (
+        <EmptyState titulo="Nenhum membro inadimplente" />
+      ) : (
+        <ul className="flex flex-col gap-2.5">
+          {membros.map((membro) => (
+            <li
+              key={membro.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-[#f5d9c2] bg-[#fdf5ee] p-3.5"
+            >
+              <span className="inline-flex items-center gap-3">
+                <Avatar nome={membro.nome} />
+                <Link href={`/membros/${membro.id}`} className="font-semibold hover:underline">
+                  {membro.nome}
+                </Link>
+              </span>
+              <Badge tom="alerta">{rotuloAtraso(membro.maiorAtrasoDias)}</Badge>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Cartao>
   );
 }

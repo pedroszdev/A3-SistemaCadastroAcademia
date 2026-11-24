@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UsuarioProvider } from "@/features/auth/usuario";
 import type { UsuarioDoToken } from "@/lib/sessao";
@@ -65,7 +65,7 @@ describe("PainelDashboard", () => {
 
     expect(await screen.findByText("Membros ativos")).toBeInTheDocument();
     expect(buscarInadimplentes).not.toHaveBeenCalled();
-    expect(screen.queryByText("Membros inadimplentes")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Inadimplentes" })).toBeNull();
   });
 
   it("mostra a mensagem de erro da API", async () => {
@@ -85,7 +85,7 @@ describe("PainelDashboard", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Lista indisponível");
     expect(screen.getByText("Membros ativos")).toBeInTheDocument();
-    expect(screen.queryByText("Membros inadimplentes")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Inadimplentes" })).toBeNull();
   });
 
   it("descarta a resposta antiga quando o usuário muda antes dela chegar", async () => {
@@ -122,6 +122,33 @@ describe("PainelDashboard", () => {
 
     expect(screen.getByText("Membros ativos").nextElementSibling?.textContent).toBe("12");
     expect(screen.queryByText("99")).toBeNull();
-    expect(screen.queryByText("Membros inadimplentes")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Inadimplentes" })).toBeNull();
+  });
+
+  it.each([
+    ["ADMIN", ["Novo membro", "Registrar pagamento", "Registrar atividade"]],
+    ["RECEPCIONISTA", ["Novo membro", "Registrar pagamento"]],
+    ["INSTRUTOR", ["Registrar atividade"]],
+  ] as const)("mostra os atalhos do cargo %s", async (cargo, atalhos) => {
+    vi.mocked(buscarResumo).mockResolvedValue(resumo);
+    vi.mocked(buscarInadimplentes).mockResolvedValue([]);
+
+    renderizar({ tipo: "FUNCIONARIO", cargo });
+
+    const cartao = (await screen.findByRole("heading", { name: "Atalhos" })).closest(
+      "section",
+    ) as HTMLElement;
+    expect(within(cartao).getAllByRole("link").map((l) => l.textContent)).toEqual(atalhos);
+  });
+
+  it("mostra o Novo membro no cabeçalho só para quem cadastra", async () => {
+    vi.mocked(buscarResumo).mockResolvedValue(resumo);
+    vi.mocked(buscarInadimplentes).mockResolvedValue([]);
+
+    renderizar({ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" });
+
+    const cabecalho = screen.getByRole("banner");
+    expect(within(cabecalho).getByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
+    expect(within(cabecalho).queryByRole("link", { name: "Novo membro" })).toBeNull();
   });
 });

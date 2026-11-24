@@ -13,7 +13,7 @@ describe("ListaInadimplentes", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Membros inadimplentes" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Inadimplentes" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Maria Souza" })).toHaveAttribute(
       "href",
       "/membros/m1",
@@ -22,14 +22,15 @@ describe("ListaInadimplentes", () => {
       "href",
       "/membros/m2",
     );
-    expect(screen.getByText("15")).toBeInTheDocument();
-    expect(screen.getByText("32")).toBeInTheDocument();
+    expect(screen.getByText("Atrasado · 15 dias")).toBeInTheDocument();
+    expect(screen.getByText("Atrasado · 32 dias")).toBeInTheDocument();
   });
 
   it("mostra o estado vazio quando não há inadimplentes", () => {
     render(<ListaInadimplentes membros={[]} />);
 
     expect(screen.getByText("Nenhum membro inadimplente")).toBeInTheDocument();
-    expect(screen.queryByRole("link")).toBeNull();
+    // Só o atalho para Pagamentos: nenhum link de ficha.
+    expect(screen.getAllByRole("link").map((l) => l.textContent)).toEqual(["Ver pagamentos"]);
   });
 });
