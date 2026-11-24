@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { Pessoa } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import { DuasColunas } from "@/components/ui/cartao";
+import { PainelLateral } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { BarraDeFiltros } from "@/components/ui/filtro-chips";
+import { Icone } from "@/components/ui/icone";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { TabelaPaginada } from "@/components/ui/tabela-paginada";
@@ -12,6 +17,7 @@ import { useToast } from "@/components/ui/toast";
 import { useUsuario } from "@/features/auth/usuario";
 import type { MembroBusca } from "@/features/pagamentos/api";
 import { BuscaMembro } from "@/features/pagamentos/busca-membro";
+import { BadgeTipoTreino } from "@/features/treinos/badge-tipo";
 import { formatarData } from "@/lib/format";
 import { useFormDialog } from "@/lib/use-form-dialog";
 import { useListaPaginada } from "@/lib/use-lista-paginada";
@@ -40,16 +46,28 @@ function estaInvertido({ dataDe, dataAte }: Periodo): boolean {
 const COLUNA_MEMBRO: Coluna<Atividade> = {
   chave: "membro",
   titulo: "Membro",
-  celula: (a) => a.membro.nome,
+  celula: (a) => <Pessoa nome={a.membro.nome} />,
 };
 
 const COLUNAS: Coluna<Atividade>[] = [
-  { chave: "data", titulo: "Data", celula: (a) => formatarData(a.data) },
+  {
+    chave: "data",
+    titulo: "Data",
+    celula: (a) => <span className="whitespace-nowrap tabular-nums">{formatarData(a.data)}</span>,
+  },
   COLUNA_MEMBRO,
   { chave: "atividade", titulo: "Atividade", celula: (a) => a.atividade },
+  {
+    chave: "treino",
+    titulo: "Treino",
+    celula: (a) => (a.treino ? <BadgeTipoTreino tipo={a.treino.tipo} /> : "—"),
+  },
   { chave: "tempo", titulo: "Tempo", celula: (a) => `${a.tempoExecucao} min` },
-  { chave: "treino", titulo: "Treino", celula: (a) => a.treino?.tipo ?? "—" },
-  { chave: "funcionario", titulo: "Funcionário", celula: (a) => a.funcionario.nome },
+  {
+    chave: "funcionario",
+    titulo: "Registrado por",
+    celula: (a) => a.funcionario?.nome ?? "O próprio aluno",
+  },
 ];
 
 // Na ficha do membro a coluna Membro repetiria o mesmo nome em toda linha.
@@ -62,9 +80,16 @@ type TelaHistoricoProps = {
   membroInativo?: boolean;
   // Chamado depois de registrar, para a ficha atualizar o resumo.
   onAlterado?: () => void;
+  // Na página /atividades o cabeçalho (com o botão Registrar atividade) vem daqui.
+  cabecalho?: { titulo: string; descricao?: string };
 };
 
-export function TelaHistorico({ membroId, membroInativo = false, onAlterado }: TelaHistoricoProps) {
+export function TelaHistorico({
+  membroId,
+  membroInativo = false,
+  onAlterado,
+  cabecalho,
+}: TelaHistoricoProps) {
   const usuario = useUsuario();
   const filtraPorFuncionario = podeFiltrarPorFuncionario(usuario);
   const [funcionarios, setFuncionarios] = useState<OpcaoFuncionario[]>([]);
@@ -97,6 +122,7 @@ export function TelaHistorico({ membroId, membroInativo = false, onAlterado }: T
       membroInativo={membroInativo}
       onAlterado={onAlterado}
       funcionarios={filtraPorFuncionario ? funcionarios : null}
+      cabecalho={cabecalho}
     />
   );
 }
@@ -107,6 +133,7 @@ type ListaHistoricoProps = {
   onAlterado?: () => void;
   // null: o usuário não filtra por funcionário.
   funcionarios: OpcaoFuncionario[] | null;
+  cabecalho?: TelaHistoricoProps["cabecalho"];
 };
 
 function ListaHistorico({
@@ -114,6 +141,7 @@ function ListaHistorico({
   membroInativo,
   onAlterado,
   funcionarios,
+  cabecalho,
 }: ListaHistoricoProps) {
   const usuario = useUsuario();
   const { mostrar } = useToast();
@@ -154,70 +182,97 @@ function ListaHistorico({
     setFiltro({ ...filtro, membroId: membro?.id, page: 1 });
   }
 
+  let botaoRegistrar: ReactNode = null;
+  if (podeRegistrarAtividade(usuario)) {
+    botaoRegistrar = membroInativo ? (
+      <p className="text-sm text-suave">Membro inativo não registra atividade.</p>
+    ) : (
+      <Button onClick={() => formulario.abrir()}>
+        <Icone nome="mais" tamanho={16} />
+        Registrar atividade
+      </Button>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-4">
+    <div className="flex flex-col gap-6">
+      {cabecalho && <CabecalhoPagina {...cabecalho} acoes={botaoRegistrar} />}
+
+      <BarraDeFiltros>
         {!membroFixo && (
-          <BuscaMembro incluirInativos selecionado={membroFiltro} onSelecionar={aoEscolherMembro} />
+          <div className="max-w-[420px] flex-[1_1_320px]">
+            <BuscaMembro
+              incluirInativos
+              rotuloOculto
+              placeholder="Filtrar por membro"
+              selecionado={membroFiltro}
+              onSelecionar={aoEscolherMembro}
+            />
+          </div>
         )}
-        {funcionarios && (
-          <Select
-            rotulo="Funcionário"
-            placeholder="Todos"
-            opcoes={funcionarios.map((f) => ({ valor: f.id, rotulo: f.nome }))}
-            value={filtro.funcionarioId ?? ""}
-            onChange={(e) =>
-              setFiltro({ ...filtro, funcionarioId: e.target.value || undefined, page: 1 })
-            }
+        <div className="flex flex-wrap items-end gap-4">
+          {funcionarios && (
+            <Select
+              rotulo="Funcionário"
+              placeholder="Todos"
+              opcoes={funcionarios.map((f) => ({ valor: f.id, rotulo: f.nome }))}
+              value={filtro.funcionarioId ?? ""}
+              onChange={(e) =>
+                setFiltro({ ...filtro, funcionarioId: e.target.value || undefined, page: 1 })
+              }
+            />
+          )}
+          <Input
+            rotulo="Data de"
+            type="date"
+            value={periodo.dataDe}
+            max={periodo.dataAte || undefined}
+            onChange={(e) => aoMudarPeriodo("dataDe", e.target.value)}
           />
-        )}
-        <Input
-          rotulo="Data de"
-          type="date"
-          value={periodo.dataDe}
-          max={periodo.dataAte || undefined}
-          onChange={(e) => aoMudarPeriodo("dataDe", e.target.value)}
-        />
-        <Input
-          rotulo="Data até"
-          type="date"
-          value={periodo.dataAte}
-          min={periodo.dataDe || undefined}
-          onChange={(e) => aoMudarPeriodo("dataAte", e.target.value)}
-          erro={estaInvertido(periodo) ? MENSAGEM_PERIODO_INVERTIDO : undefined}
-        />
-        {podeRegistrarAtividade(usuario) &&
-          (membroInativo ? (
-            <p className="ml-auto text-sm text-zinc-600">Membro inativo não registra atividade.</p>
-          ) : (
-            <Button className="ml-auto" onClick={() => formulario.abrir()}>
-              Registrar atividade
-            </Button>
-          ))}
-      </div>
+          <Input
+            rotulo="Data até"
+            type="date"
+            value={periodo.dataAte}
+            min={periodo.dataDe || undefined}
+            onChange={(e) => aoMudarPeriodo("dataAte", e.target.value)}
+            erro={estaInvertido(periodo) ? MENSAGEM_PERIODO_INVERTIDO : undefined}
+          />
+          {!cabecalho && botaoRegistrar}
+        </div>
+      </BarraDeFiltros>
 
-      <TabelaPaginada
-        pagina={lista.pagina}
-        erro={lista.erro}
-        colunas={membroFixo ? COLUNAS_DO_MEMBRO : COLUNAS}
-        chaveDaLinha={(a) => a.id}
-        vazio={<EmptyState titulo="Nenhuma atividade encontrada" />}
-        onMudarPagina={(page) => setFiltro({ ...filtro, page })}
+      <DuasColunas
+        larguraLateral="360px"
+        principal={
+          <TabelaPaginada
+            pagina={lista.pagina}
+            erro={lista.erro}
+            colunas={membroFixo ? COLUNAS_DO_MEMBRO : COLUNAS}
+            chaveDaLinha={(a) => a.id}
+            rotuloItens="atividades"
+            vazio={<EmptyState titulo="Nenhuma atividade encontrada" />}
+            onMudarPagina={(page) => setFiltro({ ...filtro, page })}
+          />
+        }
+        lateral={
+          formulario.form.aberto && (
+            <PainelLateral
+              aberto
+              titulo="Registrar atividade"
+              descricao="Lançada pelo instrutor ao fim do treino."
+              onFechar={formulario.fechar}
+            >
+              <FormAtividade
+                key={formulario.form.chave}
+                membroId={membroFixo}
+                onSalvo={aoSalvar}
+                onCancelar={formulario.fechar}
+                onEnviando={formulario.setOcupado}
+              />
+            </PainelLateral>
+          )
+        }
       />
-
-      <Dialog
-        aberto={formulario.form.aberto}
-        titulo="Registrar atividade"
-        onFechar={formulario.fechar}
-      >
-        <FormAtividade
-          key={formulario.form.chave}
-          membroId={membroFixo}
-          onSalvo={aoSalvar}
-          onCancelar={formulario.fechar}
-          onEnviando={formulario.setOcupado}
-        />
-      </Dialog>
     </div>
   );
 }
