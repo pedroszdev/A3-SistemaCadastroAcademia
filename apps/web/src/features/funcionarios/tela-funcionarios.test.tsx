@@ -57,7 +57,7 @@ describe("TelaFuncionarios", () => {
     expect(await screen.findByText("Fulano Silva")).toBeInTheDocument();
     expect(screen.getByText("Beltrana Souza")).toBeInTheDocument();
     const linha = screen.getByText("Fulano Silva").closest("tr") as HTMLElement;
-    expect(within(linha).getByText("Instrutor")).toBeInTheDocument();
+    expect(within(linha).getByText("INSTRUTOR")).toBeInTheDocument();
     expect(screen.getByText("Ativo")).toBeInTheDocument();
     expect(screen.getByText("Inativo")).toBeInTheDocument();
     expect(listarFuncionarios).toHaveBeenCalledWith({ page: 1 });
@@ -290,7 +290,7 @@ describe("TelaFuncionarios", () => {
     const dialogo = screen.getByRole("dialog", { name: "Editar funcionário" });
     expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
     await usuario.keyboard("{Escape}");
-    await usuario.click(screen.getByTestId("dialog-overlay"));
+    await usuario.click(screen.getByRole("button", { name: "Fechar painel" }));
     expect(screen.getByRole("dialog", { name: "Editar funcionário" })).toBeInTheDocument();
 
     await act(async () => terminar(fulano));
@@ -311,5 +311,25 @@ describe("TelaFuncionarios", () => {
 
     expect(screen.getByText("Acesso restrito")).toBeInTheDocument();
     expect(listarFuncionarios).not.toHaveBeenCalled();
+  });
+
+  it("mostra o cabeçalho e a matriz do que cada cargo pode fazer", async () => {
+    renderizar();
+    await screen.findByText("Fulano Silva");
+
+    expect(screen.getByRole("heading", { level: 1, name: "Funcionários" })).toBeInTheDocument();
+    const matriz = screen
+      .getByRole("heading", { name: "O que cada cargo pode fazer" })
+      .closest("section") as HTMLElement;
+    const linha = within(matriz).getByRole("row", { name: /Pagamentos/ });
+    expect(within(linha).getAllByText("Sim")).toHaveLength(2);
+    expect(within(linha).getAllByText("Não")).toHaveLength(1);
+  });
+
+  it("quem não é ADMIN vê o cabeçalho e o aviso", () => {
+    renderizar({ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" });
+
+    expect(screen.getByRole("heading", { level: 1, name: "Funcionários" })).toBeInTheDocument();
+    expect(screen.getByText("Acesso restrito")).toBeInTheDocument();
   });
 });

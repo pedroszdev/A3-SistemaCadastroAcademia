@@ -7,10 +7,10 @@ vi.mock("@/features/funcionarios/tela-funcionarios", () => ({
 }));
 
 describe("FuncionariosPage", () => {
-  it("mostra o título e a tela", () => {
+  // O título fica dentro da tela, junto do botão de ação que depende do cargo.
+  it("renderiza a tela", () => {
     render(<FuncionariosPage />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Funcionários" })).toBeInTheDocument();
     expect(screen.getByText("tela")).toBeInTheDocument();
   });
 });
