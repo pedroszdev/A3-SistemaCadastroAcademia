@@ -108,7 +108,7 @@ describe("TelaPagamentos", () => {
     renderizar();
 
     expect(await screen.findByText("Fulano Silva")).toBeInTheDocument();
-    for (const titulo of ["Membro", "Valor", "Vencimento", "Pagamento", "Status", "Ações"]) {
+    for (const titulo of ["Membro", "Valor", "Vencimento", "Pago em", "Status", "Ações"]) {
       expect(screen.getByRole("columnheader", { name: titulo })).toBeInTheDocument();
     }
     expect(listarPagamentos).toHaveBeenCalledWith({ page: 1 });
@@ -147,10 +147,10 @@ describe("TelaPagamentos", () => {
     renderizar();
     await screen.findByText("Fulano Silva");
 
-    await usuario.selectOptions(screen.getByLabelText("Status"), "ATRASADO");
+    await usuario.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Atrasado" }));
     expect(listarPagamentos).toHaveBeenLastCalledWith({ status: "ATRASADO", page: 1 });
 
-    await usuario.selectOptions(screen.getByLabelText("Status"), "");
+    await usuario.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Todos" }));
     expect(listarPagamentos).toHaveBeenLastCalledWith({ status: undefined, page: 1 });
   });
 
@@ -213,7 +213,7 @@ describe("TelaPagamentos", () => {
     await screen.findByText("Fulano Silva");
     vi.mocked(listarPagamentos).mockRejectedValue(new ApiError(500, "Falha ao listar"));
 
-    await usuario.selectOptions(screen.getByLabelText("Status"), "PAGO");
+    await usuario.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Pago" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Falha ao listar");
     expect(screen.queryByText("Fulano Silva")).toBeNull();
@@ -413,7 +413,7 @@ describe("TelaPagamentos", () => {
     await usuario.click(await within(dialogo).findByRole("button", { name: /Eliana Prado/ }));
     await usuario.type(within(dialogo).getByLabelText("Valor"), "8990");
     fireEvent.change(within(dialogo).getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
-    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+    await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
 
     expect(criarPagamento).toHaveBeenCalledWith({
       membroId: "m-novo",
@@ -441,12 +441,12 @@ describe("TelaPagamentos", () => {
     await usuario.click(await screen.findByRole("button", { name: /Eliana Prado/ }));
     await usuario.type(screen.getByLabelText("Valor"), "8990");
     fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
 
     const dialogo = screen.getByRole("dialog", { name: "Novo pagamento" });
     expect(within(dialogo).getByRole("button", { name: "Cancelar" })).toBeDisabled();
     await usuario.keyboard("{Escape}");
-    await usuario.click(screen.getByTestId("dialog-overlay"));
+    await usuario.click(screen.getByRole("button", { name: "Fechar painel" }));
     expect(screen.getByRole("dialog", { name: "Novo pagamento" })).toBeInTheDocument();
 
     await act(async () => lancamento.resolve({ ...fulano, id: "p9" }));
@@ -472,7 +472,7 @@ describe("TelaPagamentos", () => {
     await usuario.click(await screen.findByRole("button", { name: /Eliana Prado/ }));
     await usuario.type(screen.getByLabelText("Valor"), "8990");
     fireEvent.change(screen.getByLabelText("Vencimento"), { target: { value: "2026-11-20" } });
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Registrar" }));
     expect(await screen.findByText("Membro inativo não pode receber novo pagamento")).toBeInTheDocument();
 
     await usuario.keyboard("{Escape}");
@@ -498,5 +498,69 @@ describe("TelaPagamentos", () => {
     renderizar({ tipo: "FUNCIONARIO", cargo: "ADMIN" });
 
     expect(await screen.findByText("Fulano Silva")).toBeInTheDocument();
+  });
+
+  describe("visual do design", () => {
+    it("com o cabeçalho, mostra o título e o Novo pagamento nele", async () => {
+      render(
+        <UsuarioProvider usuario={recepcionista}>
+          <ToastProvider>
+            <TelaPagamentos cabecalho={{ titulo: "Pagamentos", descricao: "Mensalidades." }} />
+          </ToastProvider>
+        </UsuarioProvider>,
+      );
+      await screen.findByText("Fulano Silva");
+
+      const cabecalho = screen.getByRole("banner");
+      expect(within(cabecalho).getByRole("heading", { level: 1, name: "Pagamentos" })).toBeInTheDocument();
+      expect(within(cabecalho).getByRole("button", { name: "Novo pagamento" })).toBeInTheDocument();
+    });
+
+    it("sem acesso financeiro, o cabeçalho aparece com o aviso", () => {
+      render(
+        <UsuarioProvider usuario={{ tipo: "FUNCIONARIO", cargo: "INSTRUTOR" }}>
+          <ToastProvider>
+            <TelaPagamentos cabecalho={{ titulo: "Pagamentos" }} />
+          </ToastProvider>
+        </UsuarioProvider>,
+      );
+
+      expect(screen.getByRole("heading", { level: 1, name: "Pagamentos" })).toBeInTheDocument();
+      expect(screen.getByText("Acesso restrito")).toBeInTheDocument();
+    });
+
+    it("filtra pelo membro buscado e limpa em Trocar", async () => {
+      vi.mocked(buscarMembros).mockResolvedValue({
+        membros: [{ id: "m-novo", nome: "Eliana Prado", cpf: "11122233396" }],
+        total: 1,
+      });
+      const usuario = userEvent.setup();
+      renderizar();
+      await screen.findByText("Fulano Silva");
+
+      await usuario.type(screen.getByLabelText("Buscar membro"), "Eli");
+      await usuario.click(await screen.findByRole("button", { name: /Eliana Prado/ }));
+      await waitFor(() =>
+        expect(listarPagamentos).toHaveBeenLastCalledWith(
+          expect.objectContaining({ membroId: "m-novo", page: 1 }),
+        ),
+      );
+
+      await usuario.click(screen.getByRole("button", { name: "Trocar" }));
+      await waitFor(() =>
+        expect(listarPagamentos).toHaveBeenLastCalledWith(
+          expect.objectContaining({ membroId: undefined, page: 1 }),
+        ),
+      );
+    });
+
+    it("chama de Dar baixa o botão de registrar o pagamento", async () => {
+      renderizar();
+      await screen.findByText("Fulano Silva");
+
+      expect(
+        within(linhaDe("Fulano Silva")).getByRole("button", { name: "Registrar pagamento de Fulano Silva" }),
+      ).toHaveTextContent("Dar baixa");
+    });
   });
 });

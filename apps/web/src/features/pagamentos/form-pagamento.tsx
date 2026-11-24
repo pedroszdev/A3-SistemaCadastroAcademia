@@ -62,36 +62,50 @@ export function FormPagamento({
 
   return (
     // noValidate: o `min` da data só limita o calendário; quem mostra o erro é validarPagamento.
-    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
+    <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-[18px]">
       {!membroFixo && (
         <BuscaMembro
           selecionado={membro}
           onSelecionar={selecionarMembro}
           erro={erros.membro}
           desabilitado={enviando}
+          obrigatorio
         />
       )}
-      <Input
-        rotulo="Valor"
-        inputMode="numeric"
-        placeholder="R$ 0,00"
-        value={valorTexto}
-        onChange={(e) => setValorTexto(mascaraMoeda(e.target.value))}
-        onPaste={(e) => {
-          e.preventDefault();
-          setValorTexto(mascaraMoedaColada(e.clipboardData.getData("text")));
-        }}
-        erro={erros.valor}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4">
+        <Input
+          rotulo="Valor"
+          obrigatorio
+          inputMode="numeric"
+          placeholder="R$ 0,00"
+          value={valorTexto}
+          onChange={(e) => setValorTexto(mascaraMoeda(e.target.value))}
+          onPaste={(e) => {
+            e.preventDefault();
+            setValorTexto(mascaraMoedaColada(e.clipboardData.getData("text")));
+          }}
+          erro={erros.valor}
+        />
+        <Input
+          rotulo="Vencimento"
+          obrigatorio
+          type="date"
+          min={vencimentoMinimo()}
+          value={dataVencimento}
+          onChange={(e) => setDataVencimento(e.target.value)}
+          erro={erros.dataVencimento}
+        />
+      </div>
+      <p className="text-[13px] text-suave">
+        “Atrasado” é calculado pelo sistema após o vencimento. A baixa é feita na lista, em Dar
+        baixa.
+      </p>
+      <RodapeFormulario
+        erro={erroApi}
+        enviando={enviando}
+        onCancelar={onCancelar}
+        rotuloSalvar="Registrar"
       />
-      <Input
-        rotulo="Vencimento"
-        type="date"
-        min={vencimentoMinimo()}
-        value={dataVencimento}
-        onChange={(e) => setDataVencimento(e.target.value)}
-        erro={erros.dataVencimento}
-      />
-      <RodapeFormulario erro={erroApi} enviando={enviando} onCancelar={onCancelar} />
     </form>
   );
 }

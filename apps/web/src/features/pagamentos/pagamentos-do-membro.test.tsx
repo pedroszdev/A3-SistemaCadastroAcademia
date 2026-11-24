@@ -102,7 +102,7 @@ describe("PagamentosDoMembro", () => {
     expect(await screen.findByText("Atrasado · 12 dias")).toBeInTheDocument();
     expect(listarPagamentos).toHaveBeenCalledWith({ page: 1, membroId: "m1" });
     expect(screen.queryByRole("columnheader", { name: "Membro" })).toBeNull();
-    for (const titulo of ["Valor", "Vencimento", "Pagamento", "Status", "Ações"]) {
+    for (const titulo of ["Valor", "Vencimento", "Pago em", "Status", "Ações"]) {
       expect(screen.getByRole("columnheader", { name: titulo })).toBeInTheDocument();
     }
   });
@@ -129,7 +129,7 @@ describe("PagamentosDoMembro", () => {
     renderizar();
     await screen.findByText("Atrasado · 12 dias");
 
-    await usuario.selectOptions(screen.getByLabelText("Status"), "ATRASADO");
+    await usuario.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Atrasado" }));
     expect(listarPagamentos).toHaveBeenLastCalledWith({
       page: 1,
       membroId: "m1",
@@ -201,7 +201,7 @@ describe("PagamentosDoMembro", () => {
     fireEvent.change(within(dialogo).getByLabelText("Vencimento"), {
       target: { value: "2026-11-20" },
     });
-    await usuario.click(within(dialogo).getByRole("button", { name: "Salvar" }));
+    await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
 
     expect(criarPagamento).toHaveBeenCalledWith({
       membroId: "m1",
@@ -239,14 +239,16 @@ describe("PagamentosDoMembro", () => {
     const usuario = userEvent.setup();
     const { rerender } = renderizar();
     await screen.findByText("Atrasado · 12 dias");
-    await usuario.selectOptions(screen.getByLabelText("Status"), "ATRASADO");
+    await usuario.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Atrasado" }));
 
     rerender(<Raiz membroId="m2" usuario={recepcionista} />);
 
     expect(await screen.findByText(/^R\$\s99,00$/)).toBeInTheDocument();
     expect(screen.queryByText("Atrasado · 12 dias")).toBeNull();
     expect(listarPagamentos).toHaveBeenLastCalledWith({ page: 1, membroId: "m2" });
-    expect(screen.getByLabelText("Status")).toHaveValue("");
+    expect(
+      within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Todos" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("sem membroId não renderiza nada nem chama a API", () => {

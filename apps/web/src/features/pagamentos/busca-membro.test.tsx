@@ -231,3 +231,36 @@ describe("BuscaMembro", () => {
     expect(screen.getByText("Selecione o membro")).toBeInTheDocument();
   });
 });
+
+describe("BuscaMembro no visual do design", () => {
+  it("marca o rótulo como obrigatório, também com o membro escolhido", () => {
+    const { rerender } = render(
+      <BuscaMembro selecionado={null} onSelecionar={() => {}} obrigatorio />,
+    );
+    expect(screen.getByText("Membro")).toHaveClass("after:content-['_*']");
+
+    rerender(
+      <BuscaMembro
+        selecionado={{ id: "m1", nome: "Fulano Silva", cpf: "12345678909" }}
+        onSelecionar={() => {}}
+        obrigatorio
+      />,
+    );
+    expect(screen.getByText("Membro")).toHaveClass("after:content-['_*']");
+  });
+
+  it("na barra de filtros esconde o rótulo e a ajuda", () => {
+    render(
+      <BuscaMembro
+        selecionado={null}
+        onSelecionar={() => {}}
+        rotulo="Buscar membro"
+        rotuloOculto
+        placeholder="Buscar membro"
+      />,
+    );
+
+    expect(screen.getByText("Buscar membro")).toHaveClass("sr-only");
+    expect(screen.queryByText("Busque pelo nome ou CPF.")).toBeNull();
+  });
+});

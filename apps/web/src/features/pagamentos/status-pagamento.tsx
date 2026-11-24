@@ -1,7 +1,7 @@
 import { StatusBadge } from "@/components/ui/status-badge";
-import type { Pagamento } from "./api";
+import type { Pagamento, StatusPagamento } from "./api";
 
-export const OPCOES_STATUS_PAGAMENTO = [
+export const OPCOES_STATUS_PAGAMENTO: { valor: StatusPagamento; rotulo: string }[] = [
   { valor: "PENDENTE", rotulo: "Pendente" },
   { valor: "PAGO", rotulo: "Pago" },
   { valor: "ATRASADO", rotulo: "Atrasado" },
