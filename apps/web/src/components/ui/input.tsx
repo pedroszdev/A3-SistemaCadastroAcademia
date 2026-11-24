@@ -1,33 +1,49 @@
 import type { InputHTMLAttributes } from "react";
 import { useId } from "react";
+import {
+  bordaDoCampo,
+  CLASSES_CAMPO,
+  idsDaDescricao,
+  MolduraDoCampo,
+  type PropsDeCampo,
+} from "./campo";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & {
-  rotulo: string;
-  erro?: string;
-};
+type InputProps = InputHTMLAttributes<HTMLInputElement> & PropsDeCampo;
 
-export function Input({ rotulo, erro, id, className = "", ...props }: InputProps) {
+export function Input({
+  rotulo,
+  erro,
+  ajuda,
+  obrigatorio,
+  rotuloOculto,
+  icone,
+  id,
+  className = "",
+  ...props
+}: InputProps) {
   const idGerado = useId();
   const idCampo = id ?? idGerado;
-  const idErro = `${idCampo}-erro`;
+  const { idErro, idAjuda, descritoPor } = idsDaDescricao(idCampo, erro, ajuda);
 
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={idCampo} className="text-sm font-medium text-zinc-800">
-        {rotulo}
-      </label>
+    <MolduraDoCampo
+      rotulo={rotulo}
+      rotuloOculto={rotuloOculto}
+      obrigatorio={obrigatorio}
+      icone={icone}
+      idCampo={idCampo}
+      idErro={idErro}
+      idAjuda={idAjuda}
+      erro={erro}
+      ajuda={ajuda}
+    >
       <input
         id={idCampo}
         aria-invalid={erro ? "true" : undefined}
-        aria-describedby={erro ? idErro : undefined}
-        className={`rounded border border-zinc-300 px-3 py-2 text-sm ${className}`}
+        aria-describedby={descritoPor}
+        className={`${CLASSES_CAMPO} ${bordaDoCampo(erro)} h-[46px] pr-3.5 ${icone ? "pl-10" : "pl-3.5"} ${className}`}
         {...props}
       />
-      {erro && (
-        <p id={idErro} className="text-sm text-red-600">
-          {erro}
-        </p>
-      )}
-    </div>
+    </MolduraDoCampo>
   );
 }
