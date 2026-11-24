@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { RodapeFormulario } from "@/components/ui/rodape-formulario";
 import { useToast } from "@/components/ui/toast";
@@ -126,17 +127,21 @@ export function AcessoDoMembro({ membroId, ativo, acessoLiberado, onAlterado }: 
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <span
-        className={`inline-block w-fit rounded-full px-2 py-0.5 text-xs font-medium ${
-          liberado ? "bg-green-100 text-green-800" : "bg-zinc-100 text-zinc-700"
-        }`}
-      >
-        {liberado ? "Acesso liberado" : "Sem acesso"}
-      </span>
+    <div className="flex flex-col gap-3 rounded-xl bg-fundo p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-display text-base font-semibold">Acesso ao portal do aluno</p>
+          <p className="mt-0.5 text-[13px] text-suave">
+            Com acesso, o aluno entra com CPF e senha para ver treinos e histórico.
+          </p>
+        </div>
+        <Badge tom={liberado ? "sucesso" : "neutro"}>
+          {liberado ? "Acesso liberado" : "Sem acesso"}
+        </Badge>
+      </div>
 
       {podeGerenciar && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           {ativo && (
             <Button
               variante={liberado ? "secundario" : "primario"}
@@ -146,7 +151,11 @@ export function AcessoDoMembro({ membroId, ativo, acessoLiberado, onAlterado }: 
             </Button>
           )}
           {liberado && (
-            <Button variante="perigo" onClick={() => setConfirmarRevogar(true)}>
+            <Button
+              variante="secundario"
+              className="text-alerta"
+              onClick={() => setConfirmarRevogar(true)}
+            >
               Revogar acesso
             </Button>
           )}
@@ -154,7 +163,7 @@ export function AcessoDoMembro({ membroId, ativo, acessoLiberado, onAlterado }: 
       )}
 
       {podeGerenciar && !ativo && (
-        <p className="text-sm text-zinc-600">Membro inativo não pode receber acesso ao portal.</p>
+        <p className="text-sm text-suave">Membro inativo não pode receber acesso ao portal.</p>
       )}
 
       <Dialog

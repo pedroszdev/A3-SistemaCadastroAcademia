@@ -1,8 +1,15 @@
 import { apenasDigitos, tamanho } from "@/lib/format";
+import { valorDaMascara } from "@/features/pagamentos/moeda";
 import { isCpfValido } from "./cpf";
 
 export type ModoFormMembro = "criar" | "editar";
-export type CampoMembro = "nome" | "cpf" | "telefone" | "endereco";
+export type CampoMembro =
+  | "nome"
+  | "cpf"
+  | "telefone"
+  | "endereco"
+  | "valorMensalidade"
+  | "diaVencimento";
 export type ErrosMembro = Partial<Record<CampoMembro, string>>;
 export type ValoresMembro = Record<CampoMembro, string>;
 
@@ -28,6 +35,21 @@ export function validarMembro(valores: ValoresMembro, modo: ModoFormMembro): Err
 
   if (tamanhoEndereco < 5 || tamanhoEndereco > 200) {
     erros.endereco = "endereco deve ter entre 5 e 200 caracteres";
+  }
+
+  // RN18: obrigatório no cadastro. Na edição, em branco mantém o membro como está.
+  const valor = valorDaMascara(valores.valorMensalidade);
+  if (modo === "criar" || valores.valorMensalidade.trim() !== "") {
+    if (valor < 0.01) {
+      erros.valorMensalidade = "valorMensalidade deve ser no mínimo 0,01";
+    } else if (valor > 10000) {
+      erros.valorMensalidade = "valorMensalidade deve ser no máximo 10.000";
+    }
+  }
+
+  const dia = valores.diaVencimento.trim();
+  if (dia !== "" && !/^(?:[1-9]|[12]\d|3[01])$/.test(dia)) {
+    erros.diaVencimento = "diaVencimento deve ser entre 1 e 31";
   }
 
   return erros;

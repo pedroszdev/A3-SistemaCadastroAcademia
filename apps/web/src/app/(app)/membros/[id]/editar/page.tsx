@@ -1,3 +1,5 @@
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { Trilha } from "@/components/layout/trilha";
 import { EditarMembro } from "@/features/membros/cadastro-membro";
 
 export const metadata = { title: "Editar membro · Academia" };
@@ -10,9 +12,16 @@ export default async function EditarMembroPage({
   const { id } = await params;
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold text-zinc-900">Editar membro</h1>
+    <>
+      <CabecalhoPagina titulo="Editar membro" descricao="Atualize os dados do aluno." />
+      <Trilha
+        passos={[
+          { rotulo: "Membros", href: "/membros" },
+          { rotulo: "Ficha", href: `/membros/${encodeURIComponent(id)}` },
+          { rotulo: "Editar membro" },
+        ]}
+      />
       <EditarMembro id={id} />
-    </div>
+    </>
   );
 }

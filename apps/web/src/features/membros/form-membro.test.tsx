@@ -16,6 +16,8 @@ const existente: Membro = {
   ativo: true,
   dataCadastro: "2026-01-10T00:00:00.000Z",
   acessoLiberado: false,
+  valorMensalidade: null,
+  diaVencimento: null,
 };
 
 describe("FormMembro", () => {
@@ -45,17 +47,22 @@ describe("FormMembro", () => {
     const usuario = userEvent.setup();
     render(<FormMembro onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "  Ana Souza ");
+    await usuario.type(screen.getByLabelText("Nome completo"), "  Ana Souza ");
     await usuario.type(screen.getByLabelText("CPF"), "529.982.247-25");
     await usuario.type(screen.getByLabelText("Telefone"), "(48) 99999-0000");
     await usuario.type(screen.getByLabelText("Endereço"), " Rua Fictícia, 100  ");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.type(screen.getByLabelText("Valor da mensalidade"), "12000");
+    await usuario.clear(screen.getByLabelText("Dia do vencimento"));
+    await usuario.type(screen.getByLabelText("Dia do vencimento"), "10");
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(criarMembro).toHaveBeenCalledWith({
       nome: "Ana Souza",
       cpf: "52998224725",
       telefone: "48999990000",
       endereco: "Rua Fictícia, 100",
+      valorMensalidade: 120,
+      diaVencimento: 10,
     });
     expect(onSalvo).toHaveBeenCalled();
   });
@@ -64,7 +71,7 @@ describe("FormMembro", () => {
     const usuario = userEvent.setup();
     render(<FormMembro onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(screen.getByText("nome deve ter entre 3 e 120 caracteres")).toBeInTheDocument();
     expect(screen.getByText("cpf deve ser um CPF válido")).toBeInTheDocument();
@@ -78,12 +85,13 @@ describe("FormMembro", () => {
     const usuario = userEvent.setup();
     render(<FormMembro onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await usuario.type(screen.getByLabelText("Nome completo"), "Ana Souza");
     await usuario.type(screen.getByLabelText("CPF"), "52998224725");
     await usuario.click(screen.getByLabelText("Telefone"));
     await usuario.paste("+55 (48) 99999-1234");
     await usuario.type(screen.getByLabelText("Endereço"), "Rua Fictícia, 100");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.type(screen.getByLabelText("Valor da mensalidade"), "12000");
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(screen.getByLabelText("Telefone")).toHaveValue("(55) 48999-991234");
     expect(screen.getByText("telefone deve ter 10 ou 11 dígitos, com o DDD")).toBeInTheDocument();
@@ -94,11 +102,12 @@ describe("FormMembro", () => {
     const usuario = userEvent.setup();
     render(<FormMembro onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await usuario.type(screen.getByLabelText("Nome completo"), "Ana Souza");
     await usuario.type(screen.getByLabelText("CPF"), "52998224724");
     await usuario.type(screen.getByLabelText("Telefone"), "48999990000");
     await usuario.type(screen.getByLabelText("Endereço"), "Rua Fictícia, 100");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.type(screen.getByLabelText("Valor da mensalidade"), "12000");
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(screen.getByText("cpf deve ser um CPF válido")).toBeInTheDocument();
     expect(screen.getByLabelText("CPF")).toHaveAttribute("aria-invalid", "true");
@@ -112,12 +121,12 @@ describe("FormMembro", () => {
 
     expect(screen.getByLabelText("CPF")).toBeDisabled();
     expect(screen.getByLabelText("CPF")).toHaveValue("529.982.247-25");
-    expect(screen.getByLabelText("Nome")).toHaveValue("Ana Souza");
+    expect(screen.getByLabelText("Nome completo")).toHaveValue("Ana Souza");
     expect(screen.getByLabelText("Telefone")).toHaveValue("(48) 99999-0000");
     expect(screen.getByLabelText("Endereço")).toHaveValue("Rua Fictícia, 100");
-    await usuario.clear(screen.getByLabelText("Nome"));
-    await usuario.type(screen.getByLabelText("Nome"), "Ana Souza Lima");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.clear(screen.getByLabelText("Nome completo"));
+    await usuario.type(screen.getByLabelText("Nome completo"), "Ana Souza Lima");
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(atualizarMembro).toHaveBeenCalledWith("m1", {
       nome: "Ana Souza Lima",
@@ -133,17 +142,18 @@ describe("FormMembro", () => {
     const usuario = userEvent.setup();
     render(<FormMembro onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await usuario.type(screen.getByLabelText("Nome completo"), "Ana Souza");
     await usuario.type(screen.getByLabelText("CPF"), "52998224725");
     await usuario.type(screen.getByLabelText("Telefone"), "48999990000");
     await usuario.type(screen.getByLabelText("Endereço"), "Rua Fictícia, 100");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.type(screen.getByLabelText("Valor da mensalidade"), "12000");
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(await screen.findByText("CPF já cadastrado")).toBeInTheDocument();
     expect(screen.getByLabelText("CPF")).toHaveAttribute("aria-invalid", "true");
     expect(screen.queryByRole("alert")).toBeNull();
     expect(onSalvo).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Salvar membro" })).toBeEnabled();
   });
 
   it("mostra outro erro da API em role=alert e reabilita o botão", async () => {
@@ -151,16 +161,17 @@ describe("FormMembro", () => {
     const usuario = userEvent.setup();
     render(<FormMembro onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await usuario.type(screen.getByLabelText("Nome completo"), "Ana Souza");
     await usuario.type(screen.getByLabelText("CPF"), "52998224725");
     await usuario.type(screen.getByLabelText("Telefone"), "48999990000");
     await usuario.type(screen.getByLabelText("Endereço"), "Rua Fictícia, 100");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.type(screen.getByLabelText("Valor da mensalidade"), "12000");
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Falha");
     expect(screen.getByLabelText("CPF")).not.toHaveAttribute("aria-invalid");
     expect(onSalvo).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Salvar membro" })).toBeEnabled();
   });
 
   it("desabilita o botão enquanto envia", async () => {
@@ -168,11 +179,12 @@ describe("FormMembro", () => {
     const usuario = userEvent.setup();
     render(<FormMembro onSalvo={onSalvo} onCancelar={onCancelar} />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await usuario.type(screen.getByLabelText("Nome completo"), "Ana Souza");
     await usuario.type(screen.getByLabelText("CPF"), "52998224725");
     await usuario.type(screen.getByLabelText("Telefone"), "48999990000");
     await usuario.type(screen.getByLabelText("Endereço"), "Rua Fictícia, 100");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
+    await usuario.type(screen.getByLabelText("Valor da mensalidade"), "12000");
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
 
     expect(screen.getByRole("button", { name: "Salvando…" })).toBeDisabled();
   });
@@ -183,5 +195,86 @@ describe("FormMembro", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
     expect(onCancelar).toHaveBeenCalled();
+  });
+});
+
+describe("FormMembro: mensalidade (RN18)", () => {
+  beforeEach(() => {
+    vi.mocked(criarMembro).mockReset();
+    vi.mocked(atualizarMembro).mockReset();
+  });
+
+  it("no cadastro, o dia do vencimento começa no dia de hoje", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-24T15:00:00Z"));
+    render(<FormMembro onSalvo={vi.fn()} onCancelar={vi.fn()} />);
+
+    expect(screen.getByLabelText("Dia do vencimento")).toHaveValue(24);
+    vi.useRealTimers();
+  });
+
+  it("no cadastro, sem o valor, mostra o erro e não chama a API", async () => {
+    const usuario = userEvent.setup();
+    render(<FormMembro onSalvo={vi.fn()} onCancelar={vi.fn()} />);
+
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
+
+    expect(screen.getByLabelText("Valor da mensalidade")).toHaveAccessibleDescription(
+      "valorMensalidade deve ser no mínimo 0,01",
+    );
+    expect(criarMembro).not.toHaveBeenCalled();
+  });
+
+  it("na edição, mostra o plano salvo e manda o valor e o dia novos", async () => {
+    vi.mocked(atualizarMembro).mockResolvedValue(existente);
+    const usuario = userEvent.setup();
+    render(
+      <FormMembro
+        membro={{ ...existente, valorMensalidade: 120, diaVencimento: 10 }}
+        onSalvo={vi.fn()}
+        onCancelar={vi.fn()}
+      />,
+    );
+
+    expect(
+      (screen.getByLabelText("Valor da mensalidade") as HTMLInputElement).value,
+    ).toMatch(/^R\$\s120,00$/);
+    expect(screen.getByLabelText("Dia do vencimento")).toHaveValue(10);
+
+    await usuario.clear(screen.getByLabelText("Valor da mensalidade"));
+    await usuario.type(screen.getByLabelText("Valor da mensalidade"), "15000");
+    await usuario.clear(screen.getByLabelText("Dia do vencimento"));
+    await usuario.type(screen.getByLabelText("Dia do vencimento"), "5");
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
+
+    expect(atualizarMembro).toHaveBeenCalledWith(
+      "m1",
+      expect.objectContaining({ valorMensalidade: 150, diaVencimento: 5 }),
+    );
+  });
+
+  it("na edição do membro sem plano, o valor em branco não vai para a API", async () => {
+    vi.mocked(atualizarMembro).mockResolvedValue(existente);
+    const usuario = userEvent.setup();
+    render(<FormMembro membro={existente} onSalvo={vi.fn()} onCancelar={vi.fn()} />);
+
+    expect(screen.getByText("Sem mensalidade automática até definir o valor.")).toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "Salvar membro" }));
+
+    const [, dados] = vi.mocked(atualizarMembro).mock.calls[0];
+    expect(dados).not.toHaveProperty("valorMensalidade");
+    expect(dados).not.toHaveProperty("diaVencimento");
+  });
+
+  it("aceita o valor colado", async () => {
+    const usuario = userEvent.setup();
+    render(<FormMembro onSalvo={vi.fn()} onCancelar={vi.fn()} />);
+
+    await usuario.click(screen.getByLabelText("Valor da mensalidade"));
+    await usuario.paste("89,90");
+
+    expect(
+      (screen.getByLabelText("Valor da mensalidade") as HTMLInputElement).value,
+    ).toMatch(/^R\$\s89,90$/);
   });
 });

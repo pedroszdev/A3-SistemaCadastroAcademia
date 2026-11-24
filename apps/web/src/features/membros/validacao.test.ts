@@ -6,6 +6,8 @@ const valido = {
   cpf: "529.982.247-25",
   telefone: "(48) 99999-0000",
   endereco: "Rua Fictícia, 100",
+  valorMensalidade: "R$ 120,00",
+  diaVencimento: "10",
 };
 
 describe("validarMembro", () => {
@@ -15,13 +17,24 @@ describe("validarMembro", () => {
   });
 
   it("devolve a mensagem de cada campo inválido", () => {
-    const erros = validarMembro({ nome: "", cpf: "", telefone: "", endereco: "" }, "criar");
+    const erros = validarMembro(
+      {
+        nome: "",
+        cpf: "",
+        telefone: "",
+        endereco: "",
+        valorMensalidade: "",
+        diaVencimento: "",
+      },
+      "criar",
+    );
 
     expect(erros).toEqual({
       nome: "nome deve ter entre 3 e 120 caracteres",
       cpf: "cpf deve ser um CPF válido",
       telefone: "telefone deve ter 10 ou 11 dígitos, com o DDD",
       endereco: "endereco deve ter entre 5 e 200 caracteres",
+      valorMensalidade: "valorMensalidade deve ser no mínimo 0,01",
     });
     expect(erros.telefone).toBe(MENSAGEM_TELEFONE);
   });
@@ -75,5 +88,30 @@ describe("validarMembro", () => {
 
   it("não valida o CPF na edição, porque ele não muda", () => {
     expect(validarMembro({ ...valido, cpf: "" }, "editar")).toEqual({});
+  });
+
+  describe("mensalidade (RN18)", () => {
+    it("na edição, o valor em branco não é erro", () => {
+      expect(validarMembro({ ...valido, valorMensalidade: "" }, "editar")).toEqual({});
+    });
+
+    it("recusa valor acima de 10.000", () => {
+      expect(
+        validarMembro({ ...valido, valorMensalidade: "R$ 10.000,01" }, "criar").valorMensalidade,
+      ).toBe("valorMensalidade deve ser no máximo 10.000");
+    });
+
+    it.each([
+      ["", false],
+      ["1", false],
+      ["31", false],
+      ["0", true],
+      ["32", true],
+      ["5.5", true],
+    ])("dia %j (erro: %s)", (diaVencimento, comErro) => {
+      const erros = validarMembro({ ...valido, diaVencimento }, "criar");
+
+      expect(erros.diaVencimento === "diaVencimento deve ser entre 1 e 31").toBe(comErro);
+    });
   });
 });

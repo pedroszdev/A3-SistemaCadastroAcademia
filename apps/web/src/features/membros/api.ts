@@ -12,6 +12,9 @@ export type Membro = {
   ativo: boolean;
   dataCadastro: string;
   acessoLiberado: boolean;
+  // RN18: nulos no membro antigo, sem mensalidade automática.
+  valorMensalidade: number | null;
+  diaVencimento: number | null;
 };
 
 export type PaginaMembros = Pagina<Membro>;
@@ -32,9 +35,11 @@ export type DadosCriarMembro = {
   cpf: string;
   telefone: string;
   endereco: string;
+  valorMensalidade: number;
+  diaVencimento?: number;
 };
 
-export type DadosAtualizarMembro = Omit<DadosCriarMembro, "cpf">;
+export type DadosAtualizarMembro = Partial<Omit<DadosCriarMembro, "cpf">>;
 
 export function buscarMembro(id: string) {
   return api<Membro>(`/membros/${encodeURIComponent(id)}`);
