@@ -1,9 +1,11 @@
 import { Logger } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   INTERVALO_ROTINA_MS,
   MensalidadesService,
+  ROTINA_DESLIGADA,
 } from './mensalidades.service';
 
 const ID = '0199f0a2-7b3c-7d4e-8f00-123456789abc';
@@ -26,6 +28,7 @@ describe('MensalidadesService (RN18)', () => {
       updateMany: jest.Mock;
     };
   };
+  let config: { get: jest.Mock };
   let service: MensalidadesService;
 
   beforeEach(() => {
@@ -37,7 +40,11 @@ describe('MensalidadesService (RN18)', () => {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
     };
-    service = new MensalidadesService(prisma as unknown as PrismaService);
+    config = { get: jest.fn() };
+    service = new MensalidadesService(
+      prisma as unknown as PrismaService,
+      config as unknown as ConfigService,
+    );
   });
 
   afterEach(() => {
@@ -208,6 +215,22 @@ describe('MensalidadesService (RN18)', () => {
       service.onModuleDestroy();
       jest.advanceTimersByTime(INTERVALO_ROTINA_MS);
       expect(rodar).toHaveBeenCalledTimes(2);
+    });
+
+    it('não roda nem agenda quando ROTINA_MENSALIDADES é "desligada"', () => {
+      jest.useFakeTimers();
+      config.get.mockReturnValue(ROTINA_DESLIGADA);
+      const rodar = jest
+        .spyOn(service, 'rodarRotina')
+        .mockResolvedValue(undefined);
+
+      service.onApplicationBootstrap();
+      jest.advanceTimersByTime(INTERVALO_ROTINA_MS);
+
+      expect(config.get).toHaveBeenCalledWith('ROTINA_MENSALIDADES');
+      expect(rodar).not.toHaveBeenCalled();
+      expect(prisma.membro.findMany).not.toHaveBeenCalled();
+      expect(jest.getTimerCount()).toBe(0);
     });
 
     it('registra quantas gerou', async () => {

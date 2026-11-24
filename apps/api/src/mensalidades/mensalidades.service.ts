@@ -4,6 +4,7 @@ import {
   OnApplicationBootstrap,
   OnModuleDestroy,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { hoje } from '../common/utils/date';
 import type { Prisma } from '../generated/prisma/client';
 import { StatusPagamento } from '../generated/prisma/enums';
@@ -13,6 +14,9 @@ import { mesDe, proximoVencimento } from './vencimento';
 // A rotina é idempotente: rodar de hora em hora só cria o que ainda falta, e a virada
 // do dia no fuso da academia é pega na primeira execução depois dela.
 export const INTERVALO_ROTINA_MS = 60 * 60 * 1000;
+
+// Valor de ROTINA_MENSALIDADES que desliga a rotina (ao subir e de hora em hora).
+export const ROTINA_DESLIGADA = 'desligada';
 
 type Cliente = Pick<Prisma.TransactionClient, 'membro' | 'pagamento'>;
 
@@ -35,9 +39,17 @@ export class MensalidadesService
   private readonly logger = new Logger(MensalidadesService.name);
   private timer?: ReturnType<typeof setInterval>;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   onApplicationBootstrap() {
+    // Os e2e desligam a rotina e chamam gerarPendentes() quando precisam, para ela
+    // não correr junto com a limpeza do banco.
+    if (this.config.get<string>('ROTINA_MENSALIDADES') === ROTINA_DESLIGADA) {
+      return;
+    }
     void this.rodarRotina();
     this.timer = setInterval(
       () => void this.rodarRotina(),
