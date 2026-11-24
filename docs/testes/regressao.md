@@ -51,7 +51,7 @@ Os números do seed são relativos à data da execução: o Bruno sempre aparece
 | 8 | Editar membro | Na ficha do Teste Regressão, "Editar". Trocar o endereço para "Rua Fictícia, 100" e salvar | O CPF aparece desabilitado. Aviso "Membro atualizado." e o endereço novo na ficha | RN02 |
 | 9 | Acesso do aluno | Na ficha, "Liberar acesso" com a senha `curta`. Depois, `aluno1234` nos dois campos | `curta`: "senha deve ter no mínimo 8 caracteres". `aluno1234`: o badge passa de "Sem acesso" para "Acesso liberado", com "Redefinir senha" e "Revogar acesso" | RN15, MEM-07 |
 | 10 | Desativar e reativar | Na ficha, "Desativar" e confirmar. Abrir a aba Pagamentos. Depois, "Reativar" e confirmar | Inativo: o badge muda, "Liberar/Redefinir" dá lugar a "Membro inativo não pode receber acesso ao portal." e a aba Pagamentos mostra "Membro inativo não recebe novo pagamento." sem o botão. Reativar volta tudo a Ativo | RN03, RN04 |
-| 11 | Treinos | Em `/treinos`, "Novo treino" para o Teste Regressão: Musculação, duração 301 e início ontem. Corrigir para 45 min e hoje. Editar para 50 min. Excluir. Filtrar o tipo por Cardio | 301 e ontem: "duracao deve ser no máximo 300 minutos" e "dataInicio não pode ser anterior a hoje". Correto: "Treino cadastrado." e a linha no topo. Na edição o membro não muda. A exclusão pede confirmação e a linha some. Cardio: só os 2 treinos de Cardio | RN05 |
+| 11 | Treinos | Em `/treinos`, "Novo treino" para o Teste Regressão: Musculação, duração 301 e início ontem. Corrigir para 45 min e hoje, com a descrição "Treino da regressão" (obrigatória, de 3 a 500 caracteres). Editar para 50 min. Excluir. Filtrar o tipo por Cardio | 301 e ontem: "duracao deve ser no máximo 300 minutos" e "dataInicio não pode ser anterior a hoje". Correto: "Treino cadastrado." e a linha no topo. Na edição o membro não muda. A exclusão pede confirmação e a linha some. Cardio: só os 2 treinos de Cardio | RN05 |
 | 12 | Pagamentos: lista e filtro | Em `/pagamentos`, filtrar o status por Atrasado | Só Carla Mendes ("Atrasado · 5 dias") e Bruno Lima ("Atrasado · 15 dias") | RN07 |
 | 13 | Novo pagamento: validação | "Novo pagamento". Buscar "Isabela". Depois, escolher o Teste Regressão com valor `0`. Depois, valor 130,00 e vencimento em 01/01 do ano atual | Isabela: "Nenhum membro ativo encontrado". Valor 0: "valor deve ser no mínimo 0,01". Vencimento antigo: "O vencimento não pode ter mais de 90 dias no passado" | RN04, RN06 |
 | 14 | Novo pagamento: cadastro e duplicado | Teste Regressão, R$ 120,00, vencimento daqui a 7 dias. Salvar. Lançar de novo o mesmo membro com o mesmo vencimento | O valor ganha a máscara "R$ 120,00" e a cobrança aparece como Pendente. A segunda é recusada com "Já existe um registro com esses dados." | RN06 |
@@ -93,6 +93,7 @@ Na rodada final, depois do code freeze, refazer o roteiro inteiro na `main` fina
 | Data | Commit da `main` | Ambiente | Passos | Bugs | Executado por |
 | --- | --- | --- | --- | --- | --- |
 | 18/11/2026 | `c59cc21` (depois do PR #79, com a ficha) | Local, `pnpm dev`, PostgreSQL 17 no Docker, Google Chrome, banco do seed | 29 de 29 ✅ | 0 | Yohan Nascimento da Costa (Testador) |
+| 23/11/2026 (rodada final, code freeze) | `7a220b1` (depois do PR #80) | Local, `pnpm dev`, PostgreSQL 17 no Docker, Google Chrome 158, banco novo só com as migrations e o seed | 29 de 29 ✅ | 0 | Yohan Nascimento da Costa (Testador) |
 
 ### Observações da execução de 18/11
 
@@ -101,3 +102,12 @@ Nenhuma das observações abaixo é bug, porque o comportamento bate com as regr
 - **Passo 14:** o 409 do vencimento repetido chega com a mensagem genérica do filtro de erros do Prisma ("Já existe um registro com esses dados."). A regra funciona, mas uma mensagem como "Este membro já tem uma cobrança com esse vencimento" seria mais clara.
 - **Passo 8:** depois de editar, a tela volta para a lista de membros, e não para a ficha. É o comportamento descrito na WEB-G2, que deixou a troca do destino como opcional para a WEB-G3.
 - **Só no modo de desenvolvimento:** o selo "1 Insight" do Next.js fica no canto inferior esquerdo, por cima do botão "Sair" do menu. O console também mostra o aviso `instant-shell-url-data` ao abrir `/membros/<id>` e `/membros/<id>/editar`. Nada disso aparece no build de produção, e as telas funcionam normalmente.
+
+### Observações da rodada final de 23/11
+
+Entre `c59cc21` e `7a220b1` só mudaram arquivos de `docs/`, então o código testado é o mesmo de 18/11, agora como `main` do code freeze. Não há PR de código aberto. Os 29 passos passaram de novo, sem bug e sem issue aberta.
+
+- **Passo 11:** o roteiro não pedia a descrição do treino, que é obrigatória (de 3 a 500 caracteres). Sem ela, o formulário mostra "descricao deve ter entre 3 e 500 caracteres" junto dos outros erros. O passo foi corrigido acima e agora informa a descrição.
+- **Passo 24:** o selo do Next.js do modo de desenvolvimento ainda cobre quase todo o botão "Sair". O clique funciona na borda direita do botão. No build de produção o selo não existe.
+- **Passo 27:** em 23/11, "30 dias" e "Mês atual" mostram os mesmos números (7 atividades e 310 minutos), porque todas as atividades da Ana nos últimos 30 dias caem em novembro. "7 dias" muda para 5 atividades e 225 minutos. Não é bug, é a data da execução.
+- **Passos 14 e 18:** o 409 (cobrança repetida e login já cadastrado) aparece no rodapé do formulário, com o modal aberto, e não num toast. O resultado esperado do roteiro não diz onde a mensagem aparece, então o passo conta como ok.
