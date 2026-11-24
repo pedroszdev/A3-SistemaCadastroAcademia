@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { Button } from "./button";
+import { Button, classesDoBotao } from "./button";
 
 describe("Button", () => {
   it("usa type=button por padrão", () => {
@@ -38,6 +38,14 @@ describe("Button", () => {
   it("aplica a classe da variante perigo", () => {
     render(<Button variante="perigo">Excluir</Button>);
 
-    expect(screen.getByRole("button")).toHaveClass("bg-red-600");
+    expect(screen.getByRole("button")).toHaveClass("bg-alerta");
+  });
+});
+
+describe("classesDoBotao", () => {
+  it("combina variante e tamanho", () => {
+    expect(classesDoBotao("escuro", "pequeno")).toContain("bg-tinta");
+    expect(classesDoBotao("escuro", "pequeno")).toContain("min-h-9");
+    expect(classesDoBotao()).toContain("bg-lima");
   });
 });
