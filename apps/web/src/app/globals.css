@@ -1,23 +1,72 @@
 @import "tailwindcss";
 
-/* Os componentes usam cores fixas de tema claro (zinc, bg-white). Sem isso, o modo
-   escuro do sistema deixava a página preta com títulos escuros e inputs brancos com
-   texto claro. color-scheme também mantém claros os controles nativos (select, input). */
+/* Identidade visual "Academia Forma" (design do canvas). Só tema claro: color-scheme
+   mantém claros os controles nativos (select, input) mesmo com o sistema em modo escuro. */
 :root {
   color-scheme: light;
-  --background: #ffffff;
-  --foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme {
+  /* Tinta (texto e superfícies escuras) */
+  --color-tinta: #121614;
+  --color-tinta-2: #1e2420;
+  --color-tinta-3: #2c342f;
+  --color-tinta-borda: #2e3631;
+  /* Fundos e bordas */
+  --color-fundo: #f4f5f2;
+  --color-fundo-2: #f0f2ee;
+  --color-fundo-3: #e7eae5;
+  --color-cabecalho: #fafbf9;
+  --color-borda: #e1e4df;
+  --color-borda-campo: #cdd2cc;
+  --color-avatar: #e9ece7;
+  /* Texto secundário (no claro e no escuro) */
+  --color-suave: #566059;
+  --color-suave-escuro: #c9cfca;
+  --color-suave-escuro-2: #a9b0ab;
+  --color-suave-escuro-3: #8c948f;
+  /* Destaque */
+  --color-lima: #c8f25a;
+  --color-lima-borda: #b4e03d;
+  /* Tons de status: fundo e texto */
+  --color-sucesso-fundo: #e2f3e8;
+  --color-sucesso: #1b6a3d;
+  --color-alerta-fundo: #fce9da;
+  --color-alerta: #8f4309;
+  --color-alerta-borda: #f0c9a6;
+  --color-alerta-claro: #fdf3ea;
+  --color-alerta-texto: #7a3907;
+  --color-info-fundo: #e5edfb;
+  --color-info: #1e4d9e;
+  --color-neutro-fundo: #eceeeb;
+  --color-neutro: #4a524d;
+  --color-lima-fundo: #eff8d6;
+  --color-lima-texto: #3f5a07;
+  --color-roxo-fundo: #f1e9fb;
+  --color-roxo: #5b2f99;
+  --color-desabilitado: #e7e9e5;
+  --color-desabilitado-texto: #6b726d;
+}
+
+/* Dentro da camada base: estilo sem camada venceria as classes utilitárias do Tailwind. */
+@layer base {
+  body {
+    background: var(--color-fundo);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+  }
+
+  a {
+    color: inherit;
+  }
+
+  :where(input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-tinta);
+    outline-offset: 1px;
+  }
 }
