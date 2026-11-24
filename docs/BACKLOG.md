@@ -294,7 +294,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] E2E-02 e2e do fluxo principal — `test/fluxo-principal.e2e-spec.ts` percorre o fluxo da seção 7 do `ESCOPO.md` com banco de teste, um `it` por critério (CA01 a CA08), cada um indicando o que verifica
 - [x] E2E-03 e2e da regra de inadimplência
 - [x] QA-01 Issues do Sonar no meu código — 0 issues e 0 hotspots nos meus módulos (pagamentos, histórico, telas WEB-Y e e2e) na análise da `main` de 12/11 (`c72e73d`), sem correção a fazer. O quality gate está aprovado (bugs 0, vulnerabilidades 0, duplicação 0%, cobertura 99,4%)
-- [ ] 🟡 QA-03 Triagem semanal das issues do professor — contínua até 02/12. A tabela da seção 8 está em dia e a triagem de 12/11 está no registro (0 issues abertas); as próximas são toda segunda, a partir de 16/11
+- [ ] 🟡 QA-03 Triagem semanal das issues do professor — contínua até 02/12. A tabela da seção 8 está em dia e as triagens de 12/11 (0 issues abertas) e 23/11 (1 aberta, a #78, com labels e atribuída ao Pedro) estão no registro; a próxima é em 30/11
 - [ ] 🟡 QA-04 Regressão manual pré-entrega — o roteiro está em `docs/testes/regressao.md`: 29 passos com o banco do seed, cobrindo todas as telas, as visões ADMIN, RECEPCIONISTA e INSTRUTOR, o portal do aluno (no celular também) e a sessão, cada passo com o resultado esperado e a regra que confere. A primeira execução foi em 18/11, na `main` em `c59cc21` (já com a ficha, PR #79): 29 de 29 passaram, 0 bugs e nenhuma issue aberta. As observações que não são bug estão registradas no próprio arquivo. Falta a rodada final na `main` depois do code freeze (23/11)
 - [ ] DOC-03 2.1 · DOC-04 2.2 · DOC-06 2.4 · DOC-12 2.10
 - [ ] APR-03 meus slides · APR-05 Ensaio (cronometrista)
@@ -1586,13 +1586,14 @@ Uma task de código só é marcada como concluída quando:
 
 ## 8. Issues do professor
 
-Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada como resolvida depois que o professor confere as evidências na `main`. Atualizado em 12/11/2026.
+Rastreamento das issues abertas pelo professor (QA-03). Uma issue só é marcada como resolvida depois que o professor confere as evidências na `main`. Atualizado em 23/11/2026.
 
 | Issue | Assunto | Responsável | PRs e commits | Status | Prazo |
 | --- | --- | --- | --- | --- | --- |
 | [#28](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/28) | Matriz de permissões na `main`, validada por HTTP | Pedro | #27 (`b70b666`); PR [#35](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/35), [#46](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/46), [#47](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/47) e [#55](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/55); evidência em [`docs/evidencias/permissoes`](evidencias/permissoes/README.md) | ✅ fechada em 11/11 pelo Pedro, com o retorno final na issue. A `MATRIZ` do `test/seguranca.e2e-spec.ts` cobre todas as rotas da matriz 4.2, inclusive treinos e `/me/treinos` (#55) e `/me/atividades` (#46). Conferência do professor pendente | 11/11 |
 | [#29](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/29) | Lacunas entre escopo, fluxo principal (CA01–CA08) e evidências | Pedro (coordena); Gabriel e Yohan nos módulos deles | #26 (`b208bd1`, inadimplência), #55, #56, #57, #64 | ✅ entregue em 11/11: escopo completo e RNFs (#56), E2E-02 com CA01–CA08 (#57), módulo de treinos (#55), rastreabilidade com status, cronograma e roteiro da demo (#56); status da rastreabilidade depois dos merges (#64). Fechada em 12/11 pelo Gabriel, com o retorno final na issue. Conferência do professor pendente | 11/11 |
 | [#30](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/30) | Quality gate barrando o merge e escopo das métricas | Yohan (revisão do Pedro) | #31 (`4a3c095`); #34 (prova, não mergear); #36 e #48 (evidências); [`docs/evidencias/quality-gate`](evidencias/quality-gate/README.md) | ✅ fechada em 09/11 pelo Yohan, com o retorno final na issue (ruleset da `main` e escopo das métricas conferidos de novo em 09/11). Conferência do professor pendente | 11/11 |
+| [#78](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/issues/78) | Link da ficha na lista de inadimplentes do dashboard, com teste de navegação | Pedro (WEB-04) | PR [#79](https://github.com/pedroszdev/A3-SistemaCadastroAcademia/pull/79) (WEB-G3, ficha `/membros/<id>` na `main` em 18/11) | ✅ fechada em 23/11 pelo Yohan, com o retorno final na issue vinculando o PR #79. O professor confirmou na issue, em 23/11, que a ficha `/membros/<id>` e o teste dela já estavam na `main` pelo PR #79 (`page.test.tsx` e `ficha-membro.test.tsx`), então o link do dashboard abre a ficha. Labels `professor`, `dashboard` e `web` e atribuída ao Pedro em 23/11. Conferência do professor pendente | 23/11 (code freeze) |
 
 ### Registro da triagem semanal
 
@@ -1601,6 +1602,7 @@ A cada triagem (toda segunda, até 02/12), uma linha nova: o que estava aberto, 
 | Data | Issues abertas | Novas desde a anterior | O que foi feito |
 | --- | --- | --- | --- |
 | 12/11/2026 | 0 | 0 | #28, #29 e #30 fechadas pelo grupo, sem comentário do professor depois do retorno final. Tabela acima atualizada com os fechamentos, os PRs e os responsáveis |
+| 23/11/2026 | 1 | 1 (#78, aberta em 17/11) | #78 entrou na tabela acima, com as labels `professor`, `dashboard` e `web` e atribuída ao Pedro, dono do dashboard (WEB-04). O professor confirmou na issue que a ficha e o teste dela já estavam na `main` pelo PR #79 e pediu para vincular a correção; a #78 foi fechada no mesmo dia com o PR #79 vinculado, e o M4 fica com 0 issues abertas. #28, #29 e #30 continuam fechadas, sem comentário do professor desde o retorno final |
 
 ### Exceções à regra 1
 
