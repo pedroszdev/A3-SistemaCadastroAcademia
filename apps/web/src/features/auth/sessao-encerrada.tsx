@@ -18,7 +18,7 @@ export function SessaoEncerrada() {
   }, []);
 
   return (
-    <p role="status" className="p-4 text-sm text-zinc-600">
+    <p role="status" className="p-4 text-sm text-suave">
       {falhou
         ? "Não foi possível encerrar a sessão. Recarregue a página."
         : "Sua sessão terminou. Voltando para o login…"}

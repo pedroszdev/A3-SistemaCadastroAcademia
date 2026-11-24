@@ -7,7 +7,7 @@ import { PortalDoAluno } from "@/features/aluno/portal-do-aluno";
 export default function AlunoLayout({ children }: LayoutProps<"/">) {
   return (
     <ToastProvider>
-      <Suspense fallback={<p className="p-4 text-sm text-zinc-600">Carregando…</p>}>
+      <Suspense fallback={<p className="p-4 text-sm text-suave">Carregando…</p>}>
         <PortalDoAluno>{children}</PortalDoAluno>
       </Suspense>
     </ToastProvider>
