@@ -128,6 +128,73 @@ describe('Mensalidade automática, atividade do aluno e meus dados (e2e)', () =>
         await prisma.pagamento.count({ where: { membroId: membro.id } }),
       ).toBe(0);
     });
+
+    it('desativar cancela a cobrança que ainda não venceu e reativar não deixa inadimplente', async () => {
+      // A cobrança que a rotina teria criado com o membro ativo: vence daqui a 5 dias.
+      const vencimento = diasAtras(-5);
+      const membro = await criarMembro(prisma, {
+        valorMensalidade: 120,
+        diaVencimento: vencimento.getUTCDate(),
+      });
+      const futura = await criarPagamento(prisma, membro.id, {
+        dataVencimento: vencimento,
+      });
+
+      await request(app.getHttpServer())
+        .patch(`/membros/${membro.id}/desativar`)
+        .set('Authorization', bearer(tokenRecepcao))
+        .expect(200);
+      expect(
+        (
+          await prisma.pagamento.findUniqueOrThrow({
+            where: { id: futura.id },
+          })
+        ).status,
+      ).toBe('CANCELADO');
+
+      await request(app.getHttpServer())
+        .patch(`/membros/${membro.id}/reativar`)
+        .set('Authorization', bearer(tokenRecepcao))
+        .expect(200);
+      expect(
+        await prisma.pagamento.count({
+          where: {
+            membroId: membro.id,
+            status: 'PENDENTE',
+            dataVencimento: { gte: hoje() },
+          },
+        }),
+      ).toBe(1);
+
+      const situacao = await request(app.getHttpServer())
+        .get(`/membros/${membro.id}/situacao`)
+        .set('Authorization', bearer(tokenRecepcao))
+        .expect(200);
+      expect(situacao.body).toMatchObject({ situacao: 'EM_DIA' });
+    });
+
+    it('desativar mantém a cobrança já vencida como dívida', async () => {
+      const membro = await criarMembro(prisma, {
+        valorMensalidade: 120,
+        diaVencimento: diasAtras(15).getUTCDate(),
+      });
+      const vencida = await criarPagamento(prisma, membro.id, {
+        dataVencimento: diasAtras(15),
+      });
+
+      await request(app.getHttpServer())
+        .patch(`/membros/${membro.id}/desativar`)
+        .set('Authorization', bearer(tokenRecepcao))
+        .expect(200);
+
+      expect(
+        (
+          await prisma.pagamento.findUniqueOrThrow({
+            where: { id: vencida.id },
+          })
+        ).status,
+      ).toBe('PENDENTE');
+    });
   });
 
   describe('RN19 · atividade registrada pelo aluno', () => {
