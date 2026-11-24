@@ -81,7 +81,7 @@ describe("PortalDoAluno", () => {
 
     await renderizarPortal();
 
-    expect(screen.getByRole("link", { name: "Academia · Portal do aluno" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Academia Forma · Portal do aluno" })).toHaveAttribute(
       "href",
       "/aluno",
     );

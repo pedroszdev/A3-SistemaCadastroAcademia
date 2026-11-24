@@ -46,11 +46,11 @@ describe("MeusTreinos", () => {
     render(<MeusTreinos />);
     await screen.findByText("Descrição 1");
 
-    await userEvent.selectOptions(screen.getByLabelText("Tipo"), "Cardio");
+    await userEvent.click(screen.getByRole("button", { name: "Cardio" }));
     await screen.findByText("Descrição 1");
     expect(listarMeusTreinos).toHaveBeenLastCalledWith("Cardio", 1);
 
-    await userEvent.selectOptions(screen.getByLabelText("Tipo"), "Todos os tipos");
+    await userEvent.click(screen.getByRole("button", { name: "Todos" }));
     await screen.findByText("Descrição 1");
     expect(listarMeusTreinos).toHaveBeenLastCalledWith(undefined, 1);
   });
@@ -62,7 +62,7 @@ describe("MeusTreinos", () => {
       .mockResolvedValueOnce(pagina([treino(2, { tipo: "Cardio", descricao: "Do Cardio" })]));
     render(<MeusTreinos />);
 
-    await userEvent.selectOptions(screen.getByLabelText("Tipo"), "Cardio");
+    await userEvent.click(screen.getByRole("button", { name: "Cardio" }));
     expect(await screen.findByText("Do Cardio")).toBeInTheDocument();
     await act(async () => resolverAntiga(pagina([treino(1, { descricao: "Da lista antiga" })])));
 
@@ -144,7 +144,7 @@ describe("MeusTreinos", () => {
     );
     render(<MeusTreinos />);
 
-    await userEvent.click(await screen.findByRole("button", { name: /^Cardio/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Cardio.*Esteira/ }));
 
     const dialogo = screen.getByRole("dialog", { name: "Cardio" });
     expect(dialogo).toHaveTextContent("Esteira por 30 minutos e bicicleta");

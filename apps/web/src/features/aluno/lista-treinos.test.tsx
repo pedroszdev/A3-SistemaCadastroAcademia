@@ -19,7 +19,7 @@ describe("ListaTreinos", () => {
     expect(screen.getByText("Cardio")).toBeInTheDocument();
     expect(screen.getByText("Esteira e bicicleta")).toBeInTheDocument();
     expect(screen.getByText("45 min")).toBeInTheDocument();
-    expect(screen.getByText("Início 20/11/2026")).toBeInTheDocument();
+    expect(screen.getByText("Desde 20/11/2026")).toBeInTheDocument();
   });
 
   it("mostra o estado vazio sem treinos", () => {
@@ -32,7 +32,7 @@ describe("ListaTreinos", () => {
     const onAbrir = vi.fn();
     render(<ListaTreinos treinos={[treino]} onAbrir={onAbrir} />);
 
-    await userEvent.click(screen.getByRole("button", { name: /^Cardio.*Esteira e bicicleta.*45 min$/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Cardio.*45 min.*Esteira e bicicleta.*Desde/ }));
 
     expect(onAbrir).toHaveBeenCalledWith(treino);
   });

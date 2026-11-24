@@ -7,8 +7,8 @@ export default function MeuHistoricoPage() {
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">Meu histórico</h1>
-        <p className="mt-1 text-sm text-zinc-600">Suas atividades na academia.</p>
+        <h1 className="font-display text-lg font-bold">Meu histórico</h1>
+        <p className="mt-1 text-sm text-suave">Suas atividades na academia.</p>
       </div>
       <MeuHistorico />
     </section>
