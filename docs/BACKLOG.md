@@ -1443,7 +1443,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 
 ### Fase 7 — Apresentação
 
-> **Sem slides (decidido em 25/11):** a apresentação é a demo do sistema rodando, com o GitHub e o SonarCloud abertos para as issues e a evolução do Sonar. A APR-01 (template e capa) e a APR-03 (slides de cada parte) saíram do backlog.
+> **Sem slides (decidido em 25/11):** a apresentação é a demo do sistema rodando, com o GitHub e o SonarCloud abertos para as issues e a evolução do Sonar. A APR-01 (template e capa) e a APR-03 (slides de cada parte) saíram do backlog, e não há `apresentacao.pdf`.
 
 #### APR-02 · Roteiro e divisão de tempo
 **Responsável:** Pedro · **Sprint:** 5
@@ -1491,7 +1491,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 - Cada um deve saber **explicar o próprio código e os próprios testes**, porque o PDF prevê uma possível **defesa individual**.
 
 **Resultado esperado**
-- Tempo dentro da faixa nos dois ensaios. Exportar `apresentacao.pdf`.
+- Tempo dentro da faixa nos dois ensaios.
 
 ---
 
@@ -1519,8 +1519,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 **O que fazer**
 - Montar o `A3_Academia_Pedro_Gabriel_Yohan.zip` contendo **exatamente**:
   - `link-repositorio.txt` (URL do GitHub);
-  - `relatorio.pdf`;
-  - `apresentacao.pdf`.
+  - `relatorio.pdf`.
 - **Nada além disso.** O PDF diz que "postagem de arquivos não solicitados equivale a não postar".
 
 **Resultado esperado**
