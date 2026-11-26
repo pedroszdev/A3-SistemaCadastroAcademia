@@ -241,8 +241,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] QA-01 Issues do Sonar no meu código — a análise da `main` de 16/11 (`83565f4`) tinha 0 bugs, 0 vulnerabilidades e 0 hotspots, mas 2 code smells em linhas minhas, e o PR #75 trazia mais 1. Os 3 foram corrigidos no PR #75, um commit por problema: o fundo do `Dialog` ganhou `role="presentation"` (S6848) e dois testes e2e que só usavam o `.expect` do supertest ganharam um `expect` de verdade (S2699). O registro está em `docs/evidencias/sonar-correcoes.md`
 - [x] QA-02 Cobertura consolidada — 99,2% no Sonar na `main` de 16/11 (`83565f4`), com 100% de linhas e 97,7% de condições, e nenhum módulo abaixo de 80%. Das exclusões, saíram os DTOs (têm a lógica do `@Transform` e já tinham testes; a API continua com 100%); ficaram `main.ts`, `*.module.ts`, `layout.tsx`, `*.config.*` e os gerados, que não têm lógica. Números por módulo e o motivo de cada exclusão em `docs/evidencias/cobertura/README.md`
 - [ ] 🟡 QA-05 Evidências (prints antes/depois) — `docs/evidencias/README.md` é o índice: liga cada pasta ao que comprova, à seção do relatório e ao slide. Já estão lá o Sonar "antes", os prints do Actions (PR verde, PR barrado e execução vermelha), os prints do relatório de cobertura da API e do web e os prints das issues #28, #29 e #30 fechadas, com os PRs de cada uma (`docs/evidencias/issues`). Falta o Sonar "depois" no code freeze (23/11) e o print da #69 fechada
-- [ ] DOC-02 Introdução · DOC-05 2.3 · DOC-07 2.5 · DOC-08 2.6 · DOC-09 2.7 · DOC-11 2.9 · DOC-14 2.12 · DOC-15 2.13 · DOC-16 Conclusão (a DOC-07, a DOC-08 e a DOC-15 vieram do Gabriel em 11/11)
-- [ ] DOC-17 Revisão final e PDF do relatório
+- [x] DOC-02 Introdução · DOC-05 2.3 · DOC-07 2.5 · DOC-08 2.6 · DOC-09 2.7 · DOC-11 2.9 · DOC-14 2.12 · DOC-15 2.13 · DOC-16 Conclusão (a DOC-07, a DOC-08 e a DOC-15 vieram do Gabriel em 11/11)
+- [x] DOC-17 Revisão final e PDF do relatório
 - [ ] APR-02 Roteiro e tempos · APR-03 meus slides · APR-04 Ambiente de demo + vídeo reserva
 - [ ] ENT-01 Checklist final · ENT-02 Montar o .zip · ENT-03 Postar no Ulife
 
@@ -265,7 +265,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] WEB-G5 Testes do front (membros/treinos; os testes da WEB-G6 ficam com o Pedro) — `features/membros` com 99,6% das linhas e 95% dos branches e `features/treinos` com 100% e 95,7% (Vitest). Os casos pedidos já estavam cobertos: o formulário de membro (CPF, envio e 409) e a busca da lista vieram com a WEB-G1 e a WEB-G2, o `cpf.test.ts` compara a cópia com o `isCpfValido` da API e o formulário de treino testa a duração de 1 a 300 desde a WEB-G4. Entraram os testes dos ramos que faltavam na ficha (a confirmação de desativar não fecha durante o `PATCH`, e a recarga atrasada, com sucesso ou erro, é descartada) e no formulário de treino (Trocar tira o membro sem trazer o erro de volta). Os ramos que sobraram nos meus arquivos são defensivos e não acontecem pela tela: o `return` sem membro depois da validação do treino e o `aoConfirmar` sem confirmação aberta
 - [x] QA-01 Issues do Sonar no meu código — 0 issues e 0 hotspots nos meus módulos (membros, treinos e as telas de membros e treinos) na análise da `main` de 18/11 (`7a220b1`) e no PR #84, sem correção a fazer. O quality gate está aprovado (bugs 0, vulnerabilidades 0, duplicação 0,6%, cobertura 98,8%). Registrado em `docs/evidencias/sonar-correcoes.md`
 - [ ] QA-06 (opcional) Teste de usabilidade
-- [ ] DOC-01 Modelo UNISUL/ABNT · DOC-10 2.8 · DOC-13 2.11
+- [x] DOC-01 Modelo UNISUL/ABNT · DOC-10 2.8 · DOC-13 2.11
 - [ ] APR-01 Template e capa dos slides · APR-03 meus slides
 - [ ] ENT-03 Postar no Ulife
 
