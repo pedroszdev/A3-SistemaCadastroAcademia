@@ -83,7 +83,7 @@ Estas regras vêm direto do PDF da A3. Quebrar alguma delas tira nota individual
 | **2 — Back-end** | 20/10 a 02/11 | Todos os módulos da API com testes unitários | **M2:** API completa, cobertura da API ≥ 80% |
 | **3 — Front-end** | 03/11 a 16/11 | Todas as telas integradas à API; testes de front; e2e | **M3:** sistema navegável de ponta a ponta |
 | **4 — Qualidade** | 17/11 a 23/11 | Quality gate aprovado, issues zeradas, regressão | **M4 (code freeze em 23/11):** quality gate verde e 0 issues abertas |
-| **5 — Documentação** | 24/11 a 29/11 | Relatório + slides + ensaios | **M5:** PDFs prontos e ensaio cronometrado feito |
+| **5 — Documentação** | 24/11 a 29/11 | Relatório + ensaios | **M5:** `relatorio.pdf` pronto e ensaio cronometrado feito |
 | **Entrega** | 30/11 a 02/12 | Postagem individual no Ulife | **M6:** os 3 postaram (meta: 30/11; prazo: 02/12) |
 | **Apresentação** | 04/12 | Socialização | 🎤 |
 
@@ -240,10 +240,10 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] E2E-04 e2e de validações de membros/treinos (veio do Gabriel em 11/11) — `test/membros-treinos.e2e-spec.ts`, com banco real, um `it` por regra e o status esperado no título. RN01: CPF com dígito errado, sequência repetida ou curto → 400, e o CPF com máscara é gravado só com os números. RN02: CPF repetido (com ou sem máscara) → 409 e `PATCH` com `cpf` → 400, sem mudar o CPF salvo. Busca por parte do nome, sem diferenciar maiúsculas, e pelo início do CPF. RN03: desativar mantém o membro (aparece em `?ativo=false`), não existe `DELETE /membros/:id` (404) e reativar volta ao normal. RN04: treino para membro inativo → 422 sem gravar nada, e depois de reativar → 201. RN05: duração 0 ou 301, tipo fora da lista e início ontem → 400; duração 1 e 300 e início hoje → 201. UUID inválido → 400 e membro ou treino inexistente → 404. Os casos de data rodam no `noMesmoDia`
 - [x] QA-01 Issues do Sonar no meu código — a análise da `main` de 16/11 (`83565f4`) tinha 0 bugs, 0 vulnerabilidades e 0 hotspots, mas 2 code smells em linhas minhas, e o PR #75 trazia mais 1. Os 3 foram corrigidos no PR #75, um commit por problema: o fundo do `Dialog` ganhou `role="presentation"` (S6848) e dois testes e2e que só usavam o `.expect` do supertest ganharam um `expect` de verdade (S2699). O registro está em `docs/evidencias/sonar-correcoes.md`
 - [x] QA-02 Cobertura consolidada — 99,2% no Sonar na `main` de 16/11 (`83565f4`), com 100% de linhas e 97,7% de condições, e nenhum módulo abaixo de 80%. Das exclusões, saíram os DTOs (têm a lógica do `@Transform` e já tinham testes; a API continua com 100%); ficaram `main.ts`, `*.module.ts`, `layout.tsx`, `*.config.*` e os gerados, que não têm lógica. Números por módulo e o motivo de cada exclusão em `docs/evidencias/cobertura/README.md`
-- [ ] 🟡 QA-05 Evidências (prints antes/depois) — `docs/evidencias/README.md` é o índice: liga cada pasta ao que comprova, à seção do relatório e ao slide. Já estão lá o Sonar "antes", os prints do Actions (PR verde, PR barrado e execução vermelha), os prints do relatório de cobertura da API e do web e os prints das issues #28, #29 e #30 fechadas, com os PRs de cada uma (`docs/evidencias/issues`). Falta o Sonar "depois" no code freeze (23/11) e o print da #69 fechada
-- [ ] DOC-02 Introdução · DOC-05 2.3 · DOC-07 2.5 · DOC-08 2.6 · DOC-09 2.7 · DOC-11 2.9 · DOC-14 2.12 · DOC-15 2.13 · DOC-16 Conclusão (a DOC-07, a DOC-08 e a DOC-15 vieram do Gabriel em 11/11)
-- [ ] DOC-17 Revisão final e PDF do relatório
-- [ ] APR-02 Roteiro e tempos · APR-03 meus slides · APR-04 Ambiente de demo + vídeo reserva
+- [ ] 🟡 QA-05 Evidências (prints antes/depois) — `docs/evidencias/README.md` é o índice: liga cada pasta ao que comprova e à seção do relatório. Já estão lá o Sonar "antes", os prints do Actions (PR verde, PR barrado e execução vermelha), os prints do relatório de cobertura da API e do web e os prints das issues #28, #29 e #30 fechadas, com os PRs de cada uma (`docs/evidencias/issues`). Falta o Sonar "depois" no code freeze (23/11) e o print da #69 fechada
+- [x] DOC-02 Introdução · DOC-05 2.3 · DOC-07 2.5 · DOC-08 2.6 · DOC-09 2.7 · DOC-11 2.9 · DOC-14 2.12 · DOC-15 2.13 · DOC-16 Conclusão (a DOC-07, a DOC-08 e a DOC-15 vieram do Gabriel em 11/11)
+- [x] DOC-17 Revisão final e PDF do relatório
+- [ ] APR-02 Roteiro e tempos · APR-04 Ambiente de demo + vídeo reserva
 - [ ] ENT-01 Checklist final · ENT-02 Montar o .zip · ENT-03 Postar no Ulife
 
 ### Gabriel
@@ -265,8 +265,7 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] WEB-G5 Testes do front (membros/treinos; os testes da WEB-G6 ficam com o Pedro) — `features/membros` com 99,6% das linhas e 95% dos branches e `features/treinos` com 100% e 95,7% (Vitest). Os casos pedidos já estavam cobertos: o formulário de membro (CPF, envio e 409) e a busca da lista vieram com a WEB-G1 e a WEB-G2, o `cpf.test.ts` compara a cópia com o `isCpfValido` da API e o formulário de treino testa a duração de 1 a 300 desde a WEB-G4. Entraram os testes dos ramos que faltavam na ficha (a confirmação de desativar não fecha durante o `PATCH`, e a recarga atrasada, com sucesso ou erro, é descartada) e no formulário de treino (Trocar tira o membro sem trazer o erro de volta). Os ramos que sobraram nos meus arquivos são defensivos e não acontecem pela tela: o `return` sem membro depois da validação do treino e o `aoConfirmar` sem confirmação aberta
 - [x] QA-01 Issues do Sonar no meu código — 0 issues e 0 hotspots nos meus módulos (membros, treinos e as telas de membros e treinos) na análise da `main` de 18/11 (`7a220b1`) e no PR #84, sem correção a fazer. O quality gate está aprovado (bugs 0, vulnerabilidades 0, duplicação 0,6%, cobertura 98,8%). Registrado em `docs/evidencias/sonar-correcoes.md`
 - [ ] QA-06 (opcional) Teste de usabilidade
-- [ ] DOC-01 Modelo UNISUL/ABNT · DOC-10 2.8 · DOC-13 2.11
-- [ ] APR-01 Template e capa dos slides · APR-03 meus slides
+- [x] DOC-01 Modelo UNISUL/ABNT · DOC-10 2.8 · DOC-13 2.11
 - [ ] ENT-03 Postar no Ulife
 
 ### Yohan
@@ -299,8 +298,8 @@ Base entregue nos 4 commits iniciais (`chore: estrutura do monorepo…` até `fe
 - [x] QA-01 Issues do Sonar no meu código — 0 issues e 0 hotspots nos meus módulos (pagamentos, histórico, telas WEB-Y e e2e) na análise da `main` de 12/11 (`c72e73d`), sem correção a fazer. O quality gate está aprovado (bugs 0, vulnerabilidades 0, duplicação 0%, cobertura 99,4%)
 - [ ] 🟡 QA-03 Triagem semanal das issues do professor — contínua até 02/12. A tabela da seção 8 está em dia e a triagem de 12/11 está no registro (0 issues abertas); as próximas são toda segunda, a partir de 16/11
 - [x] QA-04 Regressão manual pré-entrega — o roteiro está em `docs/testes/regressao.md`: 29 passos com o banco do seed, cobrindo todas as telas, as visões ADMIN, RECEPCIONISTA e INSTRUTOR, o portal do aluno (no celular também) e a sessão, cada passo com o resultado esperado e a regra que confere. A primeira execução foi em 18/11, na `main` em `c59cc21` (já com a ficha, PR #79): 29 de 29 passaram, 0 bugs e nenhuma issue aberta. A rodada final foi em 23/11, no code freeze, na `main` em `7a220b1` (depois do PR #80; desde `c59cc21` só mudou `docs/`): 29 de 29 de novo, 0 bugs e nenhuma issue aberta. O passo 11 passou a pedir a descrição do treino, que é obrigatória. As observações que não são bug estão registradas no próprio arquivo
-- [ ] DOC-03 2.1 · DOC-04 2.2 · DOC-06 2.4 · DOC-12 2.10
-- [ ] APR-03 meus slides · APR-05 Ensaio (cronometrista)
+- [x] DOC-03 2.1 · DOC-04 2.2 · DOC-06 2.4 · DOC-12 2.10
+- [ ] APR-05 Ensaio (cronometrista)
 - [ ] ENT-03 Postar no Ulife
 
 ---
@@ -399,7 +398,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
   - **Regras de negócio**: copiar da seção 4.1.
 
 **Resultado esperado**
-- `docs/ESCOPO.md` revisado pelos 3 e na `main`. Ele alimenta as seções 2.1, 2.2 e 2.3 do relatório e o slide de requisitos.
+- `docs/ESCOPO.md` revisado pelos 3 e na `main`. Ele alimenta as seções 2.1, 2.2 e 2.3 do relatório e o bloco de requisitos da apresentação.
 
 ---
 
@@ -498,7 +497,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
   sonar.javascript.lcov.reportPaths=apps/api/coverage/lcov.info,apps/web/coverage/lcov.info
   ```
 - Quality gate: **Sonar way** (padrão). Badges de *Quality Gate* e *Coverage* no README.
-- **Rodar a primeira análise e tirar prints** do dashboard: issues, cobertura, duplicações, segurança e confiabilidade. Esse é o **"antes"** exigido pela seção 2.12 e pelo slide "Evolução do software".
+- **Rodar a primeira análise e tirar prints** do dashboard: issues, cobertura, duplicações, segurança e confiabilidade. Esse é o **"antes"** exigido pela seção 2.12 e pelo bloco "Evolução do software" da apresentação.
 
 **Resultado esperado**
 - A análise aparece no SonarCloud a cada push ou PR, e o PR recebe um comentário do Sonar.
@@ -1370,7 +1369,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 - Ativar *Watch → All activity* no repositório, para receber e-mail quando o professor abrir uma issue.
 
 **Resultado esperado**
-- **0 issues abertas** na entrega, cada uma ligada ao PR que a resolveu. Isso vira evidência para as seções 2.10 e 2.11 e para o slide "Principais issues".
+- **0 issues abertas** na entrega, cada uma ligada ao PR que a resolveu. Isso vira evidência para as seções 2.10 e 2.11 e para o bloco "Principais issues" da apresentação.
 
 ---
 
@@ -1397,7 +1396,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
   - prints de issues fechadas.
 
 **Resultado esperado**
-- Todo o material visual do relatório (2.7, 2.10, 2.12) e dos slides fica em um lugar só.
+- Todo o material visual do relatório (2.7, 2.10, 2.12) fica em um lugar só.
 
 ---
 
@@ -1444,18 +1443,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 
 ### Fase 7 — Apresentação
 
-#### APR-01 · Template e capa dos slides
-**Responsável:** Gabriel · **Sprint:** 5
-
-**O que fazer**
-- Criar um template único (Google Slides ou PowerPoint).
-- Capa com **nome, semestre e curso de cada integrante** (vale 0,5).
-- Slide de sumário.
-
-**Resultado esperado**
-- O template compartilhado, com a capa pronta.
-
----
+> **Sem slides (decidido em 25/11):** a apresentação é a demo do sistema rodando, com o GitHub e o SonarCloud abertos para as issues e a evolução do Sonar. A APR-01 (template e capa) e a APR-03 (slides de cada parte) saíram do backlog, e não há `apresentacao.pdf`.
 
 #### APR-02 · Roteiro e divisão de tempo
 **Responsável:** Pedro · **Sprint:** 5
@@ -1465,7 +1453,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 
 | Bloco | Quem | Tempo |
 | --- | --- | --- |
-| Capa e identificação (cada um diz nome/semestre/curso) + sumário | Todos (abre o Gabriel) | 0:45 |
+| Identificação (cada um diz nome, semestre e curso) + sumário falado | Todos (abre o Gabriel) | 0:45 |
 | Requisitos funcionais e não funcionais | Gabriel | 1:00 |
 | **Demo:** login, dashboard, funcionários e controle de acesso por cargo | Pedro | 1:30 |
 | **Demo:** cadastro/busca de membro (CPF inválido e duplicado), ficha, treinos, liberar acesso e **login como aluno → Meus treinos** | Gabriel | 1:45 |
@@ -1480,17 +1468,6 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 
 ---
 
-#### APR-03 · Slides de cada parte
-**Responsável:** cada um, os seus blocos · **Sprint:** 5
-
-**O que fazer**
-- Slides com pouco texto e prints, conforme o roteiro.
-
-**Resultado esperado**
-- Todos os slides prontos até 28/11.
-
----
-
 #### APR-04 · Ambiente de demonstração
 **Responsável:** Pedro · **Sprint:** 5
 
@@ -1498,7 +1475,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 - Roteiro de demo com os logins do seed (admin, recepcao, instrutor).
 - Banco "limpo" com `pnpm db:seed` antes de apresentar.
 - **Plano B:** gravar um vídeo da demo completa, caso o notebook, a rede ou o projetor falhem.
-- Deixar abertos, antes de começar: a aplicação, o GitHub Actions e o SonarCloud.
+- Deixar abertos, antes de começar: a aplicação, o GitHub Actions, as issues fechadas no GitHub e o SonarCloud.
 
 **Resultado esperado**
 - A demo roda sem improviso, e há um vídeo reserva salvo localmente.
@@ -1514,7 +1491,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 - Cada um deve saber **explicar o próprio código e os próprios testes**, porque o PDF prevê uma possível **defesa individual**.
 
 **Resultado esperado**
-- Tempo dentro da faixa nos dois ensaios. Exportar `apresentacao.pdf`.
+- Tempo dentro da faixa nos dois ensaios.
 
 ---
 
@@ -1542,8 +1519,7 @@ Formato de cada task: **Responsável · Sprint · Depende de**, depois **O que f
 **O que fazer**
 - Montar o `A3_Academia_Pedro_Gabriel_Yohan.zip` contendo **exatamente**:
   - `link-repositorio.txt` (URL do GitHub);
-  - `relatorio.pdf`;
-  - `apresentacao.pdf`.
+  - `relatorio.pdf`.
 - **Nada além disso.** O PDF diz que "postagem de arquivos não solicitados equivale a não postar".
 
 **Resultado esperado**
